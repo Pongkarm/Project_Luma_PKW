@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # 🗄️ PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: luma-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: luma_app
+      POSTGRES_PASSWORD: luma_secure_2024
+      POSTGRES_DB: luma_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - luma_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U luma_app -d luma_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 🚀 LUMA Backend API
+  backend:
+    build: .
+    container_name: luma-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://luma_app:luma_secure_2024@db:5432/luma_db
+      SECRET_KEY: luma-super-secret-jwt-key-2024-cdti-image-processing
+      AI_MODE: direct
+      AI_SERVER_URL: http://mock-ai:8001/generate
+      AI_SERVER_DIRECT_URL: http://mock-ai:8001/generate
+      AI_SERVER_CALLBACK_URL: http://mock-ai:8001/ai/generate
+      AI_CALLBACK_SECRET: luma-distributed-token-secret-6710301009
+      BACKEND_CALLBACK_URL: http://backend:8000/api/callback
+    ports:
+      - "8000:8000"
+    volumes:
+      - luma_uploads:/app/uploads
+      - luma_outputs:/app/outputs
+
+  # 🎨 Mock AI Inference Server
+  mock-ai:
+    build: .
+    container_name: luma-mock-ai
+    restart: unless-stopped
+    command: ["uvicorn", "mock_ai_server:app", "--host", "0.0.0.0", "--port", "8001"]
+    ports:
+      - "8001:8001"
+
+volumes:
+  luma_db_data:
+  luma_uploads:
+  luma_outputs:
