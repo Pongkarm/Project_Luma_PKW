@@ -35,13 +35,13 @@ graph TD
         LoRA[LoRA Registry & Checkpoint Loader]
     end
 
-    User -->|HTTP / HTTPS| UI
-    UI -->|REST API + JWT| API
-    API -->|SQLAlchemy ORM| DB
-    API -->|Atomic File I/O| Storage
-    API -->|Direct (Sync) OR Callback (Webhook)| AIEngine
-    AIEngine -->|Inference Execution| SD
-    AIEngine -->|X-LUMA-INTERNAL-SECRET Callback| API
+    User -->|"HTTP / HTTPS"| UI
+    UI -->|"REST API + JWT"| API
+    API -->|"SQLAlchemy ORM"| DB
+    API -->|"Atomic File I/O"| Storage
+    API -->|"Direct (Sync) OR Callback (Webhook)"| AIEngine
+    AIEngine -->|"Inference Execution"| SD
+    AIEngine -->|"X-LUMA-INTERNAL-SECRET Callback"| API
 ```
 
 ---
