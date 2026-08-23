@@ -1,0 +1,453 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.topbar {
+  height: var(--topbar-h);
+  flex: none;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  gap: 12px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.brand:hover {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.brand__mark {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-sm);
+  background: var(--accent);
+  color: var(--accent-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.brand__word {
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-size: 13px;
+}
+
+.app__body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.rail {
+  width: var(--rail-w);
+  flex: none;
+  border-right: 1px solid var(--line);
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px 10px;
+}
+
+.rail__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rail__link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: var(--r);
+  color: var(--ink-3);
+  font-weight: 500;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.rail__link:hover {
+  color: var(--ink-2);
+  background: var(--panel-2);
+  text-decoration: none;
+}
+
+.rail__link[aria-current='page'] {
+  background: var(--panel-2);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.rail__count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.rail__foot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.rail__engine {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--ink-3);
+}
+
+.dot--online {
+  background: var(--done);
+}
+
+.dot--offline {
+  background: var(--fail);
+}
+
+.app__workspace {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.stagebar {
+  height: var(--stagebar-h);
+  flex: none;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 16px;
+}
+
+.stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: auto;
+}
+
+.controls {
+  width: var(--controls-w);
+  flex: none;
+  border-left: 1px solid var(--line);
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.controls__scroll {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 14px 16px;
+}
+
+.controls__foot {
+  flex: none;
+  border-top: 1px solid var(--line);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tabbar {
+  display: none;
+}
+
+/* ── tablet: the rail keeps its icons and drops its labels ───────────── */
+@media (max-width: 1099px) {
+  .rail {
+    width: 56px;
+    padding: 10px 0;
+    align-items: center;
+  }
+
+  .rail__link {
+    width: 34px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .rail__label,
+  .rail__count,
+  .rail__foot {
+    display: none;
+  }
+
+  /* The controls stop being a column: a 372px panel and a usable image do not
+     both fit, so they become a sheet docked under the stage. */
+  .app__workspace {
+    flex-direction: column;
+  }
+
+  .controls {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--line-strong);
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    max-height: 46vh;
+  }
+}
+
+/* ── phone: a tab bar instead of a rail ──────────────────────────────── */
+@media (max-width: 767px) {
+  .rail {
+    display: none;
+  }
+
+  .stage {
+    padding: 14px;
+  }
+
+  .controls {
+    max-height: 52vh;
+  }
+
+  .tabbar {
+    display: flex;
+    flex: none;
+    height: 62px;
+    border-top: 1px solid var(--line);
+    background: var(--panel);
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 12px;
+  }
+
+  .tabbar__link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-size: 10.5px;
+    color: var(--ink-3);
+    text-decoration: none;
+    min-width: 64px;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .tabbar__link:hover {
+    text-decoration: none;
+  }
+
+  .tabbar__link[aria-current='page'] {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* Touch targets stay at 44px on a phone. */
+  .btn--lg,
+  .btn--block {
+    min-height: 44px;
+  }
+}
+
+/* ── the run strip under the stage ───────────────────────────────────── */
+.runstrip {
+  flex: none;
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.runstrip__row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.thumb {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  border-radius: var(--r);
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  overflow: hidden;
+  position: relative;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-3);
+}
+
+.thumb[aria-current='true'] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+@media (max-width: 767px) {
+  .runstrip {
+    display: none;
+  }
+}
+
+/* ── history grid ────────────────────────────────────────────────────── */
+.grid-runs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+  align-content: start;
+  /* max-content, not auto: the cards clip their own overflow, which lets an
+     auto-sized row ignore their real height and cut the caption off. */
+  grid-auto-rows: max-content;
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.runcard {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+}
+
+.runcard:hover {
+  border-color: var(--line-strong);
+}
+
+.runcard[aria-current='true'] {
+  border-color: var(--accent);
+}
+
+.runcard__media {
+  flex: none;
+  height: 150px;
+  background: var(--ph-image);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--ink-3);
+}
+
+.runcard__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.runcard__badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+
+.runcard__body {
+  flex: none;
+  padding: 9px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.runcard__prompt {
+  font-size: 12px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── auth screens ────────────────────────────────────────────────────── */
+.authpage {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 34px 24px;
+  background: var(--bg);
+}
+
+.authcard {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.centered-note {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  max-width: 360px;
+}

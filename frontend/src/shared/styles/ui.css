@@ -1,0 +1,565 @@
+/* ── buttons ─────────────────────────────────────────────────────────── */
+.btn {
+  height: var(--ctl);
+  padding: 0 13px;
+  border: 1px solid transparent;
+  border-radius: var(--r);
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--accent-hi);
+}
+
+.btn--primary:active:not(:disabled) {
+  background: var(--accent-press);
+}
+
+:root[data-theme='light'] .btn--primary:hover:not(:disabled) {
+  background: #eab97a;
+}
+
+.btn--primary:disabled {
+  background: color-mix(in srgb, var(--accent) 22%, var(--panel-2));
+  color: var(--ink-3);
+}
+
+.btn--secondary {
+  background: var(--panel-2);
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+
+.btn--secondary:hover:not(:disabled) {
+  border-color: var(--ink-3);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--ink-2);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  background: var(--panel-2);
+  color: var(--ink);
+}
+
+.btn--danger {
+  background: transparent;
+  color: var(--fail);
+  border-color: color-mix(in srgb, var(--fail) 35%, transparent);
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: var(--fail-wash);
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn--lg {
+  height: 38px;
+  font-size: 13.5px;
+}
+
+.btn--sm {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.btn--disabled-visual:disabled {
+  opacity: 1;
+}
+
+.icobtn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--panel-2);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.icobtn:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+
+.icobtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.icobtn--lg {
+  width: 34px;
+  height: 34px;
+}
+
+/* ── fields ──────────────────────────────────────────────────────────── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.label__meta {
+  font-size: 10.5px;
+  color: var(--ink-3);
+  font-weight: 400;
+}
+
+.input,
+.textarea,
+.select {
+  width: 100%;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.input,
+.select {
+  height: var(--ctl);
+  padding: 0 10px;
+}
+
+.textarea {
+  padding: 9px 10px;
+  line-height: 1.55;
+  resize: vertical;
+  min-height: 72px;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--ink-3);
+}
+
+.input:hover,
+.textarea:hover,
+.select:hover {
+  border-color: var(--line-strong);
+}
+
+.input[aria-invalid='true'],
+.textarea[aria-invalid='true'] {
+  border-color: var(--fail);
+}
+
+.select {
+  appearance: none;
+  padding-right: 30px;
+  cursor: pointer;
+}
+
+.select-wrap {
+  position: relative;
+}
+
+.select-wrap__chevron {
+  position: absolute;
+  right: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-3);
+  pointer-events: none;
+}
+
+.field__error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--fail);
+}
+
+.field__hint {
+  font-size: 11px;
+  color: var(--ink-3);
+  line-height: 1.55;
+}
+
+/* ── segmented control ───────────────────────────────────────────────── */
+.seg {
+  display: flex;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 2px;
+  gap: 2px;
+}
+
+.seg__item {
+  flex: 1;
+  height: 28px;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.seg__item:hover:not(:disabled) {
+  color: var(--ink-2);
+}
+
+.seg__item[aria-selected='true'] {
+  background: var(--raised);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+.seg__item:disabled {
+  color: var(--line-strong);
+  cursor: not-allowed;
+}
+
+.seg--icons .seg__item {
+  flex: none;
+  width: 30px;
+}
+
+/* ── slider ──────────────────────────────────────────────────────────── */
+.slider {
+  width: 100%;
+  height: 18px;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  margin: 0;
+}
+
+.slider::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to right,
+    var(--accent) 0 var(--fill, 0%),
+    var(--line-strong) var(--fill, 0%) 100%
+  );
+}
+
+.slider::-moz-range-track {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--line-strong);
+}
+
+.slider::-moz-range-progress {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 13px;
+  height: 13px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 2px solid var(--panel);
+}
+
+.slider::-moz-range-thumb {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 2px solid var(--panel);
+}
+
+.slider:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.slider-ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: var(--ink-3);
+}
+
+.num {
+  width: 62px;
+  height: 26px;
+  text-align: center;
+  border-radius: var(--r-sm);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+/* ── status ──────────────────────────────────────────────────────────── */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--r-sm);
+  font-size: 11.5px;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.status--pending {
+  color: var(--queued);
+  background: var(--queued-wash);
+  border-color: color-mix(in srgb, var(--queued) 30%, transparent);
+}
+
+.status--processing {
+  color: var(--running);
+  background: var(--running-wash);
+  border-color: color-mix(in srgb, var(--running) 30%, transparent);
+}
+
+.status--completed {
+  color: var(--done);
+  background: var(--done-wash);
+  border-color: color-mix(in srgb, var(--done) 30%, transparent);
+}
+
+.status--failed {
+  color: var(--fail);
+  background: var(--fail-wash);
+  border-color: color-mix(in srgb, var(--fail) 30%, transparent);
+}
+
+/* A value that only reaches the engine in direct mode. See README. */
+.modedot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent-dot);
+  display: inline-block;
+  flex: none;
+}
+
+/* ── messages ────────────────────────────────────────────────────────── */
+.alert {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 11px 13px;
+  border-radius: var(--r);
+  border: 1px solid var(--line);
+  background: var(--panel);
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+
+.alert--error {
+  color: var(--fail);
+  border-color: color-mix(in srgb, var(--fail) 35%, transparent);
+  background: var(--fail-wash);
+}
+
+.alert--note {
+  background: var(--panel-2);
+  font-size: 11.5px;
+  color: var(--ink-3);
+  line-height: 1.55;
+}
+
+.alert__icon {
+  flex: none;
+  margin-top: 1px;
+}
+
+/* ── dialog ──────────────────────────────────────────────────────────── */
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s5);
+  z-index: 40;
+}
+
+.dialog {
+  width: 100%;
+  max-width: 360px;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-pop);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── dropzone ────────────────────────────────────────────────────────── */
+.drop {
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 18px 16px;
+  text-align: center;
+  min-height: 132px;
+  cursor: pointer;
+  color: var(--ink-3);
+}
+
+.drop:hover {
+  border-color: var(--ink-3);
+}
+
+.drop--over {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+  color: var(--accent-text);
+}
+
+.drop--busy,
+.drop--error {
+  border-style: solid;
+  cursor: default;
+}
+
+.drop--error {
+  border-color: var(--fail);
+  background: var(--fail-wash);
+}
+
+/* ── misc ────────────────────────────────────────────────────────────── */
+.track {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--line-strong);
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+.track__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--running);
+  border-radius: 2px;
+}
+
+/* Honest indeterminate motion: it says "working", not "42% done". */
+.track__indeterminate {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 34%;
+  border-radius: 2px;
+  background: var(--running);
+  animation: luma-slide 1.5s ease-in-out infinite;
+}
+
+@keyframes luma-slide {
+  0% {
+    left: -34%;
+  }
+
+  100% {
+    left: 100%;
+  }
+}
+
+.spin {
+  animation: luma-spin 1.1s linear infinite;
+}
+
+@keyframes luma-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.skeleton {
+  background: var(--panel-2);
+  border-radius: var(--r-sm);
+}
+
+.disclosure {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--ink-2);
+}
+
+.disclosure:hover {
+  color: var(--ink);
+}
+
+.disclosure__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.disclosure__chevron {
+  color: var(--ink-3);
+  transition: transform 140ms ease;
+}
+
+.disclosure[aria-expanded='true'] .disclosure__chevron {
+  transform: rotate(180deg);
+}

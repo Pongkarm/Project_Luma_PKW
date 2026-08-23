@@ -1,0 +1,240 @@
+/* oxlint-disable react/refs -- the rule flags every `editor.*` access because the
+   editor also exposes canvasRef; the values read here are plain state, and the
+   ref itself is only ever handed to React as a ref prop. */
+import { useEffect, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { Segmented } from '../../../shared/ui/Segmented.tsx';
+import { IconButton } from '../../../shared/ui/Button.tsx';
+import { Icon } from '../../../shared/ui/Icon.tsx';
+import { MASK_DISPLAY_OPACITY } from './useMaskEditor.ts';
+import type { MaskEditor, MaskTool } from './useMaskEditor.ts';
+
+type Props = {
+  editor: MaskEditor;
+  sourceUrl: string;
+  onNaturalSize: (size: { width: number; height: number }) => void;
+};
+
+const toolOptions: { value: MaskTool; label: string; icon: 'brush' | 'eraser' }[] = [
+  { value: 'brush', label: 'Brush', icon: 'brush' },
+  { value: 'eraser', label: 'Eraser', icon: 'eraser' },
+];
+
+function isTypingTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable;
+}
+
+export function MaskCanvas({ editor, sourceUrl, onNaturalSize }: Props) {
+  const [maskOnly, setMaskOnly] = useState(false);
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (isTypingTarget(event.target)) return;
+
+      const meta = event.metaKey || event.ctrlKey;
+      if (meta && event.key.toLowerCase() === 'z') {
+        event.preventDefault();
+        if (event.shiftKey) editor.redo();
+        else editor.undo();
+        return;
+      }
+      switch (event.key.toLowerCase()) {
+        case 'b':
+          editor.setTool('brush');
+          break;
+        case 'e':
+          editor.setTool('eraser');
+          break;
+        case '[':
+          editor.setBrushSize(Math.max(4, editor.brushSize - 6));
+          break;
+        case ']':
+          editor.setBrushSize(Math.min(200, editor.brushSize + 6));
+          break;
+        default:
+          break;
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [editor]);
+
+  function onPointerDown(event: ReactPointerEvent<HTMLCanvasElement>) {
+    // Only the primary button paints; a right-click should not draw.
+    if (event.button !== 0) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    editor.beginStroke(event);
+  }
+
+  function onPointerMove(event: ReactPointerEvent<HTMLCanvasElement>) {
+    if (event.buttons !== 1) return;
+    editor.extendStroke(event);
+  }
+
+  function onPointerUp(event: ReactPointerEvent<HTMLCanvasElement>) {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    editor.endStroke();
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+      <div
+        style={{
+          height: 'var(--stagebar-h)',
+          flex: 'none',
+          borderBottom: '1px solid var(--line)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+          padding: '0 12px 0 16px',
+          flexWrap: 'wrap',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontWeight: 600, fontSize: 13.5 }}>Inpaint</span>
+          <span className="mono" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
+            {editor.hasMask
+              ? `mask · ${Math.round(editor.coverage * 100)}% of image`
+              : 'paint the area to replace'}
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Segmented
+            iconsOnly
+            ariaLabel="Mask tool"
+            options={toolOptions}
+            value={editor.tool}
+            onChange={editor.setTool}
+          />
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              height: 28,
+              padding: '0 10px 0 9px',
+              border: '1px solid var(--line)',
+              borderRadius: 'var(--r)',
+              background: 'var(--panel-2)',
+            }}
+          >
+            <label htmlFor="brush-size" style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>
+              Size
+            </label>
+            <input
+              id="brush-size"
+              className="slider"
+              type="range"
+              min={4}
+              max={200}
+              step={2}
+              value={editor.brushSize}
+              style={{ width: 76, ['--fill' as string]: `${((editor.brushSize - 4) / 196) * 100}%` }}
+              onChange={(event) => editor.setBrushSize(Number(event.target.value))}
+            />
+            <span className="mono" style={{ fontSize: 11, color: 'var(--ink-2)', width: 26 }}>
+              {editor.brushSize}
+            </span>
+          </div>
+          <IconButton icon="undo" label="Undo stroke" disabled={!editor.canUndo} onClick={editor.undo} />
+          <IconButton icon="redo" label="Redo stroke" disabled={!editor.canRedo} onClick={editor.redo} />
+          <IconButton icon="trash" label="Clear mask" disabled={!editor.canUndo} onClick={editor.clear} />
+          <div style={{ width: 1, height: 18, background: 'var(--line)', margin: '0 2px' }} />
+          <IconButton
+            icon="eye"
+            label={maskOnly ? 'Show the image' : 'Show the mask only'}
+            aria-pressed={maskOnly}
+            style={maskOnly ? { color: 'var(--ink)', borderColor: 'var(--line-strong)' } : undefined}
+            onClick={() => setMaskOnly((value) => !value)}
+          />
+        </div>
+      </div>
+
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 20,
+          overflow: 'auto',
+        }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
+          <div
+            style={{
+              position: 'relative',
+              display: 'inline-block',
+              lineHeight: 0,
+              border: '1px solid var(--line)',
+              borderRadius: 'var(--r-lg)',
+              overflow: 'hidden',
+              background: maskOnly ? '#000' : 'var(--ph-image)',
+            }}
+          >
+            <img
+              src={sourceUrl}
+              alt="The image you are painting on"
+              draggable={false}
+              onLoad={(event) =>
+                onNaturalSize({
+                  width: event.currentTarget.naturalWidth,
+                  height: event.currentTarget.naturalHeight,
+                })
+              }
+              style={{
+                display: 'block',
+                maxWidth: 'min(100%, 620px)',
+                maxHeight: '58vh',
+                width: 'auto',
+                height: 'auto',
+                opacity: maskOnly ? 0 : 1,
+                userSelect: 'none',
+              }}
+            />
+            <canvas
+              ref={editor.canvasRef}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={onPointerUp}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                cursor: 'crosshair',
+                touchAction: 'none',
+                opacity: maskOnly ? 1 : MASK_DISPLAY_OPACITY,
+                filter: maskOnly ? 'grayscale(1) brightness(2.6)' : undefined,
+              }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            <span
+              style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--ink-3)' }}
+            >
+              <span
+                style={{ width: 9, height: 9, borderRadius: 2, background: 'var(--accent)', opacity: 0.55 }}
+              />
+              painted = repaint this area
+            </span>
+            <span
+              className="mono"
+              style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10.5, color: 'var(--ink-3)' }}
+            >
+              <Icon name="info" size={12} />B brush · E eraser · [ ] size · ⌘Z undo
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

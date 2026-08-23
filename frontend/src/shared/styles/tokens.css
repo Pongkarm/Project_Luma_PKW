@@ -1,0 +1,114 @@
+/*
+ * LUMA design tokens.
+ *
+ * Dark is the primary experience, so it is the default. Light redefines the
+ * same names and nothing else; no component knows which theme it is in.
+ * `data-theme` on <html> is written by the preferences store.
+ */
+:root {
+  color-scheme: dark;
+
+  /* surfaces — depth comes from a 1px line, never a shadow */
+  --bg: #0e1013;
+  --panel: #14171c;
+  --panel-2: #1a1e25;
+  --raised: #20252d;
+  --line: #272c35;
+  --line-strong: #39404b;
+
+  /* ink */
+  --ink: #e7e9ed;
+  --ink-2: #b4bac4;
+  --ink-3: #868e9b;
+
+  /* accent — spent only on the primary action and the current selection */
+  --accent: #e0a458;
+  --accent-hi: #efbb79;
+  --accent-press: #c68c45;
+  --accent-ink: #1a1409;
+  --accent-wash: rgb(224 164 88 / 12%);
+  --accent-text: var(--accent);
+  --accent-dot: var(--accent);
+
+  /* job status — each is always paired with an icon and a word */
+  --queued: #868e9b;
+  --running: #63a0e8;
+  --done: #6bbf8a;
+  --fail: #e4736b;
+  --queued-wash: rgb(134 142 155 / 14%);
+  --running-wash: rgb(99 160 232 / 14%);
+  --done-wash: rgb(107 191 138 / 14%);
+  --fail-wash: rgb(228 115 107 / 14%);
+
+  /* placeholder tints used where a real image has not loaded */
+  --ph-1: #2a2620;
+  --ph-2: #232a2e;
+  --ph-3: #262229;
+  --ph-image: #20242b;
+
+  --overlay: rgb(10 11 14 / 72%);
+  --shadow-pop: 0 18px 44px rgb(0 0 0 / 50%);
+
+  /* geometry */
+  --r-sm: 3px;
+  --r: 5px;
+  --r-lg: 8px;
+  --ctl: 32px;
+
+  /* spacing scale */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+
+  --font-sans: 'IBM Plex Sans', 'IBM Plex Sans Thai', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, sfmono-regular, monospace;
+
+  --rail-w: 200px;
+  --controls-w: 372px;
+  --topbar-h: 48px;
+  --stagebar-h: 44px;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --bg: #f6f7f8;
+  --panel: #fff;
+  --panel-2: #f1f2f4;
+  --raised: #fff;
+  --line: #e1e4e8;
+  --line-strong: #c8cdd4;
+
+  --ink: #15181d;
+  --ink-2: #454b55;
+  --ink-3: #6b7280;
+
+  --accent: #e0a458;
+  --accent-hi: #8a5510;
+  --accent-press: #6f440d;
+  --accent-ink: #1a1409;
+  --accent-wash: rgb(224 164 88 / 16%);
+  --accent-text: #8a5510;
+  --accent-dot: #b87a2a;
+
+  --queued: #6b7280;
+  --running: #1f5fa8;
+  --done: #1f7a46;
+  --fail: #b3382e;
+  --queued-wash: rgb(107 114 128 / 12%);
+  --running-wash: rgb(31 95 168 / 12%);
+  --done-wash: rgb(31 122 70 / 12%);
+  --fail-wash: rgb(179 56 46 / 12%);
+
+  --ph-1: #efe4d2;
+  --ph-2: #dee6ea;
+  --ph-3: #e6e2ec;
+  --ph-image: #e4e7ea;
+
+  --overlay: rgb(21 24 29 / 42%);
+  --shadow-pop: 0 18px 44px rgb(21 24 29 / 18%);
+}

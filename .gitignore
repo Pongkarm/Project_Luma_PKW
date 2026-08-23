@@ -36,3 +36,9 @@ outputs/*
 .Trashes
 ehthumbs.db
 Thumbs.db
+# Frontend (Node 1)
+node_modules/
+dist/
+.env
+.env.local
+*.local
