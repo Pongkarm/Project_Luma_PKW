@@ -22,11 +22,28 @@ uploads/*
 !uploads/.gitkeep
 outputs/*
 !outputs/.gitkeep
+ai_server/storage/cached/*
+!ai_server/storage/cached/.gitkeep
 *.tmp
 *.png
 *.jpg
 *.jpeg
 *.webp
+*.zip
+*.db
+*.sqlite
+*.sqlite3
+
+# AI Model Weights & Checkpoints (CRITICAL - DO NOT COMMIT)
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.onnx
+models/
+loras/
+checkpoints/
 
 # OS generated files
 .DS_Store
