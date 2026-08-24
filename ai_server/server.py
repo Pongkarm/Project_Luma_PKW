@@ -156,7 +156,7 @@ def handle_txt2img_inference(data: dict) -> str:
         print("[ENGINE] WebUI Forge Engine is ONLINE on port 7861. Running on GPU...")
         forge_res = run_txt2img(
             prompt=enriched_prompt,
-            negative_prompt=data.get("negative_prompt", "blurry, low quality, distorted, bad anatomy"),
+            negative_prompt=data.get("negative_prompt") if data.get("negative_prompt") else "blurry, low quality, distorted, bad anatomy",
             steps=data.get("steps", 25),
             cfg_scale=data.get("cfg_scale", 7.5),
             width=data.get("width", 512),
