@@ -1,4 +1,5 @@
 from uuid import UUID
+from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, status, Query
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
@@ -102,6 +103,28 @@ def get_generation(
     return GenerationResponse.model_validate(generation)
 
 
+def _detect_media_type(path: Path) -> str:
+    try:
+        with open(path, "rb") as f:
+            header = f.read(12)
+            if header.startswith(b"\x89PNG\r\n\x1a\n"):
+                return "image/png"
+            elif header.startswith(b"\xff\xd8\xff"):
+                return "image/jpeg"
+            elif header.startswith(b"RIFF") and len(header) >= 12 and header[8:12] == b"WEBP":
+                return "image/webp"
+    except Exception:
+        pass
+    
+    ext_map = {
+        ".png": "image/png",
+        ".webp": "image/webp",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+    }
+    return ext_map.get(path.suffix.lower(), "image/png")
+
+
 # ─────────────────────────────────────────
 # 4. GET /generations/{generation_id}/image (ดาวน์โหลดภาพ)
 # ─────────────────────────────────────────
@@ -126,8 +149,10 @@ def get_generation_image(
             detail="Image not found or not ready yet",
         )
 
+    media_type = _detect_media_type(file_path)
+
     return FileResponse(
         path=file_path,
-        media_type="image/png",
-        filename=f"{generation_id}.png",
+        media_type=media_type,
+        filename=file_path.name,
     )

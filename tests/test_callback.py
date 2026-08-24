@@ -204,3 +204,54 @@ def test_callback_missing_image_on_completed(
     headers = {"X-LUMA-INTERNAL-SECRET": settings.AI_CALLBACK_SECRET}
     response = client.post("/api/callback", json=payload, headers=headers)
     assert response.status_code == 422
+
+
+def test_callback_data_url_prefix_webp_stripped_properly(
+    client: TestClient,
+    test_user: User,
+    sample_image_base64: str,
+    db: Session
+):
+    """
+    ทดสอบว่า Callback ที่มี Data URL Prefix (เช่น data:image/webp;base64,...)
+    จะถูกตัด Prefix ออกอย่างถูกต้อง ไม่เกิด 15 ไบต์ขยะที่หัวไฟล์ และเปิดด้วย PIL ได้สมบูรณ์
+    """
+    from PIL import Image
+
+    gen = Generation(
+        id=uuid.uuid4(),
+        user_id=test_user.id,
+        task_type="txt2img",
+        prompt="webp data url test",
+        model_name="sd-v1-5",
+        sampler_name="Euler a",
+        steps=20,
+        cfg_scale=7.0,
+        width=512,
+        height=512,
+        status="processing"
+    )
+    db.add(gen)
+    db.commit()
+
+    # Prepend Data URL prefix
+    data_url_payload = f"data:image/webp;base64,{sample_image_base64}"
+
+    payload = {
+        "task_id": str(gen.id),
+        "status": "completed",
+        "image_base64": data_url_payload,
+        "generation_time": 1.5
+    }
+    headers = {"X-LUMA-INTERNAL-SECRET": settings.AI_CALLBACK_SECRET}
+    response = client.post("/api/callback", json=payload, headers=headers)
+    assert response.status_code == 200
+
+    db.refresh(gen)
+    assert gen.status == "completed"
+    assert gen.output_path is not None
+
+    # ตรวจสอบว่าไฟล์เปิดด้วย PIL ได้ ไม่โยน UnidentifiedImageError
+    with Image.open(gen.output_path) as img:
+        img.verify()
+

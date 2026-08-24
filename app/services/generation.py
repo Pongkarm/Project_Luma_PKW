@@ -31,6 +31,27 @@ from app.schemas.generation import (
 logger = logging.getLogger(__name__)
 
 
+def _safe_b64decode(b64_str: str) -> bytes:
+    """
+    Decodes a Base64 string safely, removing Data URL prefixes (e.g. 'data:image/webp;base64,')
+    to prevent garbage header bytes from being prepended to the binary image file.
+    """
+    if "," in b64_str:
+        b64_str = b64_str.split(",", 1)[1]
+    return base64.b64decode(b64_str.strip())
+
+
+def _detect_image_extension(image_bytes: bytes) -> str:
+    """Detect file extension (.png, .jpg, .webp) from binary magic bytes"""
+    if image_bytes.startswith(b"\x89PNG\r\n\x1a\n"):
+        return ".png"
+    if image_bytes.startswith(b"\xff\xd8\xff"):
+        return ".jpg"
+    if image_bytes.startswith(b"RIFF") and len(image_bytes) >= 12 and image_bytes[8:12] == b"WEBP":
+        return ".webp"
+    return ".png"
+
+
 # ────────────────────────────────────────
 # 1. ดึงงานเดียว (GET /generations/{id})
 # ────────────────────────────────────────
@@ -303,6 +324,7 @@ async def process_generation_task(
                     "prompt": generation.prompt,
                     "negative_prompt": generation.negative_prompt,
                     "model": generation.model_name,
+                    "lora_config": generation.lora_config,
                     "steps": generation.steps,
                     "cfg_scale": generation.cfg_scale,
                     "width": generation.width,
@@ -363,15 +385,21 @@ async def process_generation_task(
                 _mark_as_failed(generation, "AI Server response missing 'image_base64' field", start_time, db)
                 return
 
-            image_data = base64.b64decode(data["image_base64"])
+            try:
+                image_data = _safe_b64decode(data["image_base64"])
+            except Exception as e:
+                _mark_as_failed(generation, f"Invalid base64 image data from AI Server: {e}", start_time, db)
+                return
+
             if not image_data:
                 _mark_as_failed(generation, "Decoded image is empty", start_time, db)
                 return
 
-            # บันทึกไฟล์ภาพแบบ Atomic Write
-            output_dir = Path(settings.OUTPUTS_DIR).resolve()
+            # บันทึกไฟล์ภาพแบบ Atomic Write (แยกโฟลเดอร์ตาม user_id)
+            ext = _detect_image_extension(image_data)
+            output_dir = (Path(settings.OUTPUTS_DIR).resolve() / str(generation.user_id)) if generation.user_id else Path(settings.OUTPUTS_DIR).resolve()
             output_dir.mkdir(parents=True, exist_ok=True)
-            file_path = output_dir / f"{generation.id}.png"
+            file_path = output_dir / f"{generation.id}{ext}"
 
             temp_path = file_path.with_suffix(".tmp")
             temp_path.write_bytes(image_data)
@@ -464,7 +492,7 @@ def process_ai_callback(
         )
 
     try:
-        image_data = base64.b64decode(payload.image_base64)
+        image_data = _safe_b64decode(payload.image_base64)
         if not image_data:
             raise ValueError("Decoded image data is empty")
     except Exception as e:
@@ -476,10 +504,11 @@ def process_ai_callback(
             message=f"Invalid base64 image data: {e}"
         )
 
-    # 5. บันทึกไฟล์ภาพแบบ Atomic Write
-    output_dir = Path(settings.OUTPUTS_DIR).resolve()
+    # 5. บันทึกไฟล์ภาพแบบ Atomic Write (แยกโฟลเดอร์ตาม user_id)
+    ext = _detect_image_extension(image_data)
+    output_dir = (Path(settings.OUTPUTS_DIR).resolve() / str(generation.user_id)) if generation.user_id else Path(settings.OUTPUTS_DIR).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
-    file_path = output_dir / f"{generation.id}.png"
+    file_path = output_dir / f"{generation.id}{ext}"
 
     temp_path = file_path.with_suffix(".tmp")
     temp_path.write_bytes(image_data)

@@ -7,6 +7,7 @@ from sqlalchemy import text
 from app.db.database import engine, Base
 from app.models import User, Generation
 from app.api import auth, generation, callback, upload
+from app.core.config import settings
 
 # 💡 ตั้งค่าระบบ Logging กลาง
 logging.basicConfig(

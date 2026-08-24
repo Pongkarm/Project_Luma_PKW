@@ -9,8 +9,9 @@ from sqlalchemy import (
     Float,
     Text,
     ForeignKey,
+    JSON,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.database import Base
@@ -55,7 +56,7 @@ class Generation(Base):
     prompt = Column(Text, nullable=False)
     negative_prompt = Column(Text, nullable=True)
     model_name = Column(String(100), nullable=False)
-    lora_config = Column(JSONB, nullable=True)
+    lora_config = Column(JSON, nullable=True)
     sampler_name = Column(String(50), nullable=False)
     steps = Column(Integer, nullable=False)
     cfg_scale = Column(Float, nullable=False)
