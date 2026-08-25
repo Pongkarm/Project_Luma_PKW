@@ -511,7 +511,7 @@
 }
 
 .auth__tagline {
-  font-size: 26px;
+  font-size: 30px;
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.25;
@@ -538,19 +538,19 @@
 }
 
 .auth__featureName {
-  font-size: 13.5px;
+  font-size: 14.5px;
   font-weight: 600;
 }
 
 .auth__featureBody {
-  font-size: 12.5px;
+  font-size: 13.5px;
   color: var(--ink-3);
   line-height: 1.55;
 }
 
 .auth__foot {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--ink-3);
 }
 
@@ -559,6 +559,46 @@
   align-items: center;
   justify-content: center;
   padding: 40px 24px;
+}
+
+@media (max-width: 520px) {
+  .auth {
+    /* dvh, not vh: mobile browser chrome slides away and vh would leave a gap */
+    min-height: 100dvh;
+  }
+
+  .auth__panel {
+    padding: 28px 18px;
+    align-items: flex-start;
+    padding-top: 48px;
+  }
+
+  .auth__title {
+    font-size: 24px;
+  }
+
+  .auth__tagline {
+    font-size: 26px;
+  }
+
+  /*
+   * iOS Safari zooms the page when a focused input is under 16px. Sizing up
+   * here is the only reliable way to stop the whole layout jumping on tap.
+   */
+  .auth__card .input {
+    font-size: 16px;
+    height: 46px;
+  }
+
+  .auth__card .btn--primary {
+    height: 48px;
+  }
+
+  .auth__reveal {
+    width: 32px;
+    height: 32px;
+    bottom: 7px;
+  }
 }
 
 .auth__card {
@@ -576,13 +616,13 @@
 }
 
 .auth__title {
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 600;
   letter-spacing: -0.02em;
 }
 
 .auth__sub {
-  font-size: 13.5px;
+  font-size: 15px;
   color: var(--ink-3);
 }
 
@@ -600,8 +640,13 @@
   }
 }
 
+.auth__card .label {
+  font-size: 13px;
+}
+
 .auth__card .input {
-  height: 38px;
+  height: 42px;
+  font-size: 14.5px;
   transition:
     border-color 140ms ease,
     background-color 140ms ease;
@@ -617,15 +662,16 @@
 }
 
 .auth__card .btn--primary {
-  height: 40px;
+  height: 46px;
+  font-size: 14.5px;
 }
 
 .auth__reveal {
   position: absolute;
-  right: 6px;
-  top: 27px;
-  width: 26px;
-  height: 26px;
+  right: 7px;
+  bottom: 8px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -651,8 +697,8 @@
 .auth__rule {
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-size: 11.5px;
+  gap: 8px;
+  font-size: 12.5px;
   color: var(--ink-3);
   transition: color 200ms ease;
 }
@@ -667,7 +713,7 @@
 
 .auth__alt {
   text-align: center;
-  font-size: 12.5px;
+  font-size: 13.5px;
   color: var(--ink-3);
 }
 

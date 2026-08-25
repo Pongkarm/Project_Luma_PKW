@@ -183,7 +183,9 @@ export function ControlsPanel({
 
         <div className="hairline" />
 
-        <span className="eyebrow">{t('gen.basics')}</span>
+        <span className="eyebrow">
+          {draft.mode === 'txt2img' ? t('gen.step2') : t('gen.step1')}
+        </span>
 
         <SelectField
           label={t('gen.model')}
@@ -219,7 +221,7 @@ export function ControlsPanel({
           onToggle={() => setAdvancedOpen(!advancedOpen)}
           label={
             <>
-              {t('gen.advanced')}
+              {t('gen.step3')} · {t('gen.advanced')}
               <span className="modedot" title={t('gen.modeDotSome')} />
             </>
           }

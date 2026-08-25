@@ -6,6 +6,7 @@ import { useElapsed } from '../../../shared/hooks/useElapsed.ts';
 import { formatDuration, formatElapsed } from '../../../shared/utils/format.ts';
 import type { Generation } from '../../../contracts/generation.ts';
 import { useT } from '../../../shared/hooks/useT.ts';
+import { useToasts } from '../../../shared/ui/Toast.tsx';
 
 type Props = {
   job: Generation;
@@ -31,6 +32,7 @@ export function ResultStage({
   useAsSourceBusy,
 }: Props) {
   const t = useT();
+  const showToast = useToasts((state) => state.show);
   const running = job.status === 'pending' || job.status === 'processing';
   const elapsed = useElapsed(startedAt ? new Date(startedAt) : null, running && !stalled);
   const image = useAuthedImage(job.id, job.status === 'completed');
@@ -167,6 +169,7 @@ export function ResultStage({
           href={image.url ?? undefined}
           download={`luma-${job.id}.png`}
           aria-disabled={!image.url}
+          onClick={() => image.url && showToast(t('run.savedImage'))}
           style={!image.url ? { pointerEvents: 'none', opacity: 0.5 } : undefined}
         >
           <Icon name="download" size={14} />
