@@ -36,32 +36,41 @@ VITE_API_BASE_URL=http://192.168.1.20:8000    # the team's LAN node
 
 **Generate** — one workspace, three modes, sharing a prompt and a settings panel:
 
-- **Text to image** — prompt, model, size preset, seed
+- **Text to image** — prompt, model, size, seed
 - **Image to image** — drag-and-drop upload with real progress, replace/remove, change amount
 - **Inpaint** — brush/eraser mask painting with undo, redo, clear, mask-only preview, and
   keyboard shortcuts (`B` `E` `[` `]` `⌘Z`)
 
-**History** — paginated runs with status, click through to full parameters, save the image,
-or reuse the settings.
+**Size** — three aspect-ratio presets plus custom width and height, each with a slider and a
+typed field, a live shape preview, swap orientation, lock aspect ratio, and reset. Everything is
+clamped to what the engine accepts and snapped to multiples of 8.
 
-**Account** — profile, theme, sign out.
+**Saved settings** — name a combination of size, model, style and technical values and apply it
+again from the sidebar. Kept on the device; nothing appears in the interface until the first one
+is saved.
 
-`⌘↵` generates from anywhere.
+**History** — paginated runs with status, full parameters, prompt copying, full-size viewing,
+and deletion.
 
----
+**Account** — profile with editing (username, email, password), theme, language, sign out.
+
+**Both languages** — the whole interface in English and Thai, switchable from the top bar or
+Account. Prompt text stays English; see the note below.
+
+`⌘↵` generates from anywhere. Clicking any finished image opens it full size.
 
 ## How it is put together
 
 ```text
 src/
   app/          routes, guards, error boundary, query client
-  config/       base URL, parameter limits, model list, polling policy
+  config/       base URL, parameter limits, model list, polling, i18n dictionary
   contracts/    request/response types mirrored from the backend's Pydantic schemas
   services/     apiClient + auth · user · upload · generation · system
   shared/       tokens, primitives, hooks, formatting
   features/
     auth/       sign-in, register, session store, expired-session dialog
-    generate/   workspace shell, mode fields, upload, canvas/, run/
+    generate/   workspace shell, mode fields, upload, canvas/, run/, presets
     history/    list, run detail
     account/
     layout/     app shell, rail, engine indicator
@@ -91,6 +100,42 @@ Authentication never lives in a component. One store owns the token, one interce
 401 into the expired-session dialog, and one guard decides what a signed-out visitor may see.
 
 ---
+
+## Languages
+
+All interface copy lives in `src/config/i18n.ts` — one typed dictionary, English and Thai, read
+through the `useT()` hook. Thai is written the way a Thai person would say it rather than
+translated word by word, and Thai typography (line height, word breaking) is handled in
+`base.css` under `:root[lang='th']` without affecting the Latin layout.
+
+A key present in English but missing in Thai falls back to English rather than showing the key,
+so a missed string degrades quietly. To check both sides are complete:
+
+```bash
+node -e "const s=require('fs').readFileSync('src/config/i18n.ts','utf8');
+const k=x=>new Set([...x.matchAll(/^\s{4}'([a-z]+\.[A-Za-z0-9]+)':/gm)].map(m=>m[1]));
+const en=k(s.slice(s.indexOf('  en: {'),s.indexOf('  th: {'))), th=k(s.slice(s.indexOf('  th: {')));
+console.log(en.size, th.size, [...en].filter(x=>!th.has(x)));"
+```
+
+**Prompts are deliberately not localized.** The image model reads English only — Stable
+Diffusion's text encoder has no Thai in its vocabulary, so a Thai prompt becomes noise and
+produces an unrelated image. Prompt examples and placeholders stay English until the team
+decides how a translation step should work, which would have to live in the AI node.
+
+## Backend endpoints this build expects
+
+Three of these do not exist on `origin/backend` yet. They live on branch **`feat/models-proxy`**
+and must be merged and deployed before the features that use them work:
+
+| Endpoint | Used for | Status |
+|---|---|---|
+| `GET /api/models` | Real checkpoint and LoRA lists from the AI node | on `feat/models-proxy` |
+| `DELETE /generations/{id}` | Removing an image and its record | on `feat/models-proxy` |
+| `PATCH /auth/me` | Changing username, email or password | on `feat/models-proxy` |
+
+Each degrades rather than breaking when absent: the model pickers fall back to the bundled list,
+and delete or profile changes report the failure instead of appearing to succeed.
 
 ## Notes on the API this was built against
 
