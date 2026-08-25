@@ -121,6 +121,49 @@ def get_generation_image_path(
 
 
 # ────────────────────────────────────────
+# 3b. ลบงาน (DELETE /generations/{id})
+# ────────────────────────────────────────
+def delete_generation(
+    db: Session,
+    user_id: UUID,
+    generation_id: UUID
+) -> bool:
+    """
+    ลบงานของ User ปัจจุบัน ทั้งไฟล์ภาพบนดิสก์และแถวในฐานข้อมูล
+
+    คืน False ถ้าไม่พบงาน หรืองานนั้นเป็นของ User คนอื่น (Data Isolation
+    แบบเดียวกับ get_generation_by_id: ไม่แยกระหว่าง "ไม่มี" กับ "ไม่ใช่ของคุณ"
+    เพื่อไม่ให้เดา ID ของคนอื่นได้)
+    """
+    stmt = select(Generation).where(
+        Generation.id == generation_id,
+        Generation.user_id == user_id
+    )
+    generation = db.execute(stmt).scalar_one_or_none()
+
+    if generation is None:
+        logger.warning(f"Delete denied or not found | user={user_id} | gen={generation_id}")
+        return False
+
+    # ลบไฟล์ก่อน แต่ถ้าไฟล์หายไปแล้วก็ถือว่าสำเร็จ — เป้าหมายคือให้มันหายไป
+    output_path = generation.output_path
+    if output_path:
+        try:
+            file_path = Path(output_path)
+            if file_path.is_file():
+                file_path.unlink()
+                logger.info(f"Deleted output file | gen={generation_id} | path={file_path}")
+        except Exception as e:
+            # ลบไฟล์ไม่สำเร็จไม่ควรขวางการลบแถว ไม่งั้นผู้ใช้จะติดอยู่กับงานที่ลบไม่ได้
+            logger.error(f"Could not delete output file | gen={generation_id} | err={e}")
+
+    db.delete(generation)
+    db.commit()
+    logger.info(f"Deleted generation | id={generation_id} | user={user_id}")
+    return True
+
+
+# ────────────────────────────────────────
 # 4. สร้างงานใหม่ (POST /generations)
 # ────────────────────────────────────────
 def _resolve_storage_path(path_or_url: Optional[str]) -> Optional[str]:
