@@ -41,6 +41,7 @@ export type UserProfile = UserResponse & {
  */
 export type UserUpdateRequest = {
   current_password: string;
+  username?: string;
   email?: string;
   new_password?: string;
 };

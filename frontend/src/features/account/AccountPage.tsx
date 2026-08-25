@@ -3,17 +3,15 @@ import { Segmented } from '../../shared/ui/Segmented.tsx';
 import { Alert } from '../../shared/ui/Alert.tsx';
 import { useSession } from '../auth/sessionStore.ts';
 import { usePreferences, type ThemeName } from '../../shared/stores/preferencesStore.ts';
-import { formatDateTime } from '../../shared/utils/format.ts';
 import { env } from '../../config/env.ts';
 import { useT } from '../../shared/hooks/useT.ts';
 import { usePageTitle } from '../../shared/hooks/usePageTitle.ts';
 import { languages, type Language } from '../../config/i18n.ts';
-import { SecurityCard } from './SecurityCard.tsx';
+import { ProfileCard } from './ProfileCard.tsx';
 
 export function AccountPage() {
   const t = useT();
   usePageTitle(t('account.title'));
-  const user = useSession((state) => state.user);
   const signOut = useSession((state) => state.signOut);
   const theme = usePreferences((state) => state.theme);
   const setTheme = usePreferences((state) => state.setTheme);
@@ -28,23 +26,7 @@ export function AccountPage() {
 
       <div style={{ padding: 24, overflowY: 'auto', display: 'flex', justifyContent: 'center' }}>
         <div className="account">
-          {/* Who you are, said once and clearly, instead of a four-row table. */}
-          <section className="card account__header">
-            <span className="avatar avatar--lg" aria-hidden="true">
-              {(user?.username ?? '?').slice(0, 1)}
-            </span>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-              <span className="account__name">{user?.username ?? '—'}</span>
-              <span className="account__email">{user?.email ?? '—'}</span>
-              <span className="account__email">
-                {t('account.memberSince')} {user ? formatDateTime(user.created_at) : '—'}
-              </span>
-            </div>
-            <div className="account__stat">
-              <div className="account__statNum">{user?.total_generations ?? 0}</div>
-              <div className="account__statLabel">{t('account.runs')}</div>
-            </div>
-          </section>
+          <ProfileCard />
 
           <section className="card account__section">
             <span className="eyebrow">{t('account.appearance')}</span>
@@ -64,8 +46,6 @@ export function AccountPage() {
               onChange={setLanguage}
             />
           </section>
-
-          <SecurityCard />
 
           <section className="card account__section">
             <span className="eyebrow">{t('account.connection')}</span>
