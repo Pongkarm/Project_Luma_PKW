@@ -204,27 +204,14 @@ function EmptyStage() {
   const t = useT();
   return (
     <div className="centered-note">
-      <div
-        style={{
-          width: 56,
-          height: 56,
-          borderRadius: 'var(--r-lg)',
-          border: '1px dashed var(--line-strong)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'var(--ink-3)',
-        }}
-      >
-        <Icon name="image" size={22} />
+      <div className="empty-mark">
+        <Icon name="image" size={24} />
       </div>
       <h2 style={{ fontSize: 'var(--fs-md)', fontWeight: 600 }}>{t('stage.empty')}</h2>
       <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--ink-3)', lineHeight: 1.6 }}>
         {t('stage.emptyBody')}
       </p>
-      <span className="mono" style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}>
-        ⌘ + ↵
-      </span>
+      <span className="kbd">⌘ + ↵</span>
     </div>
   );
 }

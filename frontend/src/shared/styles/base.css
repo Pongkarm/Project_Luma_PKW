@@ -53,6 +53,11 @@ a:hover {
   border-radius: var(--r-sm);
 }
 
+::selection {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--ink);
+}
+
 .mono {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;

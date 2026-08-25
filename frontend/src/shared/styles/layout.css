@@ -289,6 +289,145 @@
   justify-content: center;
   padding: 24px;
   overflow: auto;
+  position: relative;
+}
+
+/*
+ * The stage is the largest area on screen and was the emptiest — a flat
+ * expanse with a dashed square in it. The same drafting grid the sign-in panel
+ * uses gives it a surface, faded out so it never competes with an image.
+ */
+.stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 32px 32px;
+  opacity: 0.4;
+  pointer-events: none;
+  -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 45%, #000, transparent 78%);
+  mask-image: radial-gradient(ellipse 70% 70% at 50% 45%, #000, transparent 78%);
+}
+
+.stage > * {
+  position: relative;
+}
+
+/* ── the result, framed ──────────────────────────────────────────────── */
+
+/*
+ * The finished image is the payoff of the whole product, so it gets a frame and
+ * a caption rather than sitting loose on the background.
+ */
+.result {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--panel);
+  box-shadow: var(--shadow-pop);
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.result__media {
+  background: var(--ph-image);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 240px;
+  min-height: 200px;
+}
+
+.result__media img {
+  display: block;
+  max-width: 100%;
+  max-height: 56vh;
+}
+
+.result__bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.result__meta {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  color: var(--ink-3);
+}
+
+/* ── waiting ─────────────────────────────────────────────────────────── */
+
+/*
+ * While a run is in flight, hold a placeholder at the exact aspect ratio being
+ * generated. It answers "what shape am I getting" during the one moment the
+ * person has nothing else to look at.
+ */
+.pending-frame {
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--panel);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: min(100%, 420px);
+  max-height: 46vh;
+}
+
+.pending-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    color-mix(in srgb, var(--ink) 6%, transparent) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.empty-mark {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--r-lg);
+  border: 1px dashed var(--line-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-3);
+  background: var(--panel);
+}
+
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--r-sm);
+  background: var(--panel-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  color: var(--ink-2);
 }
 
 .controls {

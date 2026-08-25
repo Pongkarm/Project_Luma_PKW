@@ -52,9 +52,19 @@ export function ResultStage({
     );
   }
 
+  // The frame the engine is filling, at the aspect ratio actually requested.
+  const pendingFrame = (
+    <div
+      className="pending-frame"
+      style={{ width: 420, aspectRatio: `${job.width} / ${job.height}` }}
+      aria-hidden="true"
+    />
+  );
+
   if (job.status === 'pending') {
     return (
       <Panel>
+        {pendingFrame}
         <Icon name="queue" size={22} strokeDasharray="3 3" />
         <h2 style={{ fontSize: 'var(--fs-md)', fontWeight: 600 }}>{t('run.waiting')}</h2>
         <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--ink-3)', lineHeight: 1.6 }}>
@@ -70,6 +80,7 @@ export function ResultStage({
   if (job.status === 'processing') {
     return (
       <Panel>
+        {pendingFrame}
         <Icon name="refresh" size={22} className="spin" />
         <h2 style={{ fontSize: 'var(--fs-md)', fontWeight: 600 }}>{t('run.generating')}</h2>
         <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--ink-3)', lineHeight: 1.6 }}>
@@ -124,27 +135,10 @@ export function ResultStage({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
-      <div
-        style={{
-          borderRadius: 'var(--r-lg)',
-          border: '1px solid var(--line)',
-          overflow: 'hidden',
-          background: 'var(--ph-image)',
-          minWidth: 240,
-          minHeight: 240,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
+    <div className="result">
+      <div className="result__media">
         {image.url ? (
-          <img
-            className="img-in"
-            src={image.url}
-            alt={job.prompt}
-            style={{ display: 'block', maxWidth: '100%', maxHeight: '58vh' }}
-          />
+          <img className="img-in" src={image.url} alt={job.prompt} />
         ) : image.failed ? (
           <div style={{ padding: 32 }}>
             <Alert tone="error">{t('run.imageFailed')}</Alert>
@@ -154,30 +148,27 @@ export function ResultStage({
         )}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
-        <span className="mono" style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}>
+      <div className="result__bar">
+        <span className="result__meta">
           {job.width} × {job.height} · {job.steps} steps · cfg {job.cfg_scale} ·{' '}
           {formatDuration(job.duration_seconds)}
         </span>
-        <div style={{ width: 1, height: 14, background: 'var(--line)' }} />
-        {/*
-          The file the backend serves is named .png; note that the AI node encodes
-          WebP, so the bytes inside a live run may not match the extension.
-        */}
-        <a
-          className="btn btn--sm btn--secondary"
-          href={image.url ?? undefined}
-          download={`luma-${job.id}.png`}
-          aria-disabled={!image.url}
-          onClick={() => image.url && showToast(t('run.savedImage'))}
-          style={!image.url ? { pointerEvents: 'none', opacity: 0.5 } : undefined}
-        >
-          <Icon name="download" size={14} />
-          {t('run.saveImage')}
-        </a>
-        <Button size="sm" busy={useAsSourceBusy} onClick={onUseAsSource}>
-          {t('run.startFromThis')}
-        </Button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <a
+            className="btn btn--sm btn--secondary"
+            href={image.url ?? undefined}
+            download={`luma-${job.id}.png`}
+            aria-disabled={!image.url}
+            onClick={() => image.url && showToast(t('run.savedImage'))}
+            style={!image.url ? { pointerEvents: 'none', opacity: 0.5 } : undefined}
+          >
+            <Icon name="download" size={14} />
+            {t('run.saveImage')}
+          </a>
+          <Button size="sm" busy={useAsSourceBusy} onClick={onUseAsSource}>
+            {t('run.startFromThis')}
+          </Button>
+        </div>
       </div>
     </div>
   );
