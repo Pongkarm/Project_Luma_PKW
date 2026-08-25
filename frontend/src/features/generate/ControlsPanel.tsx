@@ -9,7 +9,7 @@ import { Icon } from '../../shared/ui/Icon.tsx';
 import { limits } from '../../config/limits.ts';
 import { checkpoints, loraOptions, samplers } from '../../config/models.ts';
 import type { TaskType } from '../../contracts/generation.ts';
-import { useDraft, draftBlocker } from './draftStore.ts';
+import { useDraft, draftBlocker, defaultDraft } from './draftStore.ts';
 import { usePreferences } from '../../shared/stores/preferencesStore.ts';
 import { ModeFields } from './modes/ModeFields.tsx';
 import { SizeControl } from './modes/SizeControl.tsx';
@@ -56,6 +56,35 @@ export function ControlsPanel({
     : rawBlocker === 'BLOCK_LONG' ? t('gen.promptTooLong')
     : rawBlocker === 'BLOCK_IMAGE' ? t('gen.addImage')
     : rawBlocker;
+
+  // Which advanced values the person has moved away from the default. Without
+  // this, Advanced is a wall of numbers with no sign of what you already changed.
+  const advancedFields = [
+    { key: 'steps', current: draft.steps, base: defaultDraft.steps },
+    { key: 'cfgScale', current: draft.cfgScale, base: defaultDraft.cfgScale },
+    { key: 'samplerName', current: draft.samplerName, base: defaultDraft.samplerName },
+    { key: 'loraId', current: draft.loraId, base: defaultDraft.loraId },
+    { key: 'seed', current: draft.seed, base: defaultDraft.seed },
+  ];
+  const changed = new Set(advancedFields.filter((f) => f.current !== f.base).map((f) => f.key));
+
+  const changedMark = (key: string, base: string | number) =>
+    changed.has(key) ? (
+      <span
+        className="dot-changed"
+        title={t('gen.isChanged', { value: String(base) === '' ? '—' : String(base) })}
+      />
+    ) : null;
+
+  function resetAdvanced() {
+    draft.patch({
+      steps: defaultDraft.steps,
+      cfgScale: defaultDraft.cfgScale,
+      samplerName: defaultDraft.samplerName,
+      loraId: defaultDraft.loraId,
+      seed: defaultDraft.seed,
+    });
+  }
 
   const modeOptions: SegmentedOption<TaskType>[] = [
     { value: 'txt2img', label: t('gen.modeText'), icon: 'generate' },
@@ -194,13 +223,28 @@ export function ControlsPanel({
               <span className="modedot" title={t('gen.modeDotSome')} />
             </>
           }
-          summary={`steps ${draft.steps} · cfg ${draft.cfgScale} · ${draft.samplerName.toLowerCase()}`}
+          summary={
+            changed.size === 0
+              ? `steps ${draft.steps} · cfg ${draft.cfgScale}`
+              : changed.size === 1
+                ? t('gen.changedOne')
+                : t('gen.changedMany', { count: changed.size })
+          }
         >
+          {changed.size > 0 ? (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -4 }}>
+              <Button size="sm" icon="refresh" onClick={resetAdvanced}>
+                {t('gen.resetAll')}
+              </Button>
+            </div>
+          ) : null}
+
           <div className="field">
             <div className="label">
               <label htmlFor="seed-field" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {t('gen.seed')}
                 <span className="modedot" title={t('gen.modeDot')} />
+                {changedMark('seed', defaultDraft.seed)}
               </label>
               <span className="label__meta">{t('gen.seedBlank')}</span>
             </div>
@@ -221,6 +265,7 @@ export function ControlsPanel({
                 onClick={() => draft.patch({ seed: '' })}
               />
             </div>
+            <span className="field__hint">{t('gen.seedHelp')}</span>
           </div>
           {draft.mode !== 'txt2img' ? (
             <div className="field" style={{ gap: 8 }}>
@@ -250,7 +295,12 @@ export function ControlsPanel({
             </div>
           ) : null}
           <Slider
-            label={t('gen.steps')}
+            label={
+              <>
+                {t('gen.steps')}
+                {changedMark('steps', defaultDraft.steps)}
+              </>
+            }
             value={draft.steps}
             min={limits.steps.min}
             max={limits.steps.max}
@@ -258,10 +308,14 @@ export function ControlsPanel({
             ends={[t('gen.stepsFast'), t('gen.stepsRefined')]}
             onChange={(steps) => draft.patch({ steps })}
           />
+          <span className="field__hint" style={{ marginTop: -10 }}>
+            {t('gen.stepsHelp')}
+          </span>
           <Slider
             label={
               <>
                 {t('gen.cfg')} <span className="label__meta">(CFG)</span>
+                {changedMark('cfgScale', defaultDraft.cfgScale)}
               </>
             }
             value={draft.cfgScale}
@@ -272,14 +326,19 @@ export function ControlsPanel({
             ends={[t('gen.cfgLoose'), t('gen.cfgLiteral')]}
             onChange={(cfgScale) => draft.patch({ cfgScale })}
           />
+          <span className="field__hint" style={{ marginTop: -10 }}>
+            {t('gen.cfgHelp')}
+          </span>
           <SelectField
             label={
               <>
                 {t('gen.sampler')}
                 <span className="modedot" title={t('gen.modeDot')} />
+                {changedMark('samplerName', defaultDraft.samplerName)}
               </>
             }
             value={draft.samplerName}
+            hint={t('gen.samplerHelp')}
             onChange={(event) => draft.patch({ samplerName: event.target.value })}
           >
             {samplers.map((sampler) => (
@@ -293,6 +352,7 @@ export function ControlsPanel({
               <>
                 {t('gen.style')}
                 <span className="modedot" title={t('gen.modeDot')} />
+                {changedMark('loraId', defaultDraft.loraId)}
               </>
             }
             value={draft.loraId}

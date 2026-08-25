@@ -54,7 +54,8 @@ type DraftState = {
   toRequest: (maskUrl?: string | null) => GenerationRequest;
 };
 
-const initial = {
+/** The values Reset returns to, and what "changed" is measured against. */
+export const defaultDraft = {
   mode: 'txt2img' as TaskType,
   prompt: '',
   negativePrompt: '',
@@ -81,7 +82,7 @@ const initial = {
 export const useDraft = create<DraftState>()(
   persist(
     (set, get) => ({
-      ...initial,
+      ...defaultDraft,
 
       setMode(mode) {
         set({
@@ -102,7 +103,7 @@ export const useDraft = create<DraftState>()(
       },
 
       reset() {
-        set({ ...initial });
+        set({ ...defaultDraft });
       },
 
       toRequest(maskUrl) {

@@ -727,3 +727,13 @@
 .toast__icon {
   color: var(--done);
 }
+
+/* Marks an advanced value that has been moved off its default. */
+.dot-changed {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--running);
+  display: inline-block;
+  flex: none;
+}
