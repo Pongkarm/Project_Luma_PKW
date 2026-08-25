@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Button } from '../../shared/ui/Button.tsx';
 import { TextField } from '../../shared/ui/Field.tsx';
+import { PasswordField } from '../../shared/ui/PasswordField.tsx';
 import { Alert } from '../../shared/ui/Alert.tsx';
 import { Icon } from '../../shared/ui/Icon.tsx';
 import { useT } from '../../shared/hooks/useT.ts';
@@ -142,9 +143,8 @@ export function ProfileCard() {
 
         {withPassword ? (
           <div className="field">
-            <TextField
+            <PasswordField
               label={t('account.newPassword')}
-              type="password"
               value={newPassword}
               autoComplete="new-password"
               onChange={(event) => setNewPassword(event.target.value)}
@@ -174,9 +174,8 @@ export function ProfileCard() {
             <Icon name="lock" size={15} className="confirm-gate__icon" />
             {t('account.confirmTitle')}
           </span>
-          <TextField
+          <PasswordField
             label={t('account.currentPassword')}
-            type="password"
             value={currentPassword}
             autoComplete="current-password"
             required

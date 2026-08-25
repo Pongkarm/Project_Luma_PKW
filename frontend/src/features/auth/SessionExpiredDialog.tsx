@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Dialog } from '../../shared/ui/Dialog.tsx';
 import { Button } from '../../shared/ui/Button.tsx';
-import { TextField } from '../../shared/ui/Field.tsx';
+import { PasswordField } from '../../shared/ui/PasswordField.tsx';
 import { Alert } from '../../shared/ui/Alert.tsx';
 import { Icon } from '../../shared/ui/Icon.tsx';
 import { isApiError } from '../../contracts/errors.ts';
@@ -58,9 +58,8 @@ export function SessionExpiredDialog() {
 
         {error ? <Alert tone="error">{error}</Alert> : null}
 
-        <TextField
+        <PasswordField
           label={t('session.passwordFor', { name: user?.username ?? '' })}
-          type="password"
           value={password}
           autoComplete="current-password"
           required

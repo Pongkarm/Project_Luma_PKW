@@ -2,8 +2,8 @@ import { useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '../../shared/ui/Button.tsx';
 import { TextField } from '../../shared/ui/Field.tsx';
+import { PasswordField } from '../../shared/ui/PasswordField.tsx';
 import { Alert } from '../../shared/ui/Alert.tsx';
-import { Icon } from '../../shared/ui/Icon.tsx';
 import { isApiError } from '../../contracts/errors.ts';
 import { useT } from '../../shared/hooks/useT.ts';
 import { useSession } from './sessionStore.ts';
@@ -17,7 +17,6 @@ export function SignInPage() {
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [reveal, setReveal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -62,25 +61,13 @@ export function SignInPage() {
           onChange={(event) => setUsername(event.target.value)}
         />
 
-        <div style={{ position: 'relative' }}>
-          <TextField
-            label={t('auth.password')}
-            type={reveal ? 'text' : 'password'}
-            value={password}
-            autoComplete="current-password"
-            required
-            style={{ paddingRight: 34 }}
-            onChange={(event) => setPassword(event.target.value)}
-          />
-          <button
-            type="button"
-            className="auth__reveal"
-            onClick={() => setReveal((value) => !value)}
-            aria-label={reveal ? t('auth.hidePassword') : t('auth.showPassword')}
-          >
-            <Icon name="eye" size={15} />
-          </button>
-        </div>
+        <PasswordField
+          label={t('auth.password')}
+          value={password}
+          autoComplete="current-password"
+          required
+          onChange={(event) => setPassword(event.target.value)}
+        />
 
         <Button
           type="submit"

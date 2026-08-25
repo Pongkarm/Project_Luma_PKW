@@ -863,3 +863,39 @@
 .confirm-gate__icon {
   color: var(--accent-text);
 }
+
+/* ── password field ──────────────────────────────────────────────────── */
+.pw {
+  position: relative;
+  display: flex;
+}
+
+.pw__input {
+  padding-right: 38px;
+}
+
+.pw__toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: color 140ms ease;
+}
+
+.pw__toggle:hover {
+  color: var(--ink);
+}
+
+.pw__toggle[aria-pressed='true'] {
+  color: var(--accent-text);
+}
