@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func
@@ -5,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.db.database import get_db
 from app.models import User, Generation
-from app.schemas.user import UserCreate, UserResponse, UserProfileResponse
+from app.schemas.user import UserCreate, UserResponse, UserProfileResponse, UserUpdate
 from app.schemas.token import Token
 from app.core.security import (
     hash_password,
@@ -13,6 +14,8 @@ from app.core.security import (
     create_access_token,
     get_current_user,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -116,6 +119,72 @@ def get_me(
         .scalar()
         or 0
     )
+
+    return UserProfileResponse(
+        id=current_user.id,
+        username=current_user.username,
+        email=current_user.email,
+        is_active=current_user.is_active,
+        created_at=current_user.created_at,
+        total_generations=total_gens,
+    )
+
+
+# ─────────────────────────────────────────
+# 🚪 ประตูที่ 4: แก้ไขอีเมล / รหัสผ่านของตัวเอง
+# ─────────────────────────────────────────
+@router.patch("/me", response_model=UserProfileResponse)
+def update_me(
+    payload: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    แก้ไขอีเมลหรือรหัสผ่าน ต้องยืนยันด้วยรหัสผ่านปัจจุบันเสมอ
+
+    หมายเหตุ: JWT ที่ออกไปแล้วยังใช้ได้จนหมดอายุ ระบบไม่มีบัญชีดำโทเคน
+    การเปลี่ยนรหัสผ่านจึงไม่เตะเซสชันอื่นออกทันที
+    """
+    # 1. ยืนยันตัวตนก่อนแก้อะไรก็ตาม
+    if not verify_password(payload.current_password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="รหัสผ่านปัจจุบันไม่ถูกต้อง",
+        )
+
+    # 2. ต้องมีอะไรให้แก้จริงๆ
+    if payload.email is None and payload.new_password is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="ไม่มีข้อมูลที่ต้องการแก้ไข",
+        )
+
+    # 3. อีเมลต้องไม่ซ้ำกับบัญชีอื่น (ซ้ำกับของตัวเองถือว่าไม่เปลี่ยน)
+    if payload.email is not None and payload.email != current_user.email:
+        taken = db.query(User).filter(
+            User.email == payload.email,
+            User.id != current_user.id,
+        ).first()
+        if taken:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email นี้ถูกใช้แล้ว!",
+            )
+        current_user.email = payload.email
+
+    if payload.new_password is not None:
+        current_user.password_hash = hash_password(payload.new_password)
+
+    db.commit()
+    db.refresh(current_user)
+
+    total_gens = (
+        db.query(func.count(Generation.id))
+        .filter(Generation.user_id == current_user.id)
+        .scalar()
+        or 0
+    )
+    logger.info(f"Profile updated | user={current_user.id}")
 
     return UserProfileResponse(
         id=current_user.id,
