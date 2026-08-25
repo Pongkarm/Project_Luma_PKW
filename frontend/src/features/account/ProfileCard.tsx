@@ -168,17 +168,22 @@ export function ProfileCard() {
           </div>
         ) : null}
 
-        <div className="hairline" />
-
-        <TextField
-          label={t('account.currentPassword')}
-          type="password"
-          value={currentPassword}
-          autoComplete="current-password"
-          required
-          hint={t('account.tokenStays')}
-          onChange={(event) => setCurrentPassword(event.target.value)}
-        />
+        {/* Not another editable value — the check that permits the edit. */}
+        <div className="confirm-gate">
+          <span className="confirm-gate__head">
+            <Icon name="lock" size={15} className="confirm-gate__icon" />
+            {t('account.confirmTitle')}
+          </span>
+          <TextField
+            label={t('account.currentPassword')}
+            type="password"
+            value={currentPassword}
+            autoComplete="current-password"
+            required
+            hint={t('account.confirmWhy')}
+            onChange={(event) => setCurrentPassword(event.target.value)}
+          />
+        </div>
 
         <div style={{ display: 'flex', gap: 8 }}>
           <Button type="button" onClick={() => setEditing(false)} disabled={busy}>
