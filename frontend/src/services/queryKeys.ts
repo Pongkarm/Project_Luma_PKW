@@ -4,4 +4,5 @@ export const queryKeys = {
   generationsAll: ['generations'] as const,
   generation: (id: string) => ['generation', id] as const,
   engineStatus: ['engine-status'] as const,
+  models: ['models'] as const,
 };

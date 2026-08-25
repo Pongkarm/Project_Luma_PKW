@@ -23,3 +23,13 @@ export type SystemStatusResponse = {
   max_upload_mb: number;
   ai_mode: string;
 };
+
+/** GET /api/models — the AI node's catalogue, proxied by the backend. */
+export type ModelEntry = { id: string; name: string; path?: string };
+
+export type ModelCatalogue = {
+  checkpoints: ModelEntry[];
+  loras: ModelEntry[];
+  /** False when the AI node could not be reached; lists may be stale or empty. */
+  available: boolean;
+};

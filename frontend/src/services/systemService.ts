@@ -1,5 +1,10 @@
 import { request } from './apiClient.ts';
-import type { HealthResponse, RootResponse, SystemStatusResponse } from '../contracts/system.ts';
+import type {
+  HealthResponse,
+  ModelCatalogue,
+  RootResponse,
+  SystemStatusResponse,
+} from '../contracts/system.ts';
 
 export type EngineStatus =
   | { state: 'online'; aiMode: string | null; supportedTasks: string[] | null }
@@ -34,6 +39,14 @@ export const systemService = {
     } catch {
       return { state: 'unavailable', reason: 'The backend does not report its status yet.' };
     }
+  },
+
+  /**
+   * The checkpoints and LoRA adapters actually present on the AI node.
+   * The backend proxies this; the browser never reaches Node 3 itself.
+   */
+  models(): Promise<ModelCatalogue> {
+    return request<ModelCatalogue>('/api/models');
   },
 
   health(): Promise<HealthResponse> {

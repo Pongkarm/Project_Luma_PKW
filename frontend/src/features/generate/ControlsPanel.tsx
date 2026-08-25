@@ -7,7 +7,8 @@ import { Button, IconButton } from '../../shared/ui/Button.tsx';
 import { Alert } from '../../shared/ui/Alert.tsx';
 import { Icon } from '../../shared/ui/Icon.tsx';
 import { limits } from '../../config/limits.ts';
-import { checkpoints, loraOptions, samplers } from '../../config/models.ts';
+import { samplers } from '../../config/models.ts';
+import { useModels } from './useModels.ts';
 import type { TaskType } from '../../contracts/generation.ts';
 import { useDraft, draftBlocker, defaultDraft } from './draftStore.ts';
 import { usePreferences } from '../../shared/stores/preferencesStore.ts';
@@ -37,6 +38,7 @@ export function ControlsPanel({
   const draft = useDraft();
   const t = useT();
   const showToast = useToasts((state) => state.show);
+  const { checkpoints, loras } = useModels();
   const presets = usePresets((state) => state.presets);
   const savePreset = usePresets((state) => state.save);
   const removePreset = usePresets((state) => state.remove);
@@ -361,7 +363,7 @@ export function ControlsPanel({
             hint={t('gen.styleHint')}
             onChange={(event) => draft.patch({ loraId: event.target.value })}
           >
-            {loraOptions.map((lora) => (
+            {loras.map((lora) => (
               <option key={lora.id || 'none'} value={lora.id}>
                 {lora.name}
               </option>
