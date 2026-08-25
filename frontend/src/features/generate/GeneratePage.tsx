@@ -17,15 +17,18 @@ import { RunStrip } from './run/RunStrip.tsx';
 import { useGenerationJob } from './run/useGenerationJob.ts';
 import { useRun } from './run/runStore.ts';
 import { toSourceImage, useDraft } from './draftStore.ts';
+import { useT } from '../../shared/hooks/useT.ts';
+import type { TKey } from '../../config/i18n.ts';
 
-const modeTitles = {
-  txt2img: 'Text to image',
-  img2img: 'Image to image',
-  inpaint: 'Inpaint',
-} as const;
+const modeTitleKeys: Record<string, TKey> = {
+  txt2img: 'stage.textToImage',
+  img2img: 'stage.imageToImage',
+  inpaint: 'stage.inpaint',
+};
 
 export function GeneratePage() {
   const draft = useDraft();
+  const t = useT();
   const queryClient = useQueryClient();
   const { activeRunId, startedAt, setActiveRun } = useRun();
   const { job, stalled, refetch } = useGenerationJob(activeRunId, startedAt);
@@ -78,10 +81,10 @@ export function GeneratePage() {
     },
     onError(error) {
       if (error instanceof Error && error.message === 'NO_MASK') {
-        setSubmitError('Paint over the area you want replaced first.');
+        setSubmitError(t('error.noMask'));
         return;
       }
-      setSubmitError(isApiError(error) ? error.message : 'The run could not be started.');
+      setSubmitError(isApiError(error) ? error.message : t('error.startRun'));
     },
   });
 
@@ -109,7 +112,7 @@ export function GeneratePage() {
       draft.setMode('img2img');
       setActiveRun(null);
     } catch (error) {
-      setSubmitError(isApiError(error) ? error.message : 'That image could not be reused.');
+      setSubmitError(isApiError(error) ? error.message : t('error.reuseImage'));
     } finally {
       setReusing(false);
     }
@@ -120,9 +123,9 @@ export function GeneratePage() {
 
   const submitHint = useMemo(() => {
     if (draft.mode === 'txt2img') return `${draft.width} × ${draft.height} · ${draft.steps} steps`;
-    if (!source) return 'Add an image to begin';
+    if (!source) return t('gen.addImage');
     return `${source.width} × ${source.height} · change ${draft.denoisingStrength.toFixed(2)}`;
-  }, [draft.mode, draft.width, draft.height, draft.steps, draft.denoisingStrength, source]);
+  }, [draft.mode, draft.width, draft.height, draft.steps, draft.denoisingStrength, source, t]);
 
   return (
     <div className="app__workspace">
@@ -137,17 +140,17 @@ export function GeneratePage() {
           <>
             <div className="stagebar">
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                <span style={{ fontWeight: 600, fontSize: 13.5 }}>{modeTitles[draft.mode]}</span>
+                <span style={{ fontWeight: 600, fontSize: 13.5 }}>{t(modeTitleKeys[draft.mode])}</span>
                 {job ? (
                   <StatusChip status={job.status} />
                 ) : (
                   <span className="mono" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
-                    {source ? 'source ready · not run' : 'no run yet'}
+                    {source ? t('stage.sourceReady') : t('stage.noRun')}
                   </span>
                 )}
               </div>
               {job ? (
-                <IconButton icon="close" label="Close this result" onClick={() => setActiveRun(null)} />
+                <IconButton icon="close" label={t('stage.close')} onClick={() => setActiveRun(null)} />
               ) : null}
             </div>
 
@@ -186,10 +189,10 @@ export function GeneratePage() {
       <ControlsPanel
         canPaintMask={canPaintMask}
         submitting={submit.isPending}
-        submitLabel={draft.mode === 'inpaint' ? 'Repaint area' : 'Generate'}
+        submitLabel={draft.mode === 'inpaint' ? t('gen.repaint') : t('gen.generate')}
         submitHint={submitHint}
         blockedReason={
-          draft.mode === 'inpaint' && !editor.hasMask && source ? 'Paint the area to replace' : null
+          draft.mode === 'inpaint' && !editor.hasMask && source ? t('gen.paintFirst') : null
         }
         onSubmit={() => submit.mutate()}
       />
@@ -198,6 +201,7 @@ export function GeneratePage() {
 }
 
 function EmptyStage() {
+  const t = useT();
   return (
     <div className="centered-note">
       <div
@@ -214,10 +218,9 @@ function EmptyStage() {
       >
         <Icon name="image" size={22} />
       </div>
-      <h2 style={{ fontSize: 14, fontWeight: 600 }}>Nothing generated yet</h2>
+      <h2 style={{ fontSize: 14, fontWeight: 600 }}>{t('stage.empty')}</h2>
       <p style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.6 }}>
-        Describe what you want on the right and press Generate. Everything else already has a sensible
-        default.
+        {t('stage.emptyBody')}
       </p>
       <span className="mono" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
         ⌘ + ↵
@@ -227,11 +230,12 @@ function EmptyStage() {
 }
 
 function SourcePreview({ url, caption }: { url: string; caption: string }) {
+  const t = useT();
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
       <img
         src={url}
-        alt="The image you are starting from"
+        alt={t('stage.startFrom')}
         style={{
           display: 'block',
           maxWidth: '100%',
@@ -241,7 +245,7 @@ function SourcePreview({ url, caption }: { url: string; caption: string }) {
         }}
       />
       <span className="mono" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
-        source · {caption}
+        {t('stage.source')} · {caption}
       </span>
     </div>
   );

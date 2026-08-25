@@ -3,7 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiError } from '../contracts/errors.ts';
 import { useSession } from '../features/auth/sessionStore.ts';
-import { applyTheme, usePreferences } from '../shared/stores/preferencesStore.ts';
+import { applyLanguage, applyTheme, usePreferences } from '../shared/stores/preferencesStore.ts';
 import { AppShell } from '../features/layout/AppShell.tsx';
 import { SignInPage } from '../features/auth/SignInPage.tsx';
 import { RegisterPage } from '../features/auth/RegisterPage.tsx';
@@ -29,6 +29,7 @@ const queryClient = new QueryClient({
 export function App() {
   const bootstrap = useSession((state) => state.bootstrap);
   const theme = usePreferences((state) => state.theme);
+  const language = usePreferences((state) => state.language);
 
   useEffect(() => {
     void bootstrap();
@@ -37,6 +38,10 @@ export function App() {
   useEffect(() => {
     applyTheme(theme);
   }, [theme]);
+
+  useEffect(() => {
+    applyLanguage(language);
+  }, [language]);
 
   return (
     <ErrorBoundary>

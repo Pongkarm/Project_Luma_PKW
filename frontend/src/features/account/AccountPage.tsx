@@ -5,31 +5,36 @@ import { useSession } from '../auth/sessionStore.ts';
 import { usePreferences, type ThemeName } from '../../shared/stores/preferencesStore.ts';
 import { formatDateTime } from '../../shared/utils/format.ts';
 import { env } from '../../config/env.ts';
+import { useT } from '../../shared/hooks/useT.ts';
+import { languages, type Language } from '../../config/i18n.ts';
 
 export function AccountPage() {
   const user = useSession((state) => state.user);
   const signOut = useSession((state) => state.signOut);
   const theme = usePreferences((state) => state.theme);
+  const language = usePreferences((state) => state.language);
+  const setLanguage = usePreferences((state) => state.setLanguage);
+  const t = useT();
   const setTheme = usePreferences((state) => state.setTheme);
 
   return (
     <main className="main">
       <div className="stagebar">
-        <span style={{ fontWeight: 600, fontSize: 13.5 }}>Account</span>
+        <span style={{ fontWeight: 600, fontSize: 13.5 }}>{t('account.title')}</span>
       </div>
 
       <div style={{ padding: 24, overflowY: 'auto', display: 'flex', justifyContent: 'center' }}>
         <div style={{ width: '100%', maxWidth: 560, display: 'flex', flexDirection: 'column', gap: 24 }}>
           <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <span className="eyebrow">Signed in as</span>
+            <span className="eyebrow">{t('account.signedInAs')}</span>
             <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '10px 16px', fontSize: 13 }}>
-              <span className="subtle">Username</span>
+              <span className="subtle">{t('account.username')}</span>
               <span>{user?.username ?? '—'}</span>
-              <span className="subtle">Email</span>
+              <span className="subtle">{t('account.email')}</span>
               <span>{user?.email ?? '—'}</span>
-              <span className="subtle">Runs</span>
+              <span className="subtle">{t('account.runs')}</span>
               <span className="mono">{user?.total_generations ?? 0}</span>
-              <span className="subtle">Member since</span>
+              <span className="subtle">{t('account.memberSince')}</span>
               <span>{user ? formatDateTime(user.created_at) : '—'}</span>
             </div>
           </section>
@@ -37,12 +42,12 @@ export function AccountPage() {
           <div className="hairline" />
 
           <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <span className="eyebrow">Appearance</span>
+            <span className="eyebrow">{t('account.appearance')}</span>
             <Segmented<ThemeName>
-              ariaLabel="Theme"
+              ariaLabel={t('account.theme')}
               options={[
-                { value: 'dark', label: 'Dark', icon: 'moon' },
-                { value: 'light', label: 'Light', icon: 'sun' },
+                { value: 'dark', label: t('account.dark'), icon: 'moon' },
+                { value: 'light', label: t('account.light'), icon: 'sun' },
               ]}
               value={theme}
               onChange={setTheme}
@@ -52,20 +57,31 @@ export function AccountPage() {
           <div className="hairline" />
 
           <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <span className="eyebrow">Connection</span>
+            <span className="eyebrow">{t('account.language')}</span>
+            <Segmented<Language>
+              ariaLabel={t('account.language')}
+              options={languages.map((entry) => ({ value: entry.value, label: entry.label }))}
+              value={language}
+              onChange={setLanguage}
+            />
+          </section>
+
+          <div className="hairline" />
+
+          <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <span className="eyebrow">{t('account.connection')}</span>
             <span className="mono" style={{ fontSize: 12, color: 'var(--ink-2)' }}>
               {env.apiBaseUrl}
             </span>
             <Alert tone="note">
-              The API issues one access token and no refresh companion, and it has no logout route —
-              so signing out discards the token on this device and nothing else.
+              {t('account.tokenNote')}
             </Alert>
           </section>
 
           <div className="hairline" />
 
           <Button variant="danger" onClick={signOut} style={{ alignSelf: 'flex-start' }}>
-            Sign out
+            {t('account.signOut')}
           </Button>
         </div>
       </div>

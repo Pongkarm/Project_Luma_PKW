@@ -5,16 +5,20 @@ import { TextField } from '../../shared/ui/Field.tsx';
 import { Alert } from '../../shared/ui/Alert.tsx';
 import { Icon } from '../../shared/ui/Icon.tsx';
 import { isApiError } from '../../contracts/errors.ts';
+import { useT } from '../../shared/hooks/useT.ts';
 import { useSession } from './sessionStore.ts';
 import { passwordIsAcceptable, passwordRules } from './passwordRules.ts';
+import { AuthLayout } from './AuthLayout.tsx';
 
 export function RegisterPage() {
   const register = useSession((state) => state.register);
+  const t = useT();
   const navigate = useNavigate();
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [reveal, setReveal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<{ field: string; message: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -31,16 +35,16 @@ export function RegisterPage() {
       navigate('/generate', { replace: true });
     } catch (cause) {
       if (isApiError(cause)) {
-        // A clash comes back as a 400 naming neither field, so it is shown on both.
+        // A clash comes back as a 400 naming neither field, so it is shown above both.
         if (cause.status === 400) {
-          setError(cause.detail ?? 'That username or email is already taken.');
+          setError(cause.detail ?? t('auth.taken'));
         } else if (cause.fieldErrors.length > 0) {
           setFieldError({ field: cause.fieldErrors[0].field, message: cause.fieldErrors[0].message });
         } else {
           setError(cause.message);
         }
       } else {
-        setError('Creating the account did not go through.');
+        setError(t('auth.registerFailed'));
       }
     } finally {
       setBusy(false);
@@ -48,14 +52,16 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="authpage">
-      <form className="authcard" onSubmit={onSubmit}>
-        <h1 style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.01em' }}>Create your account</h1>
-
-        {error ? <Alert tone="error">{error}</Alert> : null}
+    <AuthLayout title={t('auth.createTitle')} subtitle={t('auth.createSub')}>
+      <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {error ? (
+          <div className="auth__error">
+            <Alert tone="error">{error}</Alert>
+          </div>
+        ) : null}
 
         <TextField
-          label="Username"
+          label={t('auth.username')}
           value={username}
           autoComplete="username"
           autoFocus
@@ -63,8 +69,9 @@ export function RegisterPage() {
           error={fieldError?.field === 'username' ? fieldError.message : null}
           onChange={(event) => setUsername(event.target.value)}
         />
+
         <TextField
-          label="Email"
+          label={t('auth.email')}
           type="email"
           value={email}
           autoComplete="email"
@@ -73,45 +80,65 @@ export function RegisterPage() {
           onChange={(event) => setEmail(event.target.value)}
         />
 
-        <div className="field">
-          <TextField
-            label="Password"
-            type="password"
-            value={password}
-            autoComplete="new-password"
-            required
-            onChange={(event) => setPassword(event.target.value)}
-          />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginTop: -2 }}>
+        <div>
+          <div style={{ position: 'relative' }}>
+            <TextField
+              label={t('auth.password')}
+              type={reveal ? 'text' : 'password'}
+              value={password}
+              autoComplete="new-password"
+              required
+              style={{ paddingRight: 34 }}
+              onChange={(event) => setPassword(event.target.value)}
+            />
+            <button
+              type="button"
+              className="auth__reveal"
+              onClick={() => setReveal((value) => !value)}
+              aria-label={reveal ? t('auth.hidePassword') : t('auth.showPassword')}
+            >
+              <Icon name="eye" size={15} />
+            </button>
+          </div>
+
+          <div className="auth__rules">
             {passwordRules.map((rule) => {
               const met = rule.test(password);
               return (
                 <span
                   key={rule.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    fontSize: 11,
-                    color: met ? 'var(--done)' : 'var(--ink-3)',
-                  }}
+                  className={`auth__rule ${met ? 'auth__rule--met' : ''}`}
                 >
-                  <Icon name={met ? 'checkCircle' : 'queue'} size={12} />
-                  {rule.label}
+                  <Icon
+                    name={met ? 'checkCircle' : 'queue'}
+                    size={12}
+                    className="auth__ruleIcon"
+                    strokeDasharray={met ? undefined : '3 3'}
+                  />
+                  {t(rule.labelKey)}
                 </span>
               );
             })}
           </div>
         </div>
 
-        <Button type="submit" variant="primary" block busy={busy} disabled={!ready}>
-          Create account
+        <Button
+          type="submit"
+          variant="primary"
+          block
+          busy={busy}
+          disabled={!ready}
+          style={{ marginTop: 2 }}
+        >
+          {t('auth.createAccount')}
         </Button>
-
-        <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--ink-3)' }}>
-          Already registered? <Link to="/signin">Sign in</Link>
-        </p>
       </form>
-    </div>
+
+      <div className="auth__divider" />
+
+      <p className="auth__alt">
+        {t('auth.already')} <Link to="/signin">{t('auth.signIn')}</Link>
+      </p>
+    </AuthLayout>
   );
 }

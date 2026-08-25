@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Segmented, type SegmentedOption } from '../../shared/ui/Segmented.tsx';
 import { TextAreaField, SelectField } from '../../shared/ui/Field.tsx';
 import { Slider } from '../../shared/ui/Slider.tsx';
@@ -12,6 +12,9 @@ import type { TaskType } from '../../contracts/generation.ts';
 import { useDraft, draftBlocker } from './draftStore.ts';
 import { usePreferences } from '../../shared/stores/preferencesStore.ts';
 import { ModeFields } from './modes/ModeFields.tsx';
+import { SizeControl } from './modes/SizeControl.tsx';
+import { usePresets, type PresetValues } from './presetStore.ts';
+import { useT } from '../../shared/hooks/useT.ts';
 
 type Props = {
   canPaintMask: boolean;
@@ -31,6 +34,11 @@ export function ControlsPanel({
   onSubmit,
 }: Props) {
   const draft = useDraft();
+  const t = useT();
+  const presets = usePresets((state) => state.presets);
+  const savePreset = usePresets((state) => state.save);
+  const removePreset = usePresets((state) => state.remove);
+  const [presetName, setPresetName] = useState('');
   const advancedOpen = usePreferences((state) => state.advancedOpen);
   const avoidOpen = usePreferences((state) => state.avoidOpen);
   const setAvoidOpen = usePreferences((state) => state.setAvoidOpen);
@@ -40,25 +48,30 @@ export function ControlsPanel({
 
   const promptLength = draft.prompt.length;
   const overLength = promptLength > limits.prompt.max;
-  const blocker = blockedReason ?? draftBlocker(draft);
+  const rawBlocker = blockedReason ?? draftBlocker(draft);
+  const blocker =
+    rawBlocker === 'BLOCK_PROMPT' ? t('gen.describeFirst')
+    : rawBlocker === 'BLOCK_LONG' ? t('gen.promptTooLong')
+    : rawBlocker === 'BLOCK_IMAGE' ? t('gen.addImage')
+    : rawBlocker;
 
   const modeOptions: SegmentedOption<TaskType>[] = [
-    { value: 'txt2img', label: 'Text', icon: 'generate' },
-    { value: 'img2img', label: 'Image', icon: 'image' },
+    { value: 'txt2img', label: t('gen.modeText'), icon: 'generate' },
+    { value: 'img2img', label: t('gen.modeImage'), icon: 'image' },
     {
       value: 'inpaint',
-      label: 'Inpaint',
+      label: t('gen.modeInpaint'),
       icon: 'layers',
       disabled: !canPaintMask,
-      title: canPaintMask ? undefined : 'Painting a mask needs a larger screen',
+      title: canPaintMask ? undefined : t('gen.inpaintTooSmall'),
     },
   ];
 
   return (
-    <aside className="controls" aria-label="Generation settings">
+    <aside className="controls" aria-label={t('gen.settings')}>
       <div className="controls__scroll">
         <Segmented
-          ariaLabel="Generation mode"
+          ariaLabel={t('gen.mode')}
           options={modeOptions}
           value={draft.mode}
           onChange={(mode) => {
@@ -67,8 +80,39 @@ export function ControlsPanel({
           }}
         />
 
+        {presets.length > 0 ? (
+          <div className="field" style={{ gap: 6 }}>
+            <span className="eyebrow">{t('preset.saved')}</span>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {presets.map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  className="btn btn--sm btn--ghost"
+                  style={{ border: '1px solid var(--line)' }}
+                  title={`${preset.width} × ${preset.height} · ${preset.steps} steps · cfg ${preset.cfgScale}`}
+                  onClick={() =>
+                    draft.patch({
+                      width: preset.width,
+                      height: preset.height,
+                      steps: preset.steps,
+                      cfgScale: preset.cfgScale,
+                      samplerName: preset.samplerName,
+                      modelName: preset.modelName,
+                      loraId: preset.loraId,
+                      negativePrompt: preset.negativePrompt,
+                    })
+                  }
+                >
+                  {preset.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
         <TextAreaField
-          label={draft.mode === 'txt2img' ? 'Describe the image' : 'What should change?'}
+          label={draft.mode === 'txt2img' ? t('gen.describe') : t('gen.whatChanges')}
           meta={
             <span style={{ color: overLength ? 'var(--fail)' : undefined }}>
               {promptLength} / {limits.prompt.max}
@@ -79,7 +123,7 @@ export function ControlsPanel({
           placeholder="a glass workshop at dusk, warm lantern light through tall windows"
           error={
             overLength
-              ? `The engine reads the first ${limits.prompt.max} characters of a prompt.`
+              ? t('gen.promptLimit', { max: limits.prompt.max })
               : null
           }
           onChange={(event) => draft.patch({ prompt: event.target.value })}
@@ -90,14 +134,14 @@ export function ControlsPanel({
           onToggle={() => setAvoidOpen(!avoidOpen)}
           label={
             <>
-              Things to avoid
-              <span className="modedot" title="Reaches the engine in direct mode only" />
+              {t('gen.avoidToggle')}
+              <span className="modedot" title={t('gen.modeDot')} />
             </>
           }
-          summary={draft.negativePrompt ? 'set' : 'none'}
+          summary={draft.negativePrompt ? t('gen.avoidSet') : t('gen.avoidNone')}
         >
           <TextAreaField
-            label="Avoid"
+            label={t('gen.avoid')}
             meta={`${draft.negativePrompt.length} / ${limits.negativePrompt.max}`}
             rows={2}
             value={draft.negativePrompt}
@@ -108,10 +152,10 @@ export function ControlsPanel({
 
         <div className="hairline" />
 
-        <span className="eyebrow">Basics</span>
+        <span className="eyebrow">{t('gen.basics')}</span>
 
         <SelectField
-          label="Model"
+          label={t('gen.model')}
           value={draft.modelName}
           onChange={(event) => {
             draft.patch({ modelName: event.target.value });
@@ -134,32 +178,8 @@ export function ControlsPanel({
           width={draft.width}
           height={draft.height}
           onSize={(size) => draft.patch(size)}
+          sizeOverride={draft.sizeOverride}
         />
-
-        <div className="field">
-          <div className="label">
-            <label htmlFor="seed-field" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              Seed
-              <span className="modedot" title="Reaches the engine in direct mode only" />
-            </label>
-            <span className="label__meta">blank = random</span>
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <input
-              id="seed-field"
-              className="input mono"
-              inputMode="numeric"
-              placeholder="284119075"
-              value={draft.seed}
-              onChange={(event) => draft.patch({ seed: event.target.value.replace(/[^\d-]/g, '') })}
-            />
-            <IconButton
-              icon="refresh"
-              label="Use a random seed"
-              onClick={() => draft.patch({ seed: '' })}
-            />
-          </div>
-        </div>
 
         <div className="hairline" />
 
@@ -168,25 +188,78 @@ export function ControlsPanel({
           onToggle={() => setAdvancedOpen(!advancedOpen)}
           label={
             <>
-              Advanced
-              <span className="modedot" title="Some of these reach the engine in direct mode only" />
+              {t('gen.advanced')}
+              <span className="modedot" title={t('gen.modeDotSome')} />
             </>
           }
           summary={`steps ${draft.steps} · cfg ${draft.cfgScale} · ${draft.samplerName.toLowerCase()}`}
         >
+          <div className="field">
+            <div className="label">
+              <label htmlFor="seed-field" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {t('gen.seed')}
+                <span className="modedot" title={t('gen.modeDot')} />
+              </label>
+              <span className="label__meta">{t('gen.seedBlank')}</span>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                id="seed-field"
+                className="input mono"
+                inputMode="numeric"
+                placeholder="284119075"
+                value={draft.seed}
+                onChange={(event) =>
+                  draft.patch({ seed: event.target.value.replace(/[^\d-]/g, '') })
+                }
+              />
+              <IconButton
+                icon="refresh"
+                label={t('gen.seedRandom')}
+                onClick={() => draft.patch({ seed: '' })}
+              />
+            </div>
+          </div>
+          {draft.mode !== 'txt2img' ? (
+            <div className="field" style={{ gap: 8 }}>
+              <label
+                className="label"
+                style={{ cursor: 'pointer' }}
+                htmlFor="size-override"
+              >
+                <span>{t('size.byHand')}</span>
+                <input
+                  id="size-override"
+                  type="checkbox"
+                  checked={draft.sizeOverride}
+                  onChange={(event) => draft.patch({ sizeOverride: event.target.checked })}
+                />
+              </label>
+              {draft.sizeOverride ? (
+                <SizeControl
+                  label={t('size.output')}
+                  width={draft.width}
+                  height={draft.height}
+                  onChange={(size) => draft.patch(size)}
+                />
+              ) : (
+                <span className="field__hint">{t('size.byHandOff')}</span>
+              )}
+            </div>
+          ) : null}
           <Slider
-            label="Steps"
+            label={t('gen.steps')}
             value={draft.steps}
             min={limits.steps.min}
             max={limits.steps.max}
             step={limits.steps.step}
-            ends={['Faster', 'More refined']}
+            ends={[t('gen.stepsFast'), t('gen.stepsRefined')]}
             onChange={(steps) => draft.patch({ steps })}
           />
           <Slider
             label={
               <>
-                Prompt strength <span className="label__meta">(CFG)</span>
+                {t('gen.cfg')} <span className="label__meta">(CFG)</span>
               </>
             }
             value={draft.cfgScale}
@@ -194,14 +267,14 @@ export function ControlsPanel({
             max={limits.cfgScale.max}
             step={limits.cfgScale.step}
             decimals={1}
-            ends={['Loose', 'Literal']}
+            ends={[t('gen.cfgLoose'), t('gen.cfgLiteral')]}
             onChange={(cfgScale) => draft.patch({ cfgScale })}
           />
           <SelectField
             label={
               <>
-                Sampler
-                <span className="modedot" title="Reaches the engine in direct mode only" />
+                {t('gen.sampler')}
+                <span className="modedot" title={t('gen.modeDot')} />
               </>
             }
             value={draft.samplerName}
@@ -216,12 +289,12 @@ export function ControlsPanel({
           <SelectField
             label={
               <>
-                Style adapter
-                <span className="modedot" title="Reaches the engine in direct mode only" />
+                {t('gen.style')}
+                <span className="modedot" title={t('gen.modeDot')} />
               </>
             }
             value={draft.loraId}
-            hint="The engine adds this style's trigger words itself. One adapter at a time."
+            hint={t('gen.styleHint')}
             onChange={(event) => draft.patch({ loraId: event.target.value })}
           >
             {loraOptions.map((lora) => (
@@ -230,10 +303,74 @@ export function ControlsPanel({
               </option>
             ))}
           </SelectField>
+          <div className="hairline" />
+
+          <div className="field" style={{ gap: 6 }}>
+            <span className="label">{t('preset.saveThese')}</span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                className="input"
+                placeholder={t('preset.namePlaceholder')}
+                value={presetName}
+                aria-label={t('preset.name')}
+                onChange={(event) => setPresetName(event.target.value)}
+              />
+              <Button
+                disabled={!presetName.trim()}
+                onClick={() => {
+                  const values: PresetValues = {
+                    width: draft.width,
+                    height: draft.height,
+                    steps: draft.steps,
+                    cfgScale: draft.cfgScale,
+                    samplerName: draft.samplerName,
+                    modelName: draft.modelName,
+                    loraId: draft.loraId,
+                    negativePrompt: draft.negativePrompt,
+                  };
+                  savePreset(presetName, values);
+                  setPresetName('');
+                }}
+              >
+                {t('preset.save')}
+              </Button>
+            </div>
+            <span className="field__hint">
+              {t('preset.hint')}
+            </span>
+            {presets.length > 0 ? (
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 2 }}>
+                {presets.map((preset) => (
+                  <span
+                    key={preset.id}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      fontSize: 11,
+                      color: 'var(--ink-3)',
+                      border: '1px solid var(--line)',
+                      borderRadius: 'var(--r-sm)',
+                      padding: '2px 4px 2px 8px',
+                    }}
+                  >
+                    {preset.name}
+                    <IconButton
+                      icon="close"
+                      label={t('preset.delete', { name: preset.name })}
+                      style={{ width: 18, height: 18, border: 'none', background: 'none' }}
+                      iconSize={11}
+                      onClick={() => removePreset(preset.id)}
+                    />
+                  </span>
+                ))}
+              </div>
+            ) : null}
+          </div>
         </Disclosure>
 
         <Alert tone="note">
-          A run takes roughly 30–40 seconds on the studio GPU, and one job runs at a time.
+          {t('gen.runNote')}
         </Alert>
       </div>
 

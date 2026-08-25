@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { systemService } from '../../services/systemService.ts';
 import { queryKeys } from '../../services/queryKeys.ts';
+import { useT } from '../../shared/hooks/useT.ts';
 
 function useEngineStatus() {
   return useQuery({
@@ -21,12 +22,13 @@ function useEngineStatus() {
  */
 export function EngineIndicator() {
   const { data } = useEngineStatus();
+  const t = useT();
 
   if (!data) {
     return (
       <span className="rail__engine">
         <span className="dot" />
-        Checking…
+        {t('engine.checking')}
       </span>
     );
   }
@@ -35,7 +37,7 @@ export function EngineIndicator() {
     return (
       <span className="rail__engine">
         <span className="dot dot--offline" />
-        Backend unreachable
+        {t('engine.offline')}
       </span>
     );
   }
@@ -44,7 +46,7 @@ export function EngineIndicator() {
     return (
       <span className="rail__engine" title={data.reason}>
         <span className="dot" />
-        Status unavailable
+        {t('engine.unavailable')}
       </span>
     );
   }
@@ -52,7 +54,7 @@ export function EngineIndicator() {
   return (
     <span className="rail__engine">
       <span className="dot dot--online" />
-      Online
+      {t('engine.online')}
     </span>
   );
 }
@@ -60,12 +62,13 @@ export function EngineIndicator() {
 /** The inference mode, shown only when the backend actually reports one. */
 export function AiModeBadge() {
   const { data } = useEngineStatus();
+  const t = useT();
   if (!data || data.state !== 'online' || !data.aiMode) return null;
   return (
     <span
       className="mono"
       style={{ fontSize: 11, color: 'var(--ink-3)', letterSpacing: '0.04em' }}
-      title="Inference mode reported by the backend"
+      title={t('engine.modeReported')}
     >
       {data.aiMode.toUpperCase()} MODE
     </span>

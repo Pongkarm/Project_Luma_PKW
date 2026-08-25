@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { uploadService, validateBeforeUpload } from '../../../services/uploadService.ts';
 import { isApiError } from '../../../contracts/errors.ts';
+import { translate } from '../../../config/i18n.ts';
 import { toSourceImage, type SourceImage } from '../draftStore.ts';
 
 type UploadState = {
@@ -37,7 +38,12 @@ export function useImageUpload() {
       return toSourceImage(response, file.name);
     } catch (error) {
       // The server re-checks everything; its answer is the one shown.
-      const message = isApiError(error) ? error.message : 'That upload did not go through.';
+      const message = isApiError(error)
+        ? error.message
+        : translate(
+            document.documentElement.lang === 'th' ? 'th' : 'en',
+            'upload.failed',
+          );
       setState({ status: 'error', progress: 0, error: message, fileName: file.name });
       return null;
     }

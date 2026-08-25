@@ -2,14 +2,16 @@ import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useSession } from '../features/auth/sessionStore.ts';
 import { Icon } from '../shared/ui/Icon.tsx';
+import { useT } from '../shared/hooks/useT.ts';
 
 function Booting() {
+  const t = useT();
   return (
     <div className="authpage">
       <div className="centered-note">
         <Icon name="refresh" size={20} className="spin" />
         <span className="subtle" style={{ fontSize: 12.5 }}>
-          Restoring your session…
+          {t('auth.restoring')}
         </span>
       </div>
     </div>

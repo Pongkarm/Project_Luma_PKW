@@ -1,6 +1,11 @@
 import { apiUrl, requestOk, uploadMultipart, type UploadProgress } from './apiClient.ts';
 import type { ImageUploadResponse } from '../contracts/upload.ts';
 import { limits } from '../config/limits.ts';
+import { translate, type Language } from '../config/i18n.ts';
+
+function currentLanguage(): Language {
+  return document.documentElement.lang === 'th' ? 'th' : 'en';
+}
 
 export type LocalValidationError = { code: 'type' | 'size' | 'empty'; message: string };
 
@@ -10,13 +15,14 @@ export type LocalValidationError = { code: 'type' | 'size' | 'empty'; message: s
  * and its answer always wins — this only catches the two common mistakes early.
  */
 export function validateBeforeUpload(file: File): LocalValidationError | null {
-  if (file.size === 0) return { code: 'empty', message: 'That file is empty.' };
+  const language = currentLanguage();
+  if (file.size === 0) return { code: 'empty', message: translate(language, 'upload.empty') };
   if (!(limits.upload.mimeTypes as readonly string[]).includes(file.type)) {
-    return { code: 'type', message: 'LUMA reads PNG, JPEG and WebP images.' };
+    return { code: 'type', message: translate(language, 'upload.badType') };
   }
   if (file.size > limits.upload.maxBytes) {
     const mb = (file.size / (1024 * 1024)).toFixed(1);
-    return { code: 'size', message: `That file is ${mb} MB. The limit is 10 MB.` };
+    return { code: 'size', message: translate(language, 'upload.tooBig', { size: mb }) };
   }
   return null;
 }

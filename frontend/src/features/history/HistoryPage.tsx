@@ -12,11 +12,13 @@ import { truncate } from '../../shared/utils/format.ts';
 import type { Generation } from '../../contracts/generation.ts';
 import { RunDetail } from './RunDetail.tsx';
 import { useDraft } from '../generate/draftStore.ts';
+import { useT } from '../../shared/hooks/useT.ts';
 
 const PAGE_SIZE = 24;
 
 function RunCard({ run, active, onSelect }: { run: Generation; active: boolean; onSelect: () => void }) {
   const image = useAuthedImage(run.id, run.status === 'completed');
+  const t = useT();
 
   return (
     // A card, not a <button>: the whole tile is the target, and a button's
@@ -43,7 +45,7 @@ function RunCard({ run, active, onSelect }: { run: Generation; active: boolean; 
           <>
             <Icon name="xCircle" size={18} />
             <span style={{ fontSize: 11.5, padding: '0 16px', textAlign: 'center', lineHeight: 1.5 }}>
-              {truncate(run.error_message ?? 'The engine could not finish this run', 70)}
+              {truncate(run.error_message ?? t('run.failedTitle'), 70)}
             </span>
           </>
         ) : (
@@ -75,6 +77,7 @@ function RunCard({ run, active, onSelect }: { run: Generation; active: boolean; 
 
 export function HistoryPage() {
   const [page, setPage] = useState(1);
+  const t = useT();
   const navigate = useNavigate();
   const { id: selectedId } = useParams();
   const draft = useDraft();
@@ -115,25 +118,25 @@ export function HistoryPage() {
       <main className="main">
         <div className="stagebar">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontWeight: 600, fontSize: 13.5 }}>History</span>
+            <span style={{ fontWeight: 600, fontSize: 13.5 }}>{t('history.title')}</span>
             <span className="mono" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
-              {total} {total === 1 ? 'run' : 'runs'}
+              {total === 1 ? t('history.run', { count: total }) : t('history.runs', { count: total })}
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span className="mono" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
-              {from}–{to} of {total}
+              {t('history.range', { from, to, total })}
             </span>
             <div style={{ display: 'flex', gap: 4 }}>
               <IconButton
                 icon="chevronLeft"
-                label="Previous page"
+                label={t('history.prev')}
                 disabled={page <= 1}
                 onClick={() => setPage((value) => Math.max(1, value - 1))}
               />
               <IconButton
                 icon="chevronRight"
-                label="Next page"
+                label={t('history.next')}
                 disabled={page >= lastPage}
                 onClick={() => setPage((value) => Math.min(lastPage, value + 1))}
               />
@@ -143,7 +146,7 @@ export function HistoryPage() {
 
         {isError ? (
           <div style={{ padding: 16 }}>
-            <Alert tone="error">Your history could not be loaded.</Alert>
+            <Alert tone="error">{t('history.loadFailed')}</Alert>
           </div>
         ) : isLoading ? (
           <div className="grid-runs">
@@ -161,9 +164,9 @@ export function HistoryPage() {
           <div className="stage">
             <div className="centered-note">
               <Icon name="clock" size={22} />
-              <h2 style={{ fontSize: 14, fontWeight: 600 }}>No runs yet</h2>
+              <h2 style={{ fontSize: 14, fontWeight: 600 }}>{t('history.empty')}</h2>
               <p style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.6 }}>
-                Everything you generate is kept here.
+                {t('history.emptyBody')}
               </p>
             </div>
           </div>

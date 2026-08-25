@@ -60,8 +60,41 @@ export const limits = {
   },
 } as const;
 
+/**
+ * Aspect-ratio presets. Each resolves to the largest size the engine accepts
+ * for that shape — the checkpoints in use are XL-family models, which lose
+ * quality below 768 on the long side.
+ */
 export const sizePresets = [
-  { label: '512 × 512', hint: '1:1', width: 512, height: 512 },
-  { label: '512 × 768', hint: '2:3', width: 512, height: 768 },
-  { label: '768 × 512', hint: '3:2', width: 768, height: 512 },
+  { id: 'square', label: '1:1', name: 'Square', width: 768, height: 768 },
+  { id: 'portrait', label: '2:3', name: 'Portrait', width: 512, height: 768 },
+  { id: 'landscape', label: '3:2', name: 'Landscape', width: 768, height: 512 },
 ] as const;
+
+/** Snap to the multiple of 8 Forge expects, then clamp into the engine's range. */
+export function snapDimension(value: number): number {
+  const { min, max, multipleOf } = limits.dimension;
+  const snapped = Math.round(value / multipleOf) * multipleOf;
+  return Math.min(max, Math.max(min, snapped));
+}
+
+/**
+ * The size the engine will actually produce for a source image.
+ *
+ * Uploads are allowed up to 4096px but the AI node only accepts 256-768, so a
+ * photo straight from a phone must be scaled down before it is asked for —
+ * otherwise the job is rejected mid-flight and the person is told nothing useful.
+ */
+export function fitToEngine(width: number, height: number): { width: number; height: number } {
+  const { min, max } = limits.dimension;
+  const longest = Math.max(width, height);
+  const scale = longest > max ? max / longest : 1;
+  const w = snapDimension(width * scale);
+  const h = snapDimension(height * scale);
+  return { width: Math.max(min, w), height: Math.max(min, h) };
+}
+
+/** True when the engine cannot work at the source image's own size. */
+export function needsDownscale(width: number, height: number): boolean {
+  return Math.max(width, height) > limits.dimension.max;
+}

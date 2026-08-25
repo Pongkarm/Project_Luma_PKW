@@ -7,6 +7,7 @@ import { IconButton } from '../../../shared/ui/Button.tsx';
 import { Icon } from '../../../shared/ui/Icon.tsx';
 import { MASK_DISPLAY_OPACITY } from './useMaskEditor.ts';
 import type { MaskEditor, MaskTool } from './useMaskEditor.ts';
+import { useT } from '../../../shared/hooks/useT.ts';
 
 type Props = {
   editor: MaskEditor;
@@ -14,10 +15,7 @@ type Props = {
   onNaturalSize: (size: { width: number; height: number }) => void;
 };
 
-const toolOptions: { value: MaskTool; label: string; icon: 'brush' | 'eraser' }[] = [
-  { value: 'brush', label: 'Brush', icon: 'brush' },
-  { value: 'eraser', label: 'Eraser', icon: 'eraser' },
-];
+
 
 function isTypingTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -26,6 +24,11 @@ function isTypingTarget(target: EventTarget | null): boolean {
 
 export function MaskCanvas({ editor, sourceUrl, onNaturalSize }: Props) {
   const [maskOnly, setMaskOnly] = useState(false);
+  const t = useT();
+  const toolOptions: { value: MaskTool; label: string; icon: 'brush' | 'eraser' }[] = [
+    { value: 'brush', label: t('mask.brush'), icon: 'brush' },
+    { value: 'eraser', label: t('mask.eraser'), icon: 'eraser' },
+  ];
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -95,18 +98,18 @@ export function MaskCanvas({ editor, sourceUrl, onNaturalSize }: Props) {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontWeight: 600, fontSize: 13.5 }}>Inpaint</span>
+          <span style={{ fontWeight: 600, fontSize: 13.5 }}>{t('mask.title')}</span>
           <span className="mono" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
             {editor.hasMask
-              ? `mask · ${Math.round(editor.coverage * 100)}% of image`
-              : 'paint the area to replace'}
+              ? t('mask.coverage', { percent: Math.round(editor.coverage * 100) })
+              : t('mask.paintPrompt')}
           </span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <Segmented
             iconsOnly
-            ariaLabel="Mask tool"
+            ariaLabel={t('mask.tool')}
             options={toolOptions}
             value={editor.tool}
             onChange={editor.setTool}
@@ -124,7 +127,7 @@ export function MaskCanvas({ editor, sourceUrl, onNaturalSize }: Props) {
             }}
           >
             <label htmlFor="brush-size" style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>
-              Size
+              {t('mask.size')}
             </label>
             <input
               id="brush-size"
@@ -141,13 +144,13 @@ export function MaskCanvas({ editor, sourceUrl, onNaturalSize }: Props) {
               {editor.brushSize}
             </span>
           </div>
-          <IconButton icon="undo" label="Undo stroke" disabled={!editor.canUndo} onClick={editor.undo} />
-          <IconButton icon="redo" label="Redo stroke" disabled={!editor.canRedo} onClick={editor.redo} />
-          <IconButton icon="trash" label="Clear mask" disabled={!editor.canUndo} onClick={editor.clear} />
+          <IconButton icon="undo" label={t('mask.undo')} disabled={!editor.canUndo} onClick={editor.undo} />
+          <IconButton icon="redo" label={t('mask.redo')} disabled={!editor.canRedo} onClick={editor.redo} />
+          <IconButton icon="trash" label={t('mask.clear')} disabled={!editor.canUndo} onClick={editor.clear} />
           <div style={{ width: 1, height: 18, background: 'var(--line)', margin: '0 2px' }} />
           <IconButton
             icon="eye"
-            label={maskOnly ? 'Show the image' : 'Show the mask only'}
+            label={maskOnly ? t('mask.showImage') : t('mask.showMaskOnly')}
             aria-pressed={maskOnly}
             style={maskOnly ? { color: 'var(--ink)', borderColor: 'var(--line-strong)' } : undefined}
             onClick={() => setMaskOnly((value) => !value)}
@@ -180,7 +183,7 @@ export function MaskCanvas({ editor, sourceUrl, onNaturalSize }: Props) {
           >
             <img
               src={sourceUrl}
-              alt="The image you are painting on"
+              alt={t('mask.alt')}
               draggable={false}
               onLoad={(event) =>
                 onNaturalSize({
@@ -224,13 +227,14 @@ export function MaskCanvas({ editor, sourceUrl, onNaturalSize }: Props) {
               <span
                 style={{ width: 9, height: 9, borderRadius: 2, background: 'var(--accent)', opacity: 0.55 }}
               />
-              painted = repaint this area
+              {t('mask.legend')}
             </span>
             <span
               className="mono"
               style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10.5, color: 'var(--ink-3)' }}
             >
-              <Icon name="info" size={12} />B brush · E eraser · [ ] size · ⌘Z undo
+              <Icon name="info" size={12} />
+              {t('mask.shortcuts')}
             </span>
           </div>
         </div>

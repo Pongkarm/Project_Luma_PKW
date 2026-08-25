@@ -5,6 +5,7 @@ import { useAuthedImage } from '../../shared/hooks/useAuthedImage.ts';
 import { formatDateTime, formatDuration } from '../../shared/utils/format.ts';
 import { uploadService } from '../../services/uploadService.ts';
 import type { Generation } from '../../contracts/generation.ts';
+import { useT } from '../../shared/hooks/useT.ts';
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
@@ -25,11 +26,12 @@ export function RunDetail({
   onReuseSettings: () => void;
 }) {
   const image = useAuthedImage(run.id, run.status === 'completed');
+  const t = useT();
 
   return (
-    <aside className="controls" aria-label="Run details">
+    <aside className="controls" aria-label={t('history.details')}>
       <div className="stagebar">
-        <span style={{ fontWeight: 600, fontSize: 13 }}>Run details</span>
+        <span style={{ fontWeight: 600, fontSize: 13 }}>{t('history.details')}</span>
         <span className="mono" style={{ fontSize: 10.5, color: 'var(--ink-3)' }}>
           {run.id.slice(0, 8)}
         </span>
@@ -61,13 +63,13 @@ export function RunDetail({
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-          <span className="eyebrow">Prompt</span>
+          <span className="eyebrow">{t('history.prompt')}</span>
           <p style={{ fontSize: 12.5, lineHeight: 1.55, color: 'var(--ink-2)' }}>{run.prompt}</p>
         </div>
 
         {run.negative_prompt ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-            <span className="eyebrow">Avoided</span>
+            <span className="eyebrow">{t('history.avoided')}</span>
             <p style={{ fontSize: 12.5, lineHeight: 1.55, color: 'var(--ink-3)' }}>
               {run.negative_prompt}
             </p>
@@ -76,7 +78,7 @@ export function RunDetail({
 
         {run.status === 'failed' && run.error_message ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-            <span className="eyebrow">Why it failed</span>
+            <span className="eyebrow">{t('history.whyFailed')}</span>
             <p
               className="mono"
               style={{ fontSize: 11, lineHeight: 1.55, color: 'var(--fail)', wordBreak: 'break-word' }}
@@ -87,23 +89,23 @@ export function RunDetail({
         ) : null}
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px 14px' }}>
-          <Fact label="Mode" value={run.task_type} />
-          <Fact label="Model" value={run.model_name.replace(/\.safetensors$/, '')} />
-          <Fact label="Size" value={`${run.width} × ${run.height}`} />
-          <Fact label="Steps / CFG" value={`${run.steps} · ${run.cfg_scale}`} />
-          <Fact label="Sampler" value={run.sampler_name} />
-          <Fact label="Took" value={formatDuration(run.duration_seconds)} />
+          <Fact label={t('history.mode')} value={run.task_type} />
+          <Fact label={t('history.model')} value={run.model_name.replace(/\.safetensors$/, '')} />
+          <Fact label={t('history.size')} value={`${run.width} × ${run.height}`} />
+          <Fact label={t('history.stepsCfg')} value={`${run.steps} · ${run.cfg_scale}`} />
+          <Fact label={t('history.sampler')} value={run.sampler_name} />
+          <Fact label={t('history.took')} value={formatDuration(run.duration_seconds)} />
           {/* The seed actually used is never returned, so only what was sent can be shown. */}
-          <Fact label="Seed sent" value={run.seed === null ? 'random' : String(run.seed)} />
-          <Fact label="Created" value={formatDateTime(run.created_at)} />
+          <Fact label={t('history.seedSent')} value={run.seed === null ? t('history.random') : String(run.seed)} />
+          <Fact label={t('history.created')} value={formatDateTime(run.created_at)} />
         </div>
 
         {run.source_image_path ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-            <span className="eyebrow">Started from</span>
+            <span className="eyebrow">{t('history.startedFrom')}</span>
             <img
               src={uploadService.publicUrl(`/uploads/${run.source_image_path.split(/[\\/]/).pop()}`)}
-              alt="The image this run started from"
+              alt={t('history.startedFromAlt')}
               style={{
                 width: 96,
                 height: 96,
@@ -127,11 +129,11 @@ export function RunDetail({
             style={!image.url ? { pointerEvents: 'none', opacity: 0.5 } : undefined}
           >
             <Icon name="download" size={14} />
-            Save image
+            {t('run.saveImage')}
           </a>
         ) : null}
         <Button block onClick={onReuseSettings}>
-          Reuse these settings
+          {t('history.reuse')}
         </Button>
       </div>
     </aside>

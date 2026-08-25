@@ -6,6 +6,7 @@ import { formatBytes } from '../../../shared/utils/format.ts';
 import { uploadService } from '../../../services/uploadService.ts';
 import type { SourceImage } from '../draftStore.ts';
 import { useImageUpload } from './useImageUpload.ts';
+import { useT } from '../../../shared/hooks/useT.ts';
 
 type Props = {
   label: string;
@@ -20,6 +21,7 @@ type Props = {
  */
 export function ImageInput({ label, value, onChange }: Props) {
   const { state, upload, reset } = useImageUpload();
+  const t = useT();
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -95,10 +97,10 @@ export function ImageInput({ label, value, onChange }: Props) {
               {value.width} × {value.height} · {formatBytes(value.sizeBytes)}
             </span>
           </div>
-          <IconButton icon="upload" label="Replace image" onClick={() => inputRef.current?.click()} />
+          <IconButton icon="upload" label={t('upload.replace')} onClick={() => inputRef.current?.click()} />
           <IconButton
             icon="trash"
-            label="Remove image"
+            label={t('upload.remove')}
             onClick={() => {
               reset();
               onChange(null);
@@ -121,7 +123,9 @@ export function ImageInput({ label, value, onChange }: Props) {
           <div className="track" style={{ width: '70%' }}>
             <div className="track__fill" style={{ width: `${Math.round(state.progress * 100)}%` }} />
           </div>
-          <span className="field__hint">Uploading — {Math.round(state.progress * 100)}%</span>
+          <span className="field__hint">
+            {t('upload.uploading', { percent: Math.round(state.progress * 100) })}
+          </span>
         </div>
         {hiddenInput}
       </div>
@@ -136,7 +140,7 @@ export function ImageInput({ label, value, onChange }: Props) {
           <Icon name="alert" size={20} />
           <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--fail)' }}>{state.error}</span>
           <Button size="sm" onClick={() => inputRef.current?.click()}>
-            Choose another
+            {t('upload.chooseAnother')}
           </Button>
         </div>
         {hiddenInput}
@@ -167,9 +171,9 @@ export function ImageInput({ label, value, onChange }: Props) {
       >
         <Icon name="upload" size={22} />
         <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>
-          Drop an image, or browse
+          {t('upload.drop')}
         </span>
-        <span className="field__hint">PNG, JPEG or WebP · up to 10 MB · max 4096 px</span>
+        <span className="field__hint">{t('upload.constraints')}</span>
       </div>
       {hiddenInput}
     </div>

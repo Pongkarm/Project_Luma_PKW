@@ -4,10 +4,10 @@
  * anything is sent, and they are stated on screen rather than sprung on submit.
  */
 export const passwordRules = [
-  { id: 'length', label: 'At least 8 characters', test: (value: string) => value.length >= 8 },
+  { id: 'length', labelKey: 'auth.ruleLength', test: (value: string) => value.length >= 8 },
   {
     id: 'variety',
-    label: 'A number or a symbol',
+    labelKey: 'auth.ruleVariety',
     test: (value: string) => /[^A-Za-z]/.test(value),
   },
 ] as const;

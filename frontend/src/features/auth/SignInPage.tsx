@@ -5,10 +5,13 @@ import { TextField } from '../../shared/ui/Field.tsx';
 import { Alert } from '../../shared/ui/Alert.tsx';
 import { Icon } from '../../shared/ui/Icon.tsx';
 import { isApiError } from '../../contracts/errors.ts';
+import { useT } from '../../shared/hooks/useT.ts';
 import { useSession } from './sessionStore.ts';
+import { AuthLayout } from './AuthLayout.tsx';
 
 export function SignInPage() {
   const signIn = useSession((state) => state.signIn);
+  const t = useT();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -31,10 +34,10 @@ export function SignInPage() {
       // A 401 here means the credentials are wrong, not that a session ended.
       setError(
         isApiError(cause) && cause.status === 401
-          ? 'That username or password is not right.'
+          ? t('auth.wrongCredentials')
           : isApiError(cause)
             ? cause.message
-            : 'Sign-in did not go through.',
+            : t('auth.signInFailed'),
       );
     } finally {
       setBusy(false);
@@ -42,19 +45,16 @@ export function SignInPage() {
   }
 
   return (
-    <div className="authpage">
-      <form className="authcard" onSubmit={onSubmit}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 4 }}>
-          <span className="brand__mark" style={{ width: 26, height: 26, fontSize: 14 }} aria-hidden="true">
-            L
-          </span>
-          <h1 style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.01em' }}>Sign in to LUMA</h1>
-        </div>
-
-        {error ? <Alert tone="error">{error}</Alert> : null}
+    <AuthLayout title={t('auth.signIn')} subtitle={t('auth.signInSub')}>
+      <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {error ? (
+          <div className="auth__error">
+            <Alert tone="error">{error}</Alert>
+          </div>
+        ) : null}
 
         <TextField
-          label="Username or email"
+          label={t('auth.usernameOrEmail')}
           value={username}
           autoComplete="username"
           autoFocus
@@ -64,7 +64,7 @@ export function SignInPage() {
 
         <div style={{ position: 'relative' }}>
           <TextField
-            label="Password"
+            label={t('auth.password')}
             type={reveal ? 'text' : 'password'}
             value={password}
             autoComplete="current-password"
@@ -74,32 +74,31 @@ export function SignInPage() {
           />
           <button
             type="button"
+            className="auth__reveal"
             onClick={() => setReveal((value) => !value)}
-            aria-label={reveal ? 'Hide password' : 'Show password'}
-            style={{
-              position: 'absolute',
-              right: 6,
-              top: 25,
-              width: 24,
-              height: 24,
-              border: 'none',
-              background: 'none',
-              color: 'var(--ink-3)',
-              cursor: 'pointer',
-            }}
+            aria-label={reveal ? t('auth.hidePassword') : t('auth.showPassword')}
           >
             <Icon name="eye" size={15} />
           </button>
         </div>
 
-        <Button type="submit" variant="primary" block busy={busy} disabled={!username || !password}>
-          Sign in
+        <Button
+          type="submit"
+          variant="primary"
+          block
+          busy={busy}
+          disabled={!username || !password}
+          style={{ marginTop: 2 }}
+        >
+          {t('auth.signIn')}
         </Button>
-
-        <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--ink-3)' }}>
-          No account yet? <Link to="/register">Create one</Link>
-        </p>
       </form>
-    </div>
+
+      <div className="auth__divider" />
+
+      <p className="auth__alt">
+        {t('auth.noAccount')} <Link to="/register">{t('auth.createOne')}</Link>
+      </p>
+    </AuthLayout>
   );
 }

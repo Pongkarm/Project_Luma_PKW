@@ -6,6 +6,8 @@ import { Alert } from '../../shared/ui/Alert.tsx';
 import { Icon } from '../../shared/ui/Icon.tsx';
 import { isApiError } from '../../contracts/errors.ts';
 import { useSession } from './sessionStore.ts';
+import { useT } from '../../shared/hooks/useT.ts';
+
 
 /**
  * A 401 while someone is working raises this over the workspace instead of
@@ -15,6 +17,7 @@ import { useSession } from './sessionStore.ts';
  */
 export function SessionExpiredDialog() {
   const expired = useSession((state) => state.expired);
+  const t = useT();
   const user = useSession((state) => state.user);
   const signIn = useSession((state) => state.signIn);
   const signOut = useSession((state) => state.signOut);
@@ -34,8 +37,8 @@ export function SessionExpiredDialog() {
     } catch (cause) {
       setError(
         isApiError(cause) && cause.status === 401
-          ? 'That password is not right.'
-          : 'Signing back in did not work.',
+          ? t('session.wrongPassword')
+          : t('session.failed'),
       );
     } finally {
       setBusy(false);
@@ -43,20 +46,20 @@ export function SessionExpiredDialog() {
   }
 
   return (
-    <Dialog open={expired} title="Your session ended">
+    <Dialog open={expired} title={t('session.title')}>
       <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <Icon name="lock" size={18} />
-          <h2 style={{ fontSize: 15, fontWeight: 600 }}>Your session ended</h2>
+          <h2 style={{ fontSize: 15, fontWeight: 600 }}>{t('session.title')}</h2>
           <p style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.55 }}>
-            Sign in again to keep working. Your prompt, settings and uploaded image are still here.
+            {t('session.body')}
           </p>
         </div>
 
         {error ? <Alert tone="error">{error}</Alert> : null}
 
         <TextField
-          label={<>Password for {user?.username}</>}
+          label={t('session.passwordFor', { name: user?.username ?? '' })}
           type="password"
           value={password}
           autoComplete="current-password"
@@ -66,10 +69,10 @@ export function SessionExpiredDialog() {
 
         <div style={{ display: 'flex', gap: 8 }}>
           <Button type="button" onClick={signOut} style={{ flex: 1 }}>
-            Sign out
+            {t('session.signOut')}
           </Button>
           <Button type="submit" variant="primary" busy={busy} disabled={!password} style={{ flex: 1 }}>
-            Continue
+            {t('session.continue')}
           </Button>
         </div>
       </form>

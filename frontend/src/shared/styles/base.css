@@ -117,3 +117,28 @@ a:hover {
     transition-duration: 0.001ms !important;
   }
 }
+
+/*
+ * Thai typography. Scoped to :root[lang='th'] so the English layout is
+ * unchanged: Thai stacks a vowel and a tone mark above the line and another
+ * vowel below it, which collides at the Latin line-height, and it has no
+ * spaces between words, so it needs help breaking lines in narrow columns.
+ */
+:root[lang='th'] body {
+  line-height: 1.75;
+}
+
+:root[lang='th'] .btn,
+:root[lang='th'] .seg__item,
+:root[lang='th'] .label,
+:root[lang='th'] .status {
+  line-height: 1.4;
+}
+
+:root[lang='th'] p,
+:root[lang='th'] .field__hint,
+:root[lang='th'] .alert,
+:root[lang='th'] .runcard__prompt {
+  word-break: break-word;
+  line-break: loose;
+}

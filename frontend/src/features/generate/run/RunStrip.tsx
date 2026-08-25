@@ -4,7 +4,8 @@ import { generationService } from '../../../services/generationService.ts';
 import { queryKeys } from '../../../services/queryKeys.ts';
 import { useAuthedImage } from '../../../shared/hooks/useAuthedImage.ts';
 import { Icon } from '../../../shared/ui/Icon.tsx';
-import { statusLabel } from '../../../shared/ui/statusPresentation.ts';
+import { statusPresentation } from '../../../shared/ui/statusPresentation.ts';
+import { useT } from '../../../shared/hooks/useT.ts';
 import type { Generation } from '../../../contracts/generation.ts';
 
 const STRIP_SIZE = 12;
@@ -19,6 +20,8 @@ function RunThumb({
   onSelect: () => void;
 }) {
   const image = useAuthedImage(run.id, run.status === 'completed');
+  const t = useT();
+  const label = t(statusPresentation[run.status].labelKey);
 
   return (
     <button
@@ -26,7 +29,7 @@ function RunThumb({
       className="thumb"
       aria-current={active}
       onClick={onSelect}
-      title={`${statusLabel(run.status)} · ${run.prompt}`}
+      title={`${label} · ${run.prompt}`}
     >
       {image.url ? (
         <img src={image.url} alt="" />
@@ -43,7 +46,7 @@ function RunThumb({
         />
       )}
       <span className="visually-hidden">
-        {statusLabel(run.status)}: {run.prompt}
+        {label}: {run.prompt}
       </span>
     </button>
   );
@@ -56,6 +59,7 @@ export function RunStrip({
   activeRunId: string | null;
   onSelect: (id: string) => void;
 }) {
+  const t = useT();
   const { data } = useQuery({
     queryKey: queryKeys.generations(1, STRIP_SIZE),
     queryFn: () => generationService.list({ page: 1, page_size: STRIP_SIZE }),
@@ -67,9 +71,9 @@ export function RunStrip({
   return (
     <div className="runstrip">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span className="eyebrow">Recent runs</span>
+        <span className="eyebrow">{t('run.recent')}</span>
         <Link to="/history" style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>
-          Open history
+          {t('run.openHistory')}
         </Link>
       </div>
       <div className="runstrip__row">

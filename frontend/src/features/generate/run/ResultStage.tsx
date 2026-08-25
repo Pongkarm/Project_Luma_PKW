@@ -5,6 +5,7 @@ import { useAuthedImage } from '../../../shared/hooks/useAuthedImage.ts';
 import { useElapsed } from '../../../shared/hooks/useElapsed.ts';
 import { formatDuration, formatElapsed } from '../../../shared/utils/format.ts';
 import type { Generation } from '../../../contracts/generation.ts';
+import { useT } from '../../../shared/hooks/useT.ts';
 
 type Props = {
   job: Generation;
@@ -29,6 +30,7 @@ export function ResultStage({
   onUseAsSource,
   useAsSourceBusy,
 }: Props) {
+  const t = useT();
   const running = job.status === 'pending' || job.status === 'processing';
   const elapsed = useElapsed(startedAt ? new Date(startedAt) : null, running && !stalled);
   const image = useAuthedImage(job.id, job.status === 'completed');
@@ -37,13 +39,12 @@ export function ResultStage({
     return (
       <Panel>
         <Icon name="alert" size={22} />
-        <h2 style={{ fontSize: 14, fontWeight: 600 }}>This is taking unusually long</h2>
+        <h2 style={{ fontSize: 14, fontWeight: 600 }}>{t('run.stalledTitle')}</h2>
         <p style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.6 }}>
-          The job is still marked as processing. It may finish, or the engine may have lost it — we
-          stopped checking after five minutes.
+          {t('run.stalledBody')}
         </p>
         <Button icon="refresh" onClick={onCheckAgain}>
-          Check again
+          {t('run.checkAgain')}
         </Button>
       </Panel>
     );
@@ -53,9 +54,9 @@ export function ResultStage({
     return (
       <Panel>
         <Icon name="queue" size={22} strokeDasharray="3 3" />
-        <h2 style={{ fontSize: 14, fontWeight: 600 }}>Waiting for the GPU</h2>
+        <h2 style={{ fontSize: 14, fontWeight: 600 }}>{t('run.waiting')}</h2>
         <p style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.6 }}>
-          One job runs at a time. Yours starts as soon as the engine is free.
+          {t('run.waitingBody')}
         </p>
         <span className="mono" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
           {formatElapsed(elapsed)}
@@ -68,16 +69,16 @@ export function ResultStage({
     return (
       <Panel>
         <Icon name="refresh" size={22} className="spin" />
-        <h2 style={{ fontSize: 14, fontWeight: 600 }}>Generating</h2>
+        <h2 style={{ fontSize: 14, fontWeight: 600 }}>{t('run.generating')}</h2>
         <p style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.6 }}>
-          Usually 30–40 seconds. You can leave this page; the run keeps going.
+          {t('run.generatingBody')}
         </p>
         {/* Indeterminate on purpose: neither node reports a percentage. */}
         <div className="track" style={{ width: 200 }}>
           <div className="track__indeterminate" />
         </div>
         <span className="mono" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
-          {formatElapsed(elapsed)} elapsed
+          {t('run.elapsed', { time: formatElapsed(elapsed) })}
         </span>
       </Panel>
     );
@@ -87,12 +88,12 @@ export function ResultStage({
     return (
       <Panel>
         <Icon name="alert" size={22} />
-        <h2 style={{ fontSize: 14, fontWeight: 600 }}>The engine couldn't finish this run</h2>
+        <h2 style={{ fontSize: 14, fontWeight: 600 }}>{t('run.failedTitle')}</h2>
         <p style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.6 }}>
-          Your prompt and settings are still here. Try again, or make the image smaller.
+          {t('run.failedBody')}
         </p>
         <Button icon="refresh" onClick={onRetry}>
-          Try again
+          {t('run.tryAgain')}
         </Button>
         {job.error_message ? (
           <details style={{ width: '100%' }}>
@@ -143,7 +144,7 @@ export function ResultStage({
           />
         ) : image.failed ? (
           <div style={{ padding: 32 }}>
-            <Alert tone="error">The finished image could not be loaded.</Alert>
+            <Alert tone="error">{t('run.imageFailed')}</Alert>
           </div>
         ) : (
           <Icon name="image" size={22} />
@@ -168,10 +169,10 @@ export function ResultStage({
           style={!image.url ? { pointerEvents: 'none', opacity: 0.5 } : undefined}
         >
           <Icon name="download" size={14} />
-          Save image
+          {t('run.saveImage')}
         </a>
         <Button size="sm" busy={useAsSourceBusy} onClick={onUseAsSource}>
-          Start from this
+          {t('run.startFromThis')}
         </Button>
       </div>
     </div>

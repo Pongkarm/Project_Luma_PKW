@@ -1,8 +1,11 @@
 import { Slider } from '../../../shared/ui/Slider.tsx';
-import { limits, sizePresets } from '../../../config/limits.ts';
+import { Icon } from '../../../shared/ui/Icon.tsx';
+import { limits, fitToEngine, needsDownscale } from '../../../config/limits.ts';
 import { ImageInput } from '../upload/ImageInput.tsx';
 import type { SourceImage } from '../draftStore.ts';
 import type { TaskType } from '../../../contracts/generation.ts';
+import { SizeControl } from './SizeControl.tsx';
+import { useT } from '../../../shared/hooks/useT.ts';
 
 type Props = {
   mode: TaskType;
@@ -13,6 +16,7 @@ type Props = {
   width: number;
   height: number;
   onSize: (size: { width: number; height: number }) => void;
+  sizeOverride: boolean;
 };
 
 /**
@@ -29,56 +33,62 @@ export function ModeFields({
   width,
   height,
   onSize,
+  sizeOverride,
 }: Props) {
+  const t = useT();
+
   if (mode === 'txt2img') {
-    return (
-      <div className="field">
-        <span className="label">Size</span>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {sizePresets.map((preset) => {
-            const selected = preset.width === width && preset.height === height;
-            return (
-              <button
-                key={preset.label}
-                type="button"
-                className={`btn btn--sm ${selected ? 'btn--secondary' : 'btn--ghost'}`}
-                aria-pressed={selected}
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 11.5,
-                  border: selected ? undefined : '1px solid var(--line)',
-                }}
-                onClick={() => onSize({ width: preset.width, height: preset.height })}
-              >
-                {preset.label}
-              </button>
-            );
-          })}
-        </div>
-        <span className="field__hint">
-          The engine works between {limits.dimension.min} and {limits.dimension.max} pixels a side.
-        </span>
-      </div>
-    );
+    return <SizeControl width={width} height={height} onChange={onSize} />;
   }
 
   const isInpaint = mode === 'inpaint';
+  const fitted = source ? fitToEngine(source.width, source.height) : null;
+  const output = sizeOverride ? { width, height } : fitted;
+  const scaled = source ? needsDownscale(source.width, source.height) : false;
 
   return (
     <>
       <ImageInput
-        label={isInpaint ? 'Image to paint on' : 'Starting image'}
+        label={isInpaint ? t('upload.toPaintOn') : t('upload.starting')}
         value={source}
         onChange={onSource}
       />
+
+      {source && output ? (
+        <div className="field" style={{ gap: 5, marginTop: -4 }}>
+          <div className="label">
+            <span>{t('size.output')}</span>
+            <span className="label__meta mono">
+              {output.width} × {output.height} px
+            </span>
+          </div>
+          {sizeOverride ? (
+            <span className="field__hint">{t('size.byHandOn')}</span>
+          ) : scaled ? (
+            <span
+              className="field__hint"
+              style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}
+            >
+              <Icon name="info" size={12} />
+              <span>
+                {t('size.scaled', {
+                  w: source.width,
+                  h: source.height,
+                  max: limits.dimension.max,
+                })}
+              </span>
+            </span>
+          ) : (
+            <span className="field__hint">{t('size.matches')}</span>
+          )}
+        </div>
+      ) : null}
+
       <Slider
         label={
           <>
-            Change amount
-            <span
-              className="modedot"
-              title="Reaches the engine in direct mode only — see the README"
-            />
+            {t('size.changeAmount')}
+            <span className="modedot" title={t('gen.modeDot')} />
           </>
         }
         value={denoisingStrength}
@@ -86,14 +96,13 @@ export function ModeFields({
         max={limits.denoisingStrength.max}
         step={limits.denoisingStrength.step}
         decimals={2}
-        ends={isInpaint ? ["Blend with what's there", 'Replace it'] : ['Keep the original', 'Reinvent it']}
+        ends={
+          isInpaint
+            ? [t('size.blend'), t('size.replace')]
+            : [t('size.keep'), t('size.reinvent')]
+        }
         onChange={onDenoising}
       />
-      {source ? (
-        <span className="field__hint" style={{ marginTop: -8 }}>
-          The result comes back at the source image's size, {source.width} × {source.height}.
-        </span>
-      ) : null}
     </>
   );
 }

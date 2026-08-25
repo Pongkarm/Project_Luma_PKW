@@ -1,6 +1,15 @@
 import { env } from '../config/env.ts';
 import { ApiError, type FieldError } from '../contracts/errors.ts';
 import { emitUnauthorized, getToken } from './tokenStore.ts';
+import { translate, type Language } from '../config/i18n.ts';
+
+/**
+ * Errors are produced outside React, so the language is read from <html lang>
+ * — the same value the app sets when someone switches language.
+ */
+function currentLanguage(): Language {
+  return document.documentElement.lang === 'th' ? 'th' : 'en';
+}
 
 type Body =
   | { kind: 'json'; value: unknown }
@@ -64,29 +73,30 @@ function parseErrorPayload(payload: unknown): { detail: string | null; fieldErro
   return { detail: null, fieldErrors: [] };
 }
 
-/** One sentence per status, written for the person rather than the log. */
+/** One sentence per status, in the language the person is using. */
 function messageForStatus(status: number, detail: string | null): string {
+  const language = currentLanguage();
   switch (status) {
     case 400:
-      return detail ?? 'That request could not be accepted.';
+      return detail ?? translate(language, 'error.400');
     case 401:
-      return 'Your session ended. Sign in again to keep working.';
+      return translate(language, 'error.401');
     case 403:
-      return 'That belongs to another account.';
+      return translate(language, 'error.403');
     case 404:
-      return 'That is no longer available.';
+      return translate(language, 'error.404');
     case 413:
-      return 'That file is larger than the 10 MB limit.';
+      return translate(language, 'error.413');
     case 415:
-      return 'LUMA reads PNG, JPEG and WebP images.';
+      return translate(language, 'error.415');
     case 422:
-      return detail ?? 'Something in that request was not valid.';
+      return detail ?? translate(language, 'error.422');
     case 500:
     case 502:
     case 503:
-      return 'The server had a problem with that request.';
+      return translate(language, 'error.500');
     default:
-      return detail ?? `The request failed (${status}).`;
+      return detail ?? translate(language, 'error.generic', { status });
   }
 }
 
@@ -110,9 +120,7 @@ function networkError(cause: unknown): ApiError {
   const aborted = cause instanceof DOMException && cause.name === 'AbortError';
   return new ApiError({
     status: 0,
-    message: aborted
-      ? 'The request was cancelled.'
-      : 'Could not reach the LUMA backend. Check that it is running and reachable.',
+    message: translate(currentLanguage(), aborted ? 'error.aborted' : 'error.network'),
     isNetworkError: true,
   });
 }
@@ -248,7 +256,13 @@ export function uploadMultipart<T>(
 
     xhr.onerror = () => reject(networkError(null));
     xhr.onabort = () =>
-      reject(new ApiError({ status: 0, message: 'The upload was cancelled.', isNetworkError: true }));
+      reject(
+        new ApiError({
+          status: 0,
+          message: translate(currentLanguage(), 'error.aborted'),
+          isNetworkError: true,
+        }),
+      );
 
     handlers.signal?.addEventListener('abort', () => xhr.abort(), { once: true });
     xhr.send(form);

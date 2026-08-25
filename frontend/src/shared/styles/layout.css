@@ -426,6 +426,267 @@
 }
 
 /* ── auth screens ────────────────────────────────────────────────────── */
+
+/*
+ * Two panels on a wide screen: the left one says what LUMA is, the right one
+ * gets out of the way and takes the credentials. Below 940px the brand panel
+ * is dropped rather than stacked — nobody signing in on a phone needs the pitch.
+ */
+.auth {
+  min-height: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  background: var(--bg);
+}
+
+@media (min-width: 940px) {
+  .auth {
+    grid-template-columns: 1.05fr 1fr;
+  }
+}
+
+.auth__brand {
+  display: none;
+  position: relative;
+  overflow: hidden;
+  padding: 56px 56px 44px;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 48px;
+}
+
+@media (min-width: 940px) {
+  .auth__brand {
+    display: flex;
+  }
+}
+
+/* A drafting-grid texture, faded out with a mask so it never competes. */
+.auth__brand::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.6;
+  pointer-events: none;
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 25% 15%, #000, transparent 70%);
+  mask-image: radial-gradient(ellipse 80% 70% at 25% 15%, #000, transparent 70%);
+}
+
+.auth__brand > * {
+  position: relative;
+}
+
+.auth__tagline {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  max-width: 15ch;
+  text-wrap: balance;
+}
+
+.auth__features {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 46ch;
+}
+
+.auth__feature {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.auth__featureIcon {
+  color: var(--accent-text);
+  margin-top: 2px;
+}
+
+.auth__featureName {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.auth__featureBody {
+  font-size: 12.5px;
+  color: var(--ink-3);
+  line-height: 1.55;
+}
+
+.auth__foot {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.auth__panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+.auth__card {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.auth__head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth__title {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.auth__sub {
+  font-size: 13.5px;
+  color: var(--ink-3);
+}
+
+/* The mark only shows where the brand panel does not. */
+.auth__markRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+@media (min-width: 940px) {
+  .auth__markRow {
+    display: none;
+  }
+}
+
+.auth__card .input {
+  height: 38px;
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease;
+}
+
+.auth__card .input:hover {
+  border-color: var(--line-strong);
+}
+
+.auth__card .input:focus {
+  border-color: var(--accent);
+  background: var(--panel);
+}
+
+.auth__card .btn--primary {
+  height: 40px;
+}
+
+.auth__reveal {
+  position: absolute;
+  right: 6px;
+  top: 27px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: color 140ms ease;
+}
+
+.auth__reveal:hover {
+  color: var(--ink);
+}
+
+.auth__rules {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 2px;
+}
+
+.auth__rule {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  transition: color 200ms ease;
+}
+
+.auth__rule--met {
+  color: var(--done);
+}
+
+.auth__rule--met .auth__ruleIcon {
+  animation: auth-pop 280ms cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+.auth__alt {
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+.auth__divider {
+  height: 1px;
+  background: var(--line);
+}
+
+@keyframes auth-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes auth-pop {
+  from {
+    transform: scale(0.5);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
+
+.auth__card,
+.auth__brand > * {
+  animation: auth-rise 400ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+.auth__brand > *:nth-child(2) {
+  animation-delay: 60ms;
+}
+
+.auth__brand > *:nth-child(3) {
+  animation-delay: 110ms;
+}
+
+.auth__error {
+  animation: auth-rise 220ms ease both;
+}
+
 .authpage {
   min-height: 100%;
   display: flex;

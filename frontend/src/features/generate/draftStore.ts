@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import type { GenerationRequest, TaskType } from '../../contracts/generation.ts';
 import type { ImageUploadResponse } from '../../contracts/upload.ts';
 import { limits } from '../../config/limits.ts';
+import { fitToEngine } from '../../config/limits.ts';
 import { defaultCheckpoint } from '../../config/models.ts';
 
 export type SourceImage = {
@@ -40,6 +41,11 @@ type DraftState = {
   height: number;
   denoisingStrength: number;
   source: SourceImage | null;
+  /**
+   * img2img and inpaint size themselves from the source image by default.
+   * Turning this on lets an advanced user ask for a different output size.
+   */
+  sizeOverride: boolean;
 
   setMode: (mode: TaskType) => void;
   patch: (values: Partial<Omit<DraftState, 'patch' | 'setMode' | 'reset' | 'setSource' | 'toRequest'>>) => void;
@@ -58,10 +64,11 @@ const initial = {
   steps: limits.steps.default,
   cfgScale: limits.cfgScale.default,
   seed: '',
-  width: 512,
-  height: 512,
+  width: 768,
+  height: 768,
   denoisingStrength: limits.denoisingStrength.defaultImg2Img,
   source: null as SourceImage | null,
+  sizeOverride: false,
 };
 
 /**
@@ -122,14 +129,18 @@ export const useDraft = create<DraftState>()(
 
         if (draft.mode === 'txt2img') return request;
 
+        // Never forward the source image's raw size: uploads are allowed up to
+        // 4096px while the engine only accepts 256-768, so an unscaled photo is
+        // rejected mid-flight. Ask for the size the engine can actually produce.
+        const output = outputSizeFor(draft);
+
         return {
           ...request,
           source_image_path: draft.source?.url ?? null,
           mask_image_path: draft.mode === 'inpaint' ? maskUrl ?? null : null,
           denoising_strength: draft.denoisingStrength,
-          // For img2img and inpaint the engine works at the source image's size.
-          width: draft.source?.width ?? draft.width,
-          height: draft.source?.height ?? draft.height,
+          width: output.width,
+          height: output.height,
         };
       },
     }),
@@ -149,15 +160,35 @@ export const useDraft = create<DraftState>()(
         height: state.height,
         denoisingStrength: state.denoisingStrength,
         source: state.source,
+        sizeOverride: state.sizeOverride,
       }),
     },
   ),
 );
 
+/**
+ * The size a run will actually come back at.
+ * For img2img and inpaint that is the source image scaled to fit the engine,
+ * unless the person has overridden it.
+ */
+export function outputSizeFor(state: {
+  mode: DraftState['mode'];
+  width: number;
+  height: number;
+  source: SourceImage | null;
+  sizeOverride: boolean;
+}): { width: number; height: number } {
+  if (state.mode === 'txt2img' || state.sizeOverride || !state.source) {
+    return { width: state.width, height: state.height };
+  }
+  return fitToEngine(state.source.width, state.source.height);
+}
+
 /** Why the Generate button is unavailable, or null when it is ready. */
 export function draftBlocker(state: DraftState): string | null {
-  if (state.prompt.trim().length === 0) return 'Describe the image first';
-  if (state.prompt.trim().length > limits.prompt.max) return 'The prompt is too long';
-  if (state.mode !== 'txt2img' && !state.source) return 'Add a starting image';
+  // Tokens, not sentences: the panel turns these into the chosen language.
+  if (state.prompt.trim().length === 0) return 'BLOCK_PROMPT';
+  if (state.prompt.trim().length > limits.prompt.max) return 'BLOCK_LONG';
+  if (state.mode !== 'txt2img' && !state.source) return 'BLOCK_IMAGE';
   return null;
 }
