@@ -19,11 +19,20 @@ export function RegisterPage() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<{ field: string; message: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const ready = username.trim() !== '' && email.trim() !== '' && passwordIsAcceptable(password);
+  // Only complain once they have started the second box — flagging a mismatch
+  // against an empty field would call every password wrong as it is typed.
+  const mismatch = confirm.length > 0 && confirm !== password;
+  const matches = confirm.length > 0 && confirm === password;
+  const ready =
+    username.trim() !== '' &&
+    email.trim() !== '' &&
+    passwordIsAcceptable(password) &&
+    matches;
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -107,6 +116,26 @@ export function RegisterPage() {
                 </span>
               );
             })}
+            <span className={`auth__rule ${matches ? 'auth__rule--met' : ''}`}>
+              <Icon
+                name={matches ? 'checkCircle' : 'queue'}
+                size={12}
+                className="auth__ruleIcon"
+                strokeDasharray={matches ? undefined : '3 3'}
+              />
+              {t('auth.passwordMatches')}
+            </span>
+          </div>
+
+          <div style={{ marginTop: 14 }}>
+            <PasswordField
+              label={t('auth.confirmPassword')}
+              value={confirm}
+              autoComplete="new-password"
+              required
+              error={mismatch ? t('auth.passwordMismatch') : null}
+              onChange={(event) => setConfirm(event.target.value)}
+            />
           </div>
         </div>
 

@@ -30,6 +30,7 @@ export function ProfileCard() {
   const [email, setEmail] = useState('');
   const [withPassword, setWithPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
+  const [confirmNew, setConfirmNew] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -39,6 +40,7 @@ export function ProfileCard() {
     setEmail(user?.email ?? '');
     setWithPassword(false);
     setNewPassword('');
+    setConfirmNew('');
     setCurrentPassword('');
     setError(null);
     setEditing(true);
@@ -46,11 +48,13 @@ export function ProfileCard() {
 
   const changedName = username.trim() !== '' && username.trim() !== user?.username;
   const changedEmail = email.trim() !== '' && email.trim() !== user?.email;
-  const changedPassword = withPassword && passwordIsAcceptable(newPassword);
+  const pwMismatch = withPassword && confirmNew.length > 0 && confirmNew !== newPassword;
+  const pwMatches = withPassword && confirmNew.length > 0 && confirmNew === newPassword;
+  const changedPassword = withPassword && passwordIsAcceptable(newPassword) && pwMatches;
   const ready =
     currentPassword.length > 0 &&
     (changedName || changedEmail || changedPassword) &&
-    (!withPassword || passwordIsAcceptable(newPassword));
+    (!withPassword || (passwordIsAcceptable(newPassword) && pwMatches));
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -164,6 +168,25 @@ export function ProfileCard() {
                   </span>
                 );
               })}
+              <span className={`auth__rule ${pwMatches ? 'auth__rule--met' : ''}`}>
+                <Icon
+                  name={pwMatches ? 'checkCircle' : 'queue'}
+                  size={12}
+                  className="auth__ruleIcon"
+                  strokeDasharray={pwMatches ? undefined : '3 3'}
+                />
+                {t('auth.passwordMatches')}
+              </span>
+            </div>
+
+            <div style={{ marginTop: 14 }}>
+              <PasswordField
+                label={t('auth.confirmPassword')}
+                value={confirmNew}
+                autoComplete="new-password"
+                error={pwMismatch ? t('auth.passwordMismatch') : null}
+                onChange={(event) => setConfirmNew(event.target.value)}
+              />
             </div>
           </div>
         ) : null}
