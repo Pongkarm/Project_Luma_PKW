@@ -33,3 +33,14 @@ export type TokenResponse = {
 export type UserProfile = UserResponse & {
   total_generations: number;
 };
+
+/**
+ * PATCH /auth/me — change your own email or password.
+ * The current password is required for either, so a stolen token cannot lock
+ * the owner out of their own account.
+ */
+export type UserUpdateRequest = {
+  current_password: string;
+  email?: string;
+  new_password?: string;
+};

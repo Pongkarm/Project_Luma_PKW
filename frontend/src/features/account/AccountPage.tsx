@@ -8,6 +8,7 @@ import { env } from '../../config/env.ts';
 import { useT } from '../../shared/hooks/useT.ts';
 import { usePageTitle } from '../../shared/hooks/usePageTitle.ts';
 import { languages, type Language } from '../../config/i18n.ts';
+import { SecurityCard } from './SecurityCard.tsx';
 
 export function AccountPage() {
   const t = useT();
@@ -63,6 +64,8 @@ export function AccountPage() {
               onChange={setLanguage}
             />
           </section>
+
+          <SecurityCard />
 
           <section className="card account__section">
             <span className="eyebrow">{t('account.connection')}</span>

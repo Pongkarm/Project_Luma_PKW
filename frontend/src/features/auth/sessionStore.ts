@@ -20,6 +20,7 @@ type SessionState = {
   signIn: (username: string, password: string) => Promise<void>;
   register: (payload: RegisterRequest) => Promise<void>;
   refreshUser: () => Promise<void>;
+  setUser: (user: UserProfile) => void;
   signOut: () => void;
 };
 
@@ -72,6 +73,10 @@ export const useSession = create<SessionState>()((set, get) => ({
   async register(payload) {
     await authService.register(payload);
     await get().signIn(payload.username, payload.password);
+  },
+
+  setUser(user) {
+    set({ user });
   },
 
   async refreshUser() {
