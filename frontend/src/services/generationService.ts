@@ -1,4 +1,4 @@
-import { request, requestBlob, requestObjectUrl } from './apiClient.ts';
+import { request, requestBlob, requestObjectUrl, requestOk } from './apiClient.ts';
 import type {
   Generation,
   GenerationList,
@@ -17,6 +17,11 @@ export const generationService = {
     return request<GenerationList>('/generations', {
       query: { page: params.page ?? 1, page_size: params.page_size ?? 20 },
     });
+  },
+
+  /** DELETE /generations/{id} — removes the record and the file. Not reversible. */
+  remove(id: string): Promise<boolean> {
+    return requestOk(`/generations/${id}`, { method: 'DELETE' });
   },
 
   /** GET /generations/{id} — the polling target. */

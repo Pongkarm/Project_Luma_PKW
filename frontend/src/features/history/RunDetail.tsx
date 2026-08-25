@@ -6,6 +6,9 @@ import { formatDateTime, formatDuration } from '../../shared/utils/format.ts';
 import { uploadService } from '../../services/uploadService.ts';
 import type { Generation } from '../../contracts/generation.ts';
 import { useT } from '../../shared/hooks/useT.ts';
+import { useState } from 'react';
+import { useDeleteRun } from '../generate/run/useDeleteRun.ts';
+import { DeleteRunDialog } from '../generate/run/DeleteRunDialog.tsx';
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
@@ -21,10 +24,17 @@ function Fact({ label, value }: { label: string; value: string }) {
 export function RunDetail({
   run,
   onReuseSettings,
+  onDeleted,
 }: {
   run: Generation;
   onReuseSettings: () => void;
+  onDeleted: () => void;
 }) {
+  const [confirming, setConfirming] = useState(false);
+  const remove = useDeleteRun(() => {
+    setConfirming(false);
+    onDeleted();
+  });
   const image = useAuthedImage(run.id, run.status === 'completed');
   const t = useT();
 
@@ -135,7 +145,17 @@ export function RunDetail({
         <Button block onClick={onReuseSettings}>
           {t('history.reuse')}
         </Button>
+        <Button block variant="danger" icon="trash" onClick={() => setConfirming(true)}>
+          {t('run.delete')}
+        </Button>
       </div>
+
+      <DeleteRunDialog
+        open={confirming}
+        busy={remove.isPending}
+        onCancel={() => setConfirming(false)}
+        onConfirm={() => remove.mutate(run.id)}
+      />
     </aside>
   );
 }

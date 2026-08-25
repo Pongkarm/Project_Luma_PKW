@@ -164,6 +164,7 @@ export function GeneratePage() {
                   onCheckAgain={refetch}
                   onUseAsSource={() => void startFromResult()}
                   useAsSourceBusy={reusing}
+                  onDeleted={() => setActiveRun(null)}
                 />
               ) : source ? (
                 <SourcePreview

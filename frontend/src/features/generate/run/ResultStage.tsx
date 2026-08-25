@@ -7,6 +7,9 @@ import { formatDuration, formatElapsed } from '../../../shared/utils/format.ts';
 import type { Generation } from '../../../contracts/generation.ts';
 import { useT } from '../../../shared/hooks/useT.ts';
 import { useToasts } from '../../../shared/ui/Toast.tsx';
+import { useState } from 'react';
+import { useDeleteRun } from './useDeleteRun.ts';
+import { DeleteRunDialog } from './DeleteRunDialog.tsx';
 
 type Props = {
   job: Generation;
@@ -16,6 +19,7 @@ type Props = {
   onCheckAgain: () => void;
   onUseAsSource: () => void;
   useAsSourceBusy: boolean;
+  onDeleted: () => void;
 };
 
 function Panel({ children }: { children: React.ReactNode }) {
@@ -30,7 +34,13 @@ export function ResultStage({
   onCheckAgain,
   onUseAsSource,
   useAsSourceBusy,
+  onDeleted,
 }: Props) {
+  const [confirming, setConfirming] = useState(false);
+  const remove = useDeleteRun(() => {
+    setConfirming(false);
+    onDeleted();
+  });
   const t = useT();
   const showToast = useToasts((state) => state.show);
   const running = job.status === 'pending' || job.status === 'processing';
@@ -168,8 +178,24 @@ export function ResultStage({
           <Button size="sm" busy={useAsSourceBusy} onClick={onUseAsSource}>
             {t('run.startFromThis')}
           </Button>
+          <Button
+            size="sm"
+            variant="danger"
+            icon="trash"
+            onClick={() => setConfirming(true)}
+            aria-label={t('run.delete')}
+          >
+            {t('run.delete')}
+          </Button>
         </div>
       </div>
+
+      <DeleteRunDialog
+        open={confirming}
+        busy={remove.isPending}
+        onCancel={() => setConfirming(false)}
+        onConfirm={() => remove.mutate(job.id)}
+      />
     </div>
   );
 }

@@ -184,7 +184,11 @@ export function HistoryPage() {
         )}
       </main>
 
-      {selected ? <RunDetail run={selected} onReuseSettings={() => reuse(selected)} /> : null}
+      {selected ? <RunDetail
+          run={selected}
+          onReuseSettings={() => reuse(selected)}
+          onDeleted={() => navigate('/history')}
+        /> : null}
     </div>
   );
 }
