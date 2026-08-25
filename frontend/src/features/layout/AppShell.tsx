@@ -57,6 +57,9 @@ export function AppShell() {
 
   return (
     <div className="app">
+      <a className="skip" href="#main">
+        {t('nav.skip')}
+      </a>
       <header className="topbar">
         <NavLink to="/generate" className="brand">
           <span className="brand__mark" aria-hidden="true">

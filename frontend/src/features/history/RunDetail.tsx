@@ -9,6 +9,8 @@ import { useT } from '../../shared/hooks/useT.ts';
 import { useState } from 'react';
 import { useDeleteRun } from '../generate/run/useDeleteRun.ts';
 import { DeleteRunDialog } from '../generate/run/DeleteRunDialog.tsx';
+import { ImageViewer } from '../../shared/ui/ImageViewer.tsx';
+import { useToasts } from '../../shared/ui/Toast.tsx';
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
@@ -31,6 +33,8 @@ export function RunDetail({
   onDeleted: () => void;
 }) {
   const [confirming, setConfirming] = useState(false);
+  const [viewing, setViewing] = useState(false);
+  const showToast = useToasts((state) => state.show);
   const remove = useDeleteRun(() => {
     setConfirming(false);
     onDeleted();
@@ -62,7 +66,14 @@ export function RunDetail({
           }}
         >
           {image.url ? (
-            <img className="img-in" src={image.url} alt={run.prompt} style={{ width: '100%', display: 'block' }} />
+            <img
+              className="img-in"
+              src={image.url}
+              alt={run.prompt}
+              title={t('run.viewFull')}
+              style={{ width: '100%', display: 'block', cursor: 'zoom-in' }}
+              onClick={() => setViewing(true)}
+            />
           ) : run.status === 'completed' ? (
             <span className="skeleton" style={{ width: '100%', height: 160 }} />
           ) : (
@@ -73,7 +84,20 @@ export function RunDetail({
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <span className="eyebrow">{t('history.prompt')}</span>
+          <span className="label" style={{ padding: 0 }}>
+            <span className="eyebrow">{t('history.prompt')}</span>
+            <button
+              type="button"
+              className="btn btn--sm btn--ghost"
+              style={{ height: 22, padding: '0 6px', fontSize: 'var(--fs-2xs)' }}
+              onClick={() => {
+                void navigator.clipboard?.writeText(run.prompt);
+                showToast(t('run.promptCopied'));
+              }}
+            >
+              {t('run.copyPrompt')}
+            </button>
+          </span>
           <p style={{ fontSize: 'var(--fs-sm)', lineHeight: 1.55, color: 'var(--ink-2)' }}>{run.prompt}</p>
         </div>
 
@@ -149,6 +173,15 @@ export function RunDetail({
           {t('run.delete')}
         </Button>
       </div>
+
+      {viewing && image.url ? (
+        <ImageViewer
+          url={image.url}
+          alt={run.prompt}
+          meta={`${run.width} × ${run.height}`}
+          onClose={() => setViewing(false)}
+        />
+      ) : null}
 
       <DeleteRunDialog
         open={confirming}

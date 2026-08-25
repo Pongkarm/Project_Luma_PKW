@@ -10,6 +10,7 @@ import { useToasts } from '../../../shared/ui/Toast.tsx';
 import { useState } from 'react';
 import { useDeleteRun } from './useDeleteRun.ts';
 import { DeleteRunDialog } from './DeleteRunDialog.tsx';
+import { ImageViewer } from '../../../shared/ui/ImageViewer.tsx';
 
 type Props = {
   job: Generation;
@@ -37,6 +38,7 @@ export function ResultStage({
   onDeleted,
 }: Props) {
   const [confirming, setConfirming] = useState(false);
+  const [viewing, setViewing] = useState(false);
   const remove = useDeleteRun(() => {
     setConfirming(false);
     onDeleted();
@@ -146,7 +148,11 @@ export function ResultStage({
 
   return (
     <div className="result">
-      <div className="result__media">
+      <div
+        className={`result__media${image.url ? ' result__media--zoom' : ''}`}
+        onClick={() => image.url && setViewing(true)}
+        title={image.url ? t('run.viewFull') : undefined}
+      >
         {image.url ? (
           <img className="img-in" src={image.url} alt={job.prompt} />
         ) : image.failed ? (
@@ -189,6 +195,15 @@ export function ResultStage({
           </Button>
         </div>
       </div>
+
+      {viewing && image.url ? (
+        <ImageViewer
+          url={image.url}
+          alt={job.prompt}
+          meta={`${job.width} × ${job.height}`}
+          onClose={() => setViewing(false)}
+        />
+      ) : null}
 
       <DeleteRunDialog
         open={confirming}

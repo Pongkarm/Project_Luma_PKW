@@ -6,6 +6,7 @@ import { usePreferences, type ThemeName } from '../../shared/stores/preferencesS
 import { formatDateTime } from '../../shared/utils/format.ts';
 import { env } from '../../config/env.ts';
 import { useT } from '../../shared/hooks/useT.ts';
+import { usePageTitle } from '../../shared/hooks/usePageTitle.ts';
 import { languages, type Language } from '../../config/i18n.ts';
 
 export function AccountPage() {
@@ -15,10 +16,11 @@ export function AccountPage() {
   const language = usePreferences((state) => state.language);
   const setLanguage = usePreferences((state) => state.setLanguage);
   const t = useT();
+  usePageTitle(t('account.title'));
   const setTheme = usePreferences((state) => state.setTheme);
 
   return (
-    <main className="main">
+    <main className="main" id="main" tabIndex={-1}>
       <div className="stagebar">
         <span style={{ fontWeight: 600, fontSize: 'var(--fs-md)' }}>{t('account.title')}</span>
       </div>

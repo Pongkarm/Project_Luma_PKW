@@ -13,12 +13,14 @@ import type { Generation } from '../../contracts/generation.ts';
 import { RunDetail } from './RunDetail.tsx';
 import { useDraft } from '../generate/draftStore.ts';
 import { useT } from '../../shared/hooks/useT.ts';
+import { usePageTitle } from '../../shared/hooks/usePageTitle.ts';
 
 const PAGE_SIZE = 24;
 
 function RunCard({ run, active, onSelect }: { run: Generation; active: boolean; onSelect: () => void }) {
   const image = useAuthedImage(run.id, run.status === 'completed');
   const t = useT();
+  usePageTitle(t('nav.history'));
 
   return (
     // A card, not a <button>: the whole tile is the target, and a button's
@@ -115,7 +117,7 @@ export function HistoryPage() {
 
   return (
     <div className="app__workspace">
-      <main className="main">
+      <main className="main" id="main" tabIndex={-1}>
         <div className="stagebar">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontWeight: 600, fontSize: 'var(--fs-md)' }}>{t('history.title')}</span>

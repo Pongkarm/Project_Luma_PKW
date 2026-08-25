@@ -737,3 +737,102 @@
   display: inline-block;
   flex: none;
 }
+
+/* ── full-size viewer ────────────────────────────────────────────────── */
+
+/*
+ * An image tool that will not let you look at the image properly is missing
+ * its point. The result is capped at 56vh in the workspace so the controls stay
+ * visible; this is where you actually inspect what came out.
+ */
+.viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: var(--overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  animation: ui-fade 180ms ease-out both;
+  cursor: zoom-out;
+}
+
+.viewer__img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: var(--r);
+  box-shadow: var(--shadow-pop);
+  animation: viewer-in 220ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+  cursor: default;
+}
+
+@keyframes viewer-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.viewer__close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--panel);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.viewer__close:hover {
+  color: var(--ink);
+}
+
+.viewer__meta {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--panel);
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+}
+
+.result__media--zoom {
+  cursor: zoom-in;
+}
+
+/* Skip link: the first thing a keyboard reaches, invisible until focused. */
+.skip {
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 80;
+  padding: 8px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--panel);
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  transition: top 140ms ease;
+}
+
+.skip:focus {
+  top: 12px;
+  text-decoration: none;
+}

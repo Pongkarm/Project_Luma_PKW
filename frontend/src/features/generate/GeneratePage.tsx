@@ -18,6 +18,7 @@ import { useGenerationJob } from './run/useGenerationJob.ts';
 import { useRun } from './run/runStore.ts';
 import { toSourceImage, useDraft } from './draftStore.ts';
 import { useT } from '../../shared/hooks/useT.ts';
+import { usePageTitle } from '../../shared/hooks/usePageTitle.ts';
 import type { TKey } from '../../config/i18n.ts';
 
 const modeTitleKeys: Record<string, TKey> = {
@@ -29,6 +30,7 @@ const modeTitleKeys: Record<string, TKey> = {
 export function GeneratePage() {
   const draft = useDraft();
   const t = useT();
+  usePageTitle(t('nav.generate'));
   const queryClient = useQueryClient();
   const { activeRunId, startedAt, setActiveRun } = useRun();
   const { job, stalled, refetch } = useGenerationJob(activeRunId, startedAt);
@@ -129,7 +131,7 @@ export function GeneratePage() {
 
   return (
     <div className="app__workspace">
-      <main className="main">
+      <main className="main" id="main" tabIndex={-1}>
         {showMaskCanvas ? (
           <MaskCanvas
             editor={editor}
