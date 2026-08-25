@@ -6,7 +6,7 @@ from sqlalchemy import text
 
 from app.db.database import engine, Base
 from app.models import User, Generation
-from app.api import auth, generation, callback, upload
+from app.api import auth, generation, callback, upload, models
 
 # 💡 ตั้งค่าระบบ Logging กลาง
 logging.basicConfig(
@@ -49,6 +49,7 @@ app.include_router(auth.router)
 app.include_router(generation.router)
 app.include_router(callback.router)
 app.include_router(upload.router)
+app.include_router(models.router)
 
 
 @app.get("/", tags=["Health Check"])
