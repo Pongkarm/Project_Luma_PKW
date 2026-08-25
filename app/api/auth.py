@@ -153,13 +153,27 @@ def update_me(
         )
 
     # 2. ต้องมีอะไรให้แก้จริงๆ
-    if payload.email is None and payload.new_password is None:
+    if payload.username is None and payload.email is None and payload.new_password is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="ไม่มีข้อมูลที่ต้องการแก้ไข",
         )
 
-    # 3. อีเมลต้องไม่ซ้ำกับบัญชีอื่น (ซ้ำกับของตัวเองถือว่าไม่เปลี่ยน)
+    # 3. ชื่อผู้ใช้ต้องไม่ซ้ำ — ใช้ล็อกอินได้ จึงต้องไม่ชนกับบัญชีอื่น
+    #    (โทเคนผูกกับ user id ไม่ใช่ username เซสชันจึงไม่หลุดตอนเปลี่ยนชื่อ)
+    if payload.username is not None and payload.username != current_user.username:
+        taken = db.query(User).filter(
+            User.username == payload.username,
+            User.id != current_user.id,
+        ).first()
+        if taken:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username นี้ถูกใช้แล้ว!",
+            )
+        current_user.username = payload.username
+
+    # 4. อีเมลต้องไม่ซ้ำกับบัญชีอื่น (ซ้ำกับของตัวเองถือว่าไม่เปลี่ยน)
     if payload.email is not None and payload.email != current_user.email:
         taken = db.query(User).filter(
             User.email == payload.email,

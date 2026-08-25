@@ -40,5 +40,6 @@ class UserUpdate(BaseModel):
     เปลี่ยนรหัสผ่านแล้วล็อกเจ้าของบัญชีออกจากระบบได้
     """
     current_password: str = Field(..., min_length=1)
+    username: str | None = Field(default=None, min_length=3, max_length=50)
     email: EmailStr | None = None
     new_password: str | None = Field(default=None, min_length=8)
