@@ -50,6 +50,150 @@
   font-size: 13px;
 }
 
+/* ── top bar ─────────────────────────────────────────────────────────── */
+.topbar__cluster {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar__divider {
+  width: 1px;
+  height: 20px;
+  background: var(--line);
+}
+
+/* Status belongs in a status bar. It used to sit at the bottom of the rail,
+   where it was both easy to miss and gone the moment the rail collapsed. */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-2);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .status-pill__text {
+    display: none;
+  }
+
+  .status-pill {
+    padding: 0 8px;
+  }
+}
+
+.avatar {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  text-transform: uppercase;
+}
+
+.avatar--lg {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-lg);
+  font-size: 24px;
+}
+
+.topbar__user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-2);
+  font-size: var(--fs-md);
+  font-weight: 500;
+  text-decoration: none;
+  padding: 3px 6px 3px 3px;
+  border-radius: 999px;
+  transition: background-color 140ms ease;
+}
+
+.topbar__user:hover {
+  background: var(--panel-2);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+/* ── account ─────────────────────────────────────────────────────────── */
+.account {
+  width: 100%;
+  max-width: 620px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.account__header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+}
+
+.account__name {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.account__email {
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+}
+
+.account__stat {
+  margin-left: auto;
+  text-align: right;
+}
+
+.account__statNum {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.account__statLabel {
+  font-size: var(--fs-2xs);
+  color: var(--ink-3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.account__section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+}
+
+@media (max-width: 560px) {
+  .account__header {
+    flex-wrap: wrap;
+  }
+
+  .account__stat {
+    margin-left: 0;
+    text-align: left;
+  }
+}
+
 .app__body {
   flex: 1;
   display: flex;
@@ -225,11 +369,7 @@
 }
 
 .rail__foot {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px;
-  border-top: 1px solid var(--line);
+  display: none;
 }
 
 .rail__engine {

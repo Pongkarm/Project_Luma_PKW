@@ -14,47 +14,28 @@ function useEngineStatus() {
 }
 
 /**
- * What the app can honestly say about the backend.
- *
- * /healthz and /api/status both raise on the server today, so "unavailable" is
- * the truthful reading — it does not mean the backend is down, and it does not
- * claim a mode the app cannot actually read.
+ * Compact status for the top bar. The rail footer version disappeared whenever
+ * the rail collapsed, which is exactly when someone might wonder whether the
+ * engine is up.
  */
-export function EngineIndicator() {
+export function EnginePill() {
   const { data } = useEngineStatus();
   const t = useT();
 
-  if (!data) {
-    return (
-      <span className="rail__engine">
-        <span className="dot" />
-        {t('engine.checking')}
-      </span>
-    );
-  }
-
-  if (data.state === 'offline') {
-    return (
-      <span className="rail__engine">
-        <span className="dot dot--offline" />
-        {t('engine.offline')}
-      </span>
-    );
-  }
-
-  if (data.state === 'unavailable') {
-    return (
-      <span className="rail__engine" title={data.reason}>
-        <span className="dot" />
-        {t('engine.unavailable')}
-      </span>
-    );
-  }
+  const tone =
+    !data ? '' : data.state === 'online' ? 'dot--online' : data.state === 'offline' ? 'dot--offline' : '';
+  const label = !data
+    ? t('engine.checking')
+    : data.state === 'online'
+      ? t('engine.online')
+      : data.state === 'offline'
+        ? t('engine.offline')
+        : t('engine.unavailable');
 
   return (
-    <span className="rail__engine">
-      <span className="dot dot--online" />
-      {t('engine.online')}
+    <span className="status-pill" title={`${t('nav.engine')}: ${label}`}>
+      <span className={`dot ${tone}`} />
+      <span className="status-pill__text">{label}</span>
     </span>
   );
 }

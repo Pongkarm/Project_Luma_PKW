@@ -4,7 +4,7 @@ import { IconButton } from '../../shared/ui/Button.tsx';
 import { useSession } from '../auth/sessionStore.ts';
 import { usePreferences } from '../../shared/stores/preferencesStore.ts';
 import { useT } from '../../shared/hooks/useT.ts';
-import { AiModeBadge, EngineIndicator } from './EngineIndicator.tsx';
+import { AiModeBadge, EnginePill } from './EngineIndicator.tsx';
 import { SessionExpiredDialog } from '../auth/SessionExpiredDialog.tsx';
 import { Toasts } from '../../shared/ui/Toast.tsx';
 import { usePresets } from '../generate/presetStore.ts';
@@ -68,7 +68,8 @@ export function AppShell() {
           <span className="brand__word">LUMA</span>
         </NavLink>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="topbar__cluster">
+          <EnginePill />
           <AiModeBadge />
           <button
             type="button"
@@ -147,11 +148,6 @@ export function AppShell() {
           <div className="rail__spacer" />
 
           <div className="rail__section">{rest.filter((item) => item.minor).map((item) => renderLink(item))}</div>
-
-          <div className="rail__foot">
-            <span className="eyebrow">{t('nav.engine')}</span>
-            <EngineIndicator />
-          </div>
 
           <button
             type="button"
