@@ -55,7 +55,7 @@ export function ModeFields({
       />
 
       {source && output ? (
-        <div className="field" style={{ gap: 5, marginTop: -4 }}>
+        <div className="field" style={{ gap: 4, marginTop: -4 }}>
           <div className="label">
             <span>{t('size.output')}</span>
             <span className="label__meta mono">

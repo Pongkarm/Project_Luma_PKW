@@ -50,8 +50,8 @@ export function SessionExpiredDialog() {
       <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <Icon name="lock" size={18} />
-          <h2 style={{ fontSize: 15, fontWeight: 600 }}>{t('session.title')}</h2>
-          <p style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.55 }}>
+          <h2 style={{ fontSize: 'var(--fs-lg)', fontWeight: 600 }}>{t('session.title')}</h2>
+          <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--ink-3)', lineHeight: 1.55 }}>
             {t('session.body')}
           </p>
         </div>

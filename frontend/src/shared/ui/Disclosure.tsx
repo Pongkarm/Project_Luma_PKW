@@ -20,7 +20,7 @@ export function Disclosure({ open, onToggle, label, summary, children }: Props) 
         </span>
         {summary && !open ? <span className="label__meta mono">{summary}</span> : null}
       </button>
-      {open ? <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>{children}</div> : null}
+      {open ? <div className="disclosure__panel">{children}</div> : null}
     </div>
   );
 }

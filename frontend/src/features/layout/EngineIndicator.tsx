@@ -67,7 +67,7 @@ export function AiModeBadge() {
   return (
     <span
       className="mono"
-      style={{ fontSize: 11, color: 'var(--ink-3)', letterSpacing: '0.04em' }}
+      style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-3)', letterSpacing: '0.04em' }}
       title={t('engine.modeReported')}
     >
       {data.aiMode.toUpperCase()} MODE

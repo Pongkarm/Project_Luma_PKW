@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Icon } from '../../../shared/ui/Icon.tsx';
 import { limits, sizePresets, snapDimension } from '../../../config/limits.ts';
 import { useT } from '../../../shared/hooks/useT.ts';
@@ -9,6 +9,8 @@ type Props = {
   width: number;
   height: number;
   onChange: (size: { width: number; height: number }) => void;
+  /** Where Reset returns to. Defaults to the first preset. */
+  defaultSize?: { width: number; height: number };
 };
 
 /** A proportional rectangle, so the shape reads before the numbers do. */
@@ -112,8 +114,64 @@ function DimensionRow({ label, ariaLabel, value, onCommit }: RowProps) {
  * place rather than being buried under Advanced. Swapping the two dimensions is
  * always one click away, whichever mode you are in.
  */
-export function SizeControl({ label, width, height, onChange }: Props) {
+export function SizeControl({ label, width, height, onChange, defaultSize }: Props) {
   const t = useT();
+  const [locked, setLocked] = useState(false);
+  const fallback = defaultSize ?? { width: sizePresets[0].width, height: sizePresets[0].height };
+  const isDefault = width === fallback.width && height === fallback.height;
+
+  /**
+   * With the ratio locked, moving one dimension moves the other to match.
+   * The ratio is taken from the values as they were when the lock went on, so
+   * rounding to multiples of 8 cannot make it drift over repeated drags.
+   */
+  const ratio = useRef(width / height);
+
+  function setLock(next: boolean) {
+    if (next) ratio.current = width / height;
+    setLocked(next);
+  }
+
+  /**
+   * Hold the ratio while keeping both sides inside the engine's range. When the
+   * partner dimension would fall outside it, the dimension being dragged backs
+   * off instead — letting it run on would silently break the lock at the edges.
+   */
+  function withRatio(driver: number, drivingWidth: boolean) {
+    const { min, max } = limits.dimension;
+    const r = ratio.current;
+
+    // Work in raw numbers and only snap at the very end: snapDimension clamps,
+    // so checking the range after snapping would never see an out-of-range
+    // partner and the lock would quietly break at the edges.
+    let w = drivingWidth ? driver : driver * r;
+    let h = drivingWidth ? driver / r : driver;
+
+    if (h > max) {
+      h = max;
+      w = max * r;
+    } else if (h < min) {
+      h = min;
+      w = min * r;
+    }
+    if (w > max) {
+      w = max;
+      h = max / r;
+    } else if (w < min) {
+      w = min;
+      h = min / r;
+    }
+
+    return { width: snapDimension(w), height: snapDimension(h) };
+  }
+
+  function commitWidth(next: number) {
+    onChange(locked ? withRatio(next, true) : { width: snapDimension(next), height });
+  }
+
+  function commitHeight(next: number) {
+    onChange(locked ? withRatio(next, false) : { width, height: snapDimension(next) });
+  }
   // Custom stays open once chosen, even when the numbers happen to match a
   // preset — clicking "Custom" should reveal the controls, not change the size.
   const [customOpen, setCustomOpen] = useState(false);
@@ -134,9 +192,39 @@ export function SizeControl({ label, width, height, onChange }: Props) {
             style={{ width: 22, height: 22 }}
             aria-label={t('size.swap')}
             title={t('size.swap')}
-            onClick={() => onChange({ width: height, height: width })}
+            onClick={() => {
+              ratio.current = height / width;
+              onChange({ width: height, height: width });
+            }}
           >
             <Icon name="swap" size={12} />
+          </button>
+          <button
+            type="button"
+            className="icobtn"
+            style={{
+              width: 22,
+              height: 22,
+              color: locked ? 'var(--accent-text)' : undefined,
+              borderColor: locked ? 'var(--accent)' : undefined,
+            }}
+            aria-pressed={locked}
+            aria-label={locked ? t('size.lockOn') : t('size.lock')}
+            title={locked ? t('size.lockOn') : t('size.lock')}
+            onClick={() => setLock(!locked)}
+          >
+            <Icon name={locked ? 'lock' : 'lockOpen'} size={12} />
+          </button>
+          <button
+            type="button"
+            className="icobtn"
+            style={{ width: 22, height: 22 }}
+            disabled={isDefault}
+            aria-label={t('size.reset')}
+            title={t('size.reset')}
+            onClick={() => onChange(fallback)}
+          >
+            <Icon name="refresh" size={12} />
           </button>
         </span>
       </div>
@@ -154,6 +242,7 @@ export function SizeControl({ label, width, height, onChange }: Props) {
               style={{ gap: 6, border: selected ? undefined : '1px solid var(--line)' }}
               onClick={() => {
                 setCustomOpen(false);
+                setLocked(false);
                 onChange({ width: preset.width, height: preset.height });
               }}
             >
@@ -193,13 +282,13 @@ export function SizeControl({ label, width, height, onChange }: Props) {
               label={t('size.width')}
               ariaLabel={t('size.widthPx')}
               value={width}
-              onCommit={(next) => onChange({ width: next, height })}
+              onCommit={commitWidth}
             />
             <DimensionRow
               label={t('size.height')}
               ariaLabel={t('size.heightPx')}
               value={height}
-              onCommit={(next) => onChange({ width, height: next })}
+              onCommit={commitHeight}
             />
           </div>
         </div>

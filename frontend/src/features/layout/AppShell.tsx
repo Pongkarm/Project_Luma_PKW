@@ -6,8 +6,9 @@ import { usePreferences } from '../../shared/stores/preferencesStore.ts';
 import { useT } from '../../shared/hooks/useT.ts';
 import { AiModeBadge, EngineIndicator } from './EngineIndicator.tsx';
 import { SessionExpiredDialog } from '../auth/SessionExpiredDialog.tsx';
+import { Toasts } from '../../shared/ui/Toast.tsx';
 
-type NavItem = { to: string; label: string; icon: IconName; count?: number };
+type NavItem = { to: string; label: string; icon: IconName; count?: number; minor?: boolean };
 
 export function AppShell() {
   const user = useSession((state) => state.user);
@@ -20,7 +21,7 @@ export function AppShell() {
   const items: NavItem[] = [
     { to: '/generate', label: t('nav.generate'), icon: 'generate' },
     { to: '/history', label: t('nav.history'), icon: 'clock', count: user?.total_generations },
-    { to: '/account', label: t('nav.account'), icon: 'user' },
+    { to: '/account', label: t('nav.account'), icon: 'user', minor: true },
   ];
 
   return (
@@ -57,7 +58,7 @@ export function AppShell() {
               alignItems: 'center',
               gap: 8,
               color: 'var(--ink-2)',
-              fontSize: 13,
+              fontSize: 'var(--fs-sm)',
               fontWeight: 500,
               textDecoration: 'none',
             }}
@@ -65,7 +66,7 @@ export function AppShell() {
             <Icon name="user" size={15} />
             {user?.username ?? t('nav.account')}
             {user ? (
-              <span className="mono" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
+              <span className="mono" style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}>
                 {user.total_generations}
               </span>
             ) : null}
@@ -77,7 +78,13 @@ export function AppShell() {
         <nav className="rail" aria-label={t('nav.sections')}>
           <div className="rail__nav">
             {items.map((item) => (
-              <NavLink key={item.to} to={item.to} className="rail__link" title={item.label}>
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={`rail__link${item.minor ? ' rail__link--minor' : ''}`}
+                data-label={item.label}
+                title={item.label}
+              >
                 <Icon name={item.icon} size={16} />
                 <span className="rail__label">{item.label}</span>
                 {item.count !== undefined ? <span className="rail__count">{item.count}</span> : null}
@@ -103,6 +110,7 @@ export function AppShell() {
       </nav>
 
       <SessionExpiredDialog />
+      <Toasts />
     </div>
   );
 }

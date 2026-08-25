@@ -10,7 +10,7 @@ function Booting() {
     <div className="authpage">
       <div className="centered-note">
         <Icon name="refresh" size={20} className="spin" />
-        <span className="subtle" style={{ fontSize: 12.5 }}>
+        <span className="subtle" style={{ fontSize: 'var(--fs-sm)' }}>
           {t('auth.restoring')}
         </span>
       </div>

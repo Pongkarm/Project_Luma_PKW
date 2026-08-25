@@ -39,8 +39,8 @@ export function ResultStage({
     return (
       <Panel>
         <Icon name="alert" size={22} />
-        <h2 style={{ fontSize: 14, fontWeight: 600 }}>{t('run.stalledTitle')}</h2>
-        <p style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.6 }}>
+        <h2 style={{ fontSize: 'var(--fs-md)', fontWeight: 600 }}>{t('run.stalledTitle')}</h2>
+        <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--ink-3)', lineHeight: 1.6 }}>
           {t('run.stalledBody')}
         </p>
         <Button icon="refresh" onClick={onCheckAgain}>
@@ -54,11 +54,11 @@ export function ResultStage({
     return (
       <Panel>
         <Icon name="queue" size={22} strokeDasharray="3 3" />
-        <h2 style={{ fontSize: 14, fontWeight: 600 }}>{t('run.waiting')}</h2>
-        <p style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.6 }}>
+        <h2 style={{ fontSize: 'var(--fs-md)', fontWeight: 600 }}>{t('run.waiting')}</h2>
+        <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--ink-3)', lineHeight: 1.6 }}>
           {t('run.waitingBody')}
         </p>
-        <span className="mono" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
+        <span className="mono" style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}>
           {formatElapsed(elapsed)}
         </span>
       </Panel>
@@ -69,15 +69,15 @@ export function ResultStage({
     return (
       <Panel>
         <Icon name="refresh" size={22} className="spin" />
-        <h2 style={{ fontSize: 14, fontWeight: 600 }}>{t('run.generating')}</h2>
-        <p style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.6 }}>
+        <h2 style={{ fontSize: 'var(--fs-md)', fontWeight: 600 }}>{t('run.generating')}</h2>
+        <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--ink-3)', lineHeight: 1.6 }}>
           {t('run.generatingBody')}
         </p>
         {/* Indeterminate on purpose: neither node reports a percentage. */}
         <div className="track" style={{ width: 200 }}>
           <div className="track__indeterminate" />
         </div>
-        <span className="mono" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
+        <span className="mono" style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}>
           {t('run.elapsed', { time: formatElapsed(elapsed) })}
         </span>
       </Panel>
@@ -88,8 +88,8 @@ export function ResultStage({
     return (
       <Panel>
         <Icon name="alert" size={22} />
-        <h2 style={{ fontSize: 14, fontWeight: 600 }}>{t('run.failedTitle')}</h2>
-        <p style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.6 }}>
+        <h2 style={{ fontSize: 'var(--fs-md)', fontWeight: 600 }}>{t('run.failedTitle')}</h2>
+        <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--ink-3)', lineHeight: 1.6 }}>
           {t('run.failedBody')}
         </p>
         <Button icon="refresh" onClick={onRetry}>
@@ -99,14 +99,14 @@ export function ResultStage({
           <details style={{ width: '100%' }}>
             <summary
               className="mono"
-              style={{ fontSize: 10.5, color: 'var(--ink-3)', cursor: 'pointer' }}
+              style={{ fontSize: 'var(--fs-2xs)', color: 'var(--ink-3)', cursor: 'pointer' }}
             >
               error_message
             </summary>
             <p
               className="mono"
               style={{
-                fontSize: 10.5,
+                fontSize: 'var(--fs-2xs)',
                 color: 'var(--ink-3)',
                 textAlign: 'left',
                 marginTop: 8,
@@ -138,6 +138,7 @@ export function ResultStage({
       >
         {image.url ? (
           <img
+            className="img-in"
             src={image.url}
             alt={job.prompt}
             style={{ display: 'block', maxWidth: '100%', maxHeight: '58vh' }}
@@ -152,7 +153,7 @@ export function ResultStage({
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
-        <span className="mono" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
+        <span className="mono" style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}>
           {job.width} × {job.height} · {job.steps} steps · cfg {job.cfg_scale} ·{' '}
           {formatDuration(job.duration_seconds)}
         </span>

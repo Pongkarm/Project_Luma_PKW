@@ -83,7 +83,7 @@ export function ImageInput({ label, value, onChange }: Props) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: 1 }}>
             <span
               style={{
-                fontSize: 12,
+                fontSize: 'var(--fs-sm)',
                 fontWeight: 500,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -93,7 +93,7 @@ export function ImageInput({ label, value, onChange }: Props) {
             >
               {value.filename}
             </span>
-            <span className="mono" style={{ fontSize: 10.5, color: 'var(--ink-3)' }}>
+            <span className="mono" style={{ fontSize: 'var(--fs-2xs)', color: 'var(--ink-3)' }}>
               {value.width} × {value.height} · {formatBytes(value.sizeBytes)}
             </span>
           </div>
@@ -117,7 +117,7 @@ export function ImageInput({ label, value, onChange }: Props) {
       <div className="field">
         <span className="label">{label}</span>
         <div className="drop drop--busy">
-          <span className="mono" style={{ fontSize: 11.5, color: 'var(--ink-2)' }}>
+          <span className="mono" style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-2)' }}>
             {state.fileName}
           </span>
           <div className="track" style={{ width: '70%' }}>
@@ -138,7 +138,7 @@ export function ImageInput({ label, value, onChange }: Props) {
         <span className="label">{label}</span>
         <div className="drop drop--error" role="alert">
           <Icon name="alert" size={20} />
-          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--fail)' }}>{state.error}</span>
+          <span style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--fail)' }}>{state.error}</span>
           <Button size="sm" onClick={() => inputRef.current?.click()}>
             {t('upload.chooseAnother')}
           </Button>
@@ -170,7 +170,7 @@ export function ImageInput({ label, value, onChange }: Props) {
         onDrop={onDrop}
       >
         <Icon name="upload" size={22} />
-        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>
+        <span style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--ink)' }}>
           {t('upload.drop')}
         </span>
         <span className="field__hint">{t('upload.constraints')}</span>

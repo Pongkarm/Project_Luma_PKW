@@ -98,8 +98,8 @@ export function MaskCanvas({ editor, sourceUrl, onNaturalSize }: Props) {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontWeight: 600, fontSize: 13.5 }}>{t('mask.title')}</span>
-          <span className="mono" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
+          <span style={{ fontWeight: 600, fontSize: 'var(--fs-md)' }}>{t('mask.title')}</span>
+          <span className="mono" style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}>
             {editor.hasMask
               ? t('mask.coverage', { percent: Math.round(editor.coverage * 100) })
               : t('mask.paintPrompt')}
@@ -126,7 +126,7 @@ export function MaskCanvas({ editor, sourceUrl, onNaturalSize }: Props) {
               background: 'var(--panel-2)',
             }}
           >
-            <label htmlFor="brush-size" style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>
+            <label htmlFor="brush-size" style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}>
               {t('mask.size')}
             </label>
             <input
@@ -140,7 +140,7 @@ export function MaskCanvas({ editor, sourceUrl, onNaturalSize }: Props) {
               style={{ width: 76, ['--fill' as string]: `${((editor.brushSize - 4) / 196) * 100}%` }}
               onChange={(event) => editor.setBrushSize(Number(event.target.value))}
             />
-            <span className="mono" style={{ fontSize: 11, color: 'var(--ink-2)', width: 26 }}>
+            <span className="mono" style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-2)', width: 26 }}>
               {editor.brushSize}
             </span>
           </div>
@@ -222,7 +222,7 @@ export function MaskCanvas({ editor, sourceUrl, onNaturalSize }: Props) {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
             <span
-              style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--ink-3)' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}
             >
               <span
                 style={{ width: 9, height: 9, borderRadius: 2, background: 'var(--accent)', opacity: 0.55 }}
@@ -231,7 +231,7 @@ export function MaskCanvas({ editor, sourceUrl, onNaturalSize }: Props) {
             </span>
             <span
               className="mono"
-              style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10.5, color: 'var(--ink-3)' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--fs-2xs)', color: 'var(--ink-3)' }}
             >
               <Icon name="info" size={12} />
               {t('mask.shortcuts')}

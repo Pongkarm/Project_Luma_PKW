@@ -11,7 +11,7 @@ function Fact({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       <span className="eyebrow">{label}</span>
-      <span className="mono" style={{ fontSize: 11.5 }}>
+      <span className="mono" style={{ fontSize: 'var(--fs-xs)' }}>
         {value}
       </span>
     </div>
@@ -31,8 +31,8 @@ export function RunDetail({
   return (
     <aside className="controls" aria-label={t('history.details')}>
       <div className="stagebar">
-        <span style={{ fontWeight: 600, fontSize: 13 }}>{t('history.details')}</span>
-        <span className="mono" style={{ fontSize: 10.5, color: 'var(--ink-3)' }}>
+        <span style={{ fontWeight: 600, fontSize: 'var(--fs-sm)' }}>{t('history.details')}</span>
+        <span className="mono" style={{ fontSize: 'var(--fs-2xs)', color: 'var(--ink-3)' }}>
           {run.id.slice(0, 8)}
         </span>
       </div>
@@ -52,7 +52,7 @@ export function RunDetail({
           }}
         >
           {image.url ? (
-            <img src={image.url} alt={run.prompt} style={{ width: '100%', display: 'block' }} />
+            <img className="img-in" src={image.url} alt={run.prompt} style={{ width: '100%', display: 'block' }} />
           ) : run.status === 'completed' ? (
             <span className="skeleton" style={{ width: '100%', height: 160 }} />
           ) : (
@@ -62,26 +62,26 @@ export function RunDetail({
           )}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <span className="eyebrow">{t('history.prompt')}</span>
-          <p style={{ fontSize: 12.5, lineHeight: 1.55, color: 'var(--ink-2)' }}>{run.prompt}</p>
+          <p style={{ fontSize: 'var(--fs-sm)', lineHeight: 1.55, color: 'var(--ink-2)' }}>{run.prompt}</p>
         </div>
 
         {run.negative_prompt ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <span className="eyebrow">{t('history.avoided')}</span>
-            <p style={{ fontSize: 12.5, lineHeight: 1.55, color: 'var(--ink-3)' }}>
+            <p style={{ fontSize: 'var(--fs-sm)', lineHeight: 1.55, color: 'var(--ink-3)' }}>
               {run.negative_prompt}
             </p>
           </div>
         ) : null}
 
         {run.status === 'failed' && run.error_message ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <span className="eyebrow">{t('history.whyFailed')}</span>
             <p
               className="mono"
-              style={{ fontSize: 11, lineHeight: 1.55, color: 'var(--fail)', wordBreak: 'break-word' }}
+              style={{ fontSize: 'var(--fs-xs)', lineHeight: 1.55, color: 'var(--fail)', wordBreak: 'break-word' }}
             >
               {run.error_message}
             </p>
@@ -101,7 +101,7 @@ export function RunDetail({
         </div>
 
         {run.source_image_path ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <span className="eyebrow">{t('history.startedFrom')}</span>
             <img
               src={uploadService.publicUrl(`/uploads/${run.source_image_path.split(/[\\/]/).pop()}`)}

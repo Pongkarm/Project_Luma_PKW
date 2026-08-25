@@ -32,7 +32,7 @@ function RunThumb({
       title={`${label} · ${run.prompt}`}
     >
       {image.url ? (
-        <img src={image.url} alt="" />
+        <img className="img-in" src={image.url} alt="" />
       ) : run.status === 'failed' ? (
         <Icon name="xCircle" size={16} />
       ) : run.status === 'completed' ? (
@@ -72,7 +72,7 @@ export function RunStrip({
     <div className="runstrip">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span className="eyebrow">{t('run.recent')}</span>
-        <Link to="/history" style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>
+        <Link to="/history" style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}>
           {t('run.openHistory')}
         </Link>
       </div>

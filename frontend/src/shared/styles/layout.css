@@ -105,6 +105,14 @@
   color: var(--ink-3);
 }
 
+.rail__link--minor {
+  color: var(--ink-3);
+}
+
+.rail__link--minor:not([aria-current='page']) .rail__label {
+  font-weight: 400;
+}
+
 .rail__foot {
   display: flex;
   flex-direction: column;
@@ -216,6 +224,36 @@
     width: 34px;
     justify-content: center;
     padding: 0;
+    position: relative;
+  }
+
+  /*
+   * At this width the rail is icons only, and a native title tooltip takes a
+   * second to appear. This names the destination immediately on hover.
+   */
+  .rail__link::after {
+    content: attr(data-label);
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%) translateX(-4px);
+    padding: 4px 9px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-sm);
+    background: var(--raised);
+    color: var(--ink);
+    font-size: var(--fs-xs);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 140ms ease, transform 140ms ease;
+    z-index: 20;
+  }
+
+  .rail__link:hover::after,
+  .rail__link:focus-visible::after {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
   }
 
   .rail__label,
@@ -362,24 +400,14 @@
 }
 
 .runcard {
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
+  /* visual rules come from .card; this only adds layout */
   overflow: hidden;
-  background: var(--panel);
   display: flex;
   flex-direction: column;
   text-align: left;
   padding: 0;
   cursor: pointer;
   color: inherit;
-}
-
-.runcard:hover {
-  border-color: var(--line-strong);
-}
-
-.runcard[aria-current='true'] {
-  border-color: var(--accent);
 }
 
 .runcard__media {

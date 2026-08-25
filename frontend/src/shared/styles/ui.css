@@ -563,3 +563,167 @@
 .disclosure[aria-expanded='true'] .disclosure__chevron {
   transform: rotate(180deg);
 }
+
+/* ── surfaces ────────────────────────────────────────────────────────── */
+
+/*
+ * One card rule for the whole product. Cards were improvised per screen before
+ * this: same idea, four slightly different borders and radii.
+ */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.card--flat {
+  box-shadow: none;
+}
+
+.card--interactive {
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.card--interactive:hover {
+  border-color: var(--line-strong);
+}
+
+.card--interactive[aria-current='true'] {
+  border-color: var(--accent);
+}
+
+/* ── state consistency ───────────────────────────────────────────────── */
+
+/*
+ * Disabled was expressed three different ways before this — opacity on some
+ * controls, a colour swap on others, nothing on the rest. One rule now: dim it,
+ * remove the pointer, and never let a hover state fire.
+ */
+.btn:disabled,
+.icobtn:disabled,
+.seg__item:disabled,
+.input:disabled,
+.slider:disabled,
+.num:disabled {
+  cursor: not-allowed;
+}
+
+.btn:disabled:hover,
+.icobtn:disabled:hover,
+.seg__item:disabled:hover {
+  border-color: inherit;
+  background: inherit;
+  color: inherit;
+}
+
+.input:disabled,
+.num:disabled,
+.textarea:disabled {
+  opacity: 0.55;
+  background: var(--panel);
+}
+
+/* Every pressable thing acknowledges the press. */
+.btn:active:not(:disabled),
+.icobtn:active:not(:disabled) {
+  transform: translateY(0.5px);
+}
+
+.icobtn {
+  transition:
+    color 140ms ease,
+    border-color 140ms ease,
+    background-color 140ms ease;
+}
+
+/* ── motion ──────────────────────────────────────────────────────────── */
+
+/*
+ * Every animation here answers a question the person is already asking:
+ * did that open, has the image arrived, can I drop this. Anything that did not
+ * answer one was left out. All of it stops under prefers-reduced-motion, which
+ * base.css already enforces globally.
+ */
+@keyframes ui-expand {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes ui-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* The Advanced block used to appear instantly, with no sense of where from. */
+.disclosure__panel {
+  animation: ui-expand 180ms ease-out both;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* A result image arrives after its own authenticated request; fade it in so it
+   does not snap into place a beat after everything else. */
+.img-in {
+  animation: ui-fade 220ms ease-out both;
+}
+
+/* Dropzone: the border alone was easy to miss mid-drag. */
+.drop--over {
+  transform: scale(1.005);
+  transition: transform 140ms ease;
+}
+
+.drop {
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    transform 140ms ease;
+}
+
+/* ── toast ───────────────────────────────────────────────────────────── */
+.toasts {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--raised);
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  box-shadow: var(--shadow-pop);
+  animation: ui-expand 200ms ease-out both;
+}
+
+.toast__icon {
+  color: var(--done);
+}

@@ -24,7 +24,7 @@ function RunCard({ run, active, onSelect }: { run: Generation; active: boolean; 
     // A card, not a <button>: the whole tile is the target, and a button's
     // anonymous inner box makes multi-line captions awkward to size.
     <div
-      className="runcard"
+      className="card card--interactive runcard"
       role="button"
       tabIndex={0}
       aria-current={active}
@@ -38,13 +38,13 @@ function RunCard({ run, active, onSelect }: { run: Generation; active: boolean; 
     >
       <div className="runcard__media">
         {image.url ? (
-          <img src={image.url} alt="" />
+          <img className="img-in" src={image.url} alt="" />
         ) : run.status === 'completed' ? (
           <span className="skeleton" style={{ width: '100%', height: '100%' }} />
         ) : run.status === 'failed' ? (
           <>
             <Icon name="xCircle" size={18} />
-            <span style={{ fontSize: 11.5, padding: '0 16px', textAlign: 'center', lineHeight: 1.5 }}>
+            <span style={{ fontSize: 'var(--fs-xs)', padding: '0 16px', textAlign: 'center', lineHeight: 1.5 }}>
               {truncate(run.error_message ?? t('run.failedTitle'), 70)}
             </span>
           </>
@@ -67,7 +67,7 @@ function RunCard({ run, active, onSelect }: { run: Generation; active: boolean; 
       </div>
       <div className="runcard__body">
         <span className="runcard__prompt">{run.prompt}</span>
-        <span className="mono" style={{ fontSize: 10.5, color: 'var(--ink-3)' }}>
+        <span className="mono" style={{ fontSize: 'var(--fs-2xs)', color: 'var(--ink-3)' }}>
           {run.task_type} · {run.width}×{run.height}
         </span>
       </div>
@@ -118,13 +118,13 @@ export function HistoryPage() {
       <main className="main">
         <div className="stagebar">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontWeight: 600, fontSize: 13.5 }}>{t('history.title')}</span>
-            <span className="mono" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
+            <span style={{ fontWeight: 600, fontSize: 'var(--fs-md)' }}>{t('history.title')}</span>
+            <span className="mono" style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}>
               {total === 1 ? t('history.run', { count: total }) : t('history.runs', { count: total })}
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span className="mono" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
+            <span className="mono" style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}>
               {t('history.range', { from, to, total })}
             </span>
             <div style={{ display: 'flex', gap: 4 }}>
@@ -151,7 +151,7 @@ export function HistoryPage() {
         ) : isLoading ? (
           <div className="grid-runs">
             {Array.from({ length: 8 }, (_, index) => (
-              <div key={index} className="runcard">
+              <div key={index} className="card runcard">
                 <span className="skeleton" style={{ height: 150 }} />
                 <div className="runcard__body">
                   <span className="skeleton" style={{ height: 10, width: '80%' }} />
@@ -164,8 +164,8 @@ export function HistoryPage() {
           <div className="stage">
             <div className="centered-note">
               <Icon name="clock" size={22} />
-              <h2 style={{ fontSize: 14, fontWeight: 600 }}>{t('history.empty')}</h2>
-              <p style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.6 }}>
+              <h2 style={{ fontSize: 'var(--fs-md)', fontWeight: 600 }}>{t('history.empty')}</h2>
+              <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--ink-3)', lineHeight: 1.6 }}>
                 {t('history.emptyBody')}
               </p>
             </div>

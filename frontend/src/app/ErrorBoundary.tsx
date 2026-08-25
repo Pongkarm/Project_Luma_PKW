@@ -35,11 +35,11 @@ export class ErrorBoundary extends Component<Props, State> {
       <div className="authpage">
         <div className="centered-note">
           <Icon name="alert" size={22} />
-          <h1 style={{ fontSize: 15, fontWeight: 600 }}>{crashText.title}</h1>
-          <p style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.6 }}>
+          <h1 style={{ fontSize: 'var(--fs-lg)', fontWeight: 600 }}>{crashText.title}</h1>
+          <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--ink-3)', lineHeight: 1.6 }}>
             {crashText.body}
           </p>
-          <p className="mono" style={{ fontSize: 10.5, color: 'var(--ink-3)', wordBreak: 'break-word' }}>
+          <p className="mono" style={{ fontSize: 'var(--fs-2xs)', color: 'var(--ink-3)', wordBreak: 'break-word' }}>
             {error.message}
           </p>
           <Button icon="refresh" onClick={() => window.location.reload()}>

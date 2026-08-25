@@ -15,6 +15,7 @@ import { ModeFields } from './modes/ModeFields.tsx';
 import { SizeControl } from './modes/SizeControl.tsx';
 import { usePresets, type PresetValues } from './presetStore.ts';
 import { useT } from '../../shared/hooks/useT.ts';
+import { useToasts } from '../../shared/ui/Toast.tsx';
 
 type Props = {
   canPaintMask: boolean;
@@ -35,6 +36,7 @@ export function ControlsPanel({
 }: Props) {
   const draft = useDraft();
   const t = useT();
+  const showToast = useToasts((state) => state.show);
   const presets = usePresets((state) => state.presets);
   const savePreset = usePresets((state) => state.save);
   const removePreset = usePresets((state) => state.remove);
@@ -329,6 +331,7 @@ export function ControlsPanel({
                     negativePrompt: draft.negativePrompt,
                   };
                   savePreset(presetName, values);
+                  showToast(t('preset.saved1', { name: presetName.trim() }));
                   setPresetName('');
                 }}
               >
@@ -347,7 +350,7 @@ export function ControlsPanel({
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: 4,
-                      fontSize: 11,
+                      fontSize: 'var(--fs-xs)',
                       color: 'var(--ink-3)',
                       border: '1px solid var(--line)',
                       borderRadius: 'var(--r-sm)',
@@ -389,7 +392,7 @@ export function ControlsPanel({
         </Button>
         <span
           style={{
-            fontSize: 11,
+            fontSize: 'var(--fs-xs)',
             color: 'var(--ink-3)',
             textAlign: 'center',
             display: 'flex',

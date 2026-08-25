@@ -64,6 +64,21 @@
   --s6: 32px;
   --s7: 48px;
 
+
+  /*
+   * Type scale. Every size in the product comes from these five steps — the
+   * interface previously used nine values that differed by half a pixel, which
+   * read as noise rather than hierarchy.
+   */
+  --fs-2xs: 10.5px;   /* eyebrows, mono meta */
+  --fs-xs: 11.5px;    /* hints, captions */
+  --fs-sm: 12.5px;    /* secondary text */
+  --fs-md: 14px;      /* body, control labels */
+  --fs-lg: 15px;      /* emphasis */
+
+  /* Elevation. Flat surfaces use a hairline; only things that float cast one. */
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 18%);
+
   --font-sans: 'IBM Plex Sans', 'IBM Plex Sans Thai', system-ui, -apple-system, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, sfmono-regular, monospace;
 
@@ -111,4 +126,5 @@
 
   --overlay: rgb(21 24 29 / 42%);
   --shadow-pop: 0 18px 44px rgb(21 24 29 / 18%);
+  --shadow-card: 0 1px 2px rgb(21 24 29 / 7%);
 }

@@ -140,11 +140,11 @@ export function GeneratePage() {
           <>
             <div className="stagebar">
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                <span style={{ fontWeight: 600, fontSize: 13.5 }}>{t(modeTitleKeys[draft.mode])}</span>
+                <span style={{ fontWeight: 600, fontSize: 'var(--fs-md)' }}>{t(modeTitleKeys[draft.mode])}</span>
                 {job ? (
                   <StatusChip status={job.status} />
                 ) : (
-                  <span className="mono" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
+                  <span className="mono" style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}>
                     {source ? t('stage.sourceReady') : t('stage.noRun')}
                   </span>
                 )}
@@ -218,11 +218,11 @@ function EmptyStage() {
       >
         <Icon name="image" size={22} />
       </div>
-      <h2 style={{ fontSize: 14, fontWeight: 600 }}>{t('stage.empty')}</h2>
-      <p style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.6 }}>
+      <h2 style={{ fontSize: 'var(--fs-md)', fontWeight: 600 }}>{t('stage.empty')}</h2>
+      <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--ink-3)', lineHeight: 1.6 }}>
         {t('stage.emptyBody')}
       </p>
-      <span className="mono" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
+      <span className="mono" style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}>
         ⌘ + ↵
       </span>
     </div>
@@ -244,7 +244,7 @@ function SourcePreview({ url, caption }: { url: string; caption: string }) {
           border: '1px solid var(--line)',
         }}
       />
-      <span className="mono" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
+      <span className="mono" style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}>
         {t('stage.source')} · {caption}
       </span>
     </div>

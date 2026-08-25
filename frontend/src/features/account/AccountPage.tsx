@@ -20,14 +20,14 @@ export function AccountPage() {
   return (
     <main className="main">
       <div className="stagebar">
-        <span style={{ fontWeight: 600, fontSize: 13.5 }}>{t('account.title')}</span>
+        <span style={{ fontWeight: 600, fontSize: 'var(--fs-md)' }}>{t('account.title')}</span>
       </div>
 
       <div style={{ padding: 24, overflowY: 'auto', display: 'flex', justifyContent: 'center' }}>
         <div style={{ width: '100%', maxWidth: 560, display: 'flex', flexDirection: 'column', gap: 24 }}>
           <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <span className="eyebrow">{t('account.signedInAs')}</span>
-            <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '10px 16px', fontSize: 13 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '10px 16px', fontSize: 'var(--fs-sm)' }}>
               <span className="subtle">{t('account.username')}</span>
               <span>{user?.username ?? '—'}</span>
               <span className="subtle">{t('account.email')}</span>
@@ -70,7 +70,7 @@ export function AccountPage() {
 
           <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <span className="eyebrow">{t('account.connection')}</span>
-            <span className="mono" style={{ fontSize: 12, color: 'var(--ink-2)' }}>
+            <span className="mono" style={{ fontSize: 'var(--fs-sm)', color: 'var(--ink-2)' }}>
               {env.apiBaseUrl}
             </span>
             <Alert tone="note">
