@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { Icon, type IconName } from '../../shared/ui/Icon.tsx';
 import { IconButton } from '../../shared/ui/Button.tsx';
 import { useSession } from '../auth/sessionStore.ts';
@@ -7,6 +7,8 @@ import { useT } from '../../shared/hooks/useT.ts';
 import { AiModeBadge, EngineIndicator } from './EngineIndicator.tsx';
 import { SessionExpiredDialog } from '../auth/SessionExpiredDialog.tsx';
 import { Toasts } from '../../shared/ui/Toast.tsx';
+import { usePresets } from '../generate/presetStore.ts';
+import { useDraft } from '../generate/draftStore.ts';
 
 type NavItem = { to: string; label: string; icon: IconName; count?: number; minor?: boolean };
 
@@ -17,12 +19,41 @@ export function AppShell() {
   const language = usePreferences((state) => state.language);
   const setLanguage = usePreferences((state) => state.setLanguage);
   const t = useT();
+  const navigate = useNavigate();
+  const railCollapsed = usePreferences((state) => state.railCollapsed);
+  const toggleRail = usePreferences((state) => state.toggleRail);
+  const presets = usePresets((state) => state.presets);
+  const applyDraft = useDraft((state) => state.patch);
 
   const items: NavItem[] = [
     { to: '/generate', label: t('nav.generate'), icon: 'generate' },
     { to: '/history', label: t('nav.history'), icon: 'clock', count: user?.total_generations },
     { to: '/account', label: t('nav.account'), icon: 'user', minor: true },
   ];
+
+  const [primary, ...rest] = items;
+
+  function renderLink(item: NavItem, primaryStyle = false) {
+    return (
+      <NavLink
+        key={item.to}
+        to={item.to}
+        className={[
+          'rail__link',
+          primaryStyle ? 'rail__link--primary' : '',
+          item.minor ? 'rail__link--minor' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        data-label={item.label}
+        title={item.label}
+      >
+        <Icon name={item.icon} size={16} />
+        <span className="rail__label">{item.label}</span>
+        {item.count !== undefined ? <span className="rail__count">{item.count}</span> : null}
+      </NavLink>
+    );
+  }
 
   return (
     <div className="app">
@@ -75,26 +106,59 @@ export function AppShell() {
       </header>
 
       <div className="app__body">
-        <nav className="rail" aria-label={t('nav.sections')}>
-          <div className="rail__nav">
-            {items.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={`rail__link${item.minor ? ' rail__link--minor' : ''}`}
-                data-label={item.label}
-                title={item.label}
+        <nav className="rail" aria-label={t('nav.sections')} data-collapsed={railCollapsed}>
+          <div className="rail__section">{renderLink(primary, true)}</div>
+
+          <div className="rail__section">
+            <span className="rail__sectionLabel">{t('nav.library')}</span>
+            {rest.filter((item) => !item.minor).map((item) => renderLink(item))}
+
+            {/* Saved settings apply straight from here — they were otherwise
+                only reachable after opening Advanced. */}
+            {presets.slice(0, 4).map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                className="rail__preset"
+                title={t('nav.applyPreset', { name: preset.name })}
+                onClick={() => {
+                  applyDraft({
+                    width: preset.width,
+                    height: preset.height,
+                    steps: preset.steps,
+                    cfgScale: preset.cfgScale,
+                    samplerName: preset.samplerName,
+                    modelName: preset.modelName,
+                    loraId: preset.loraId,
+                    negativePrompt: preset.negativePrompt,
+                  });
+                  navigate('/generate');
+                }}
               >
-                <Icon name={item.icon} size={16} />
-                <span className="rail__label">{item.label}</span>
-                {item.count !== undefined ? <span className="rail__count">{item.count}</span> : null}
-              </NavLink>
+                <Icon name="sliders" size={13} />
+                {preset.name}
+              </button>
             ))}
           </div>
+
+          <div className="rail__spacer" />
+
+          <div className="rail__section">{rest.filter((item) => item.minor).map((item) => renderLink(item))}</div>
+
           <div className="rail__foot">
             <span className="eyebrow">{t('nav.engine')}</span>
             <EngineIndicator />
           </div>
+
+          <button
+            type="button"
+            className="rail__collapse"
+            aria-label={railCollapsed ? t('nav.expand') : t('nav.collapse')}
+            title={railCollapsed ? t('nav.expand') : t('nav.collapse')}
+            onClick={toggleRail}
+          >
+            <Icon name={railCollapsed ? 'chevronRight' : 'chevronLeft'} size={13} />
+          </button>
         </nav>
 
         <Outlet />

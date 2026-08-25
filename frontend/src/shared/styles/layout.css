@@ -63,8 +63,118 @@
   background: var(--panel);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 20px;
   padding: 12px 10px;
+  transition: width 180ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+/* Pushes the account block and engine line to the bottom without stranding a
+   gap in the middle the way space-between did. */
+.rail__spacer {
+  flex: 1;
+  min-height: 12px;
+}
+
+.rail__section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rail__sectionLabel {
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 0 10px;
+  margin-bottom: 2px;
+}
+
+/* Generate is what people came to do, so it reads as an action, not a link. */
+.rail__link--primary {
+  background: var(--accent-wash);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.rail__link--primary:hover {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  color: var(--accent-text);
+}
+
+.rail__link--primary[aria-current='page'] {
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: none;
+}
+
+.rail__link--primary[aria-current='page']::before {
+  display: none;
+}
+
+/* An accent bar on the active row: clearer at a glance than a grey fill, and
+   it survives the collapsed width where labels are gone. */
+.rail__link::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  width: 2px;
+  height: 0;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent);
+  transform: translateY(-50%);
+  transition: height 180ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.rail__link[aria-current='page']::before {
+  height: 20px;
+}
+
+.rail__preset {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--r);
+  background: transparent;
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.rail__preset:hover {
+  background: var(--panel-2);
+  color: var(--ink);
+}
+
+.rail__collapse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 28px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: transparent;
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.rail__collapse:hover {
+  color: var(--ink);
+  border-color: var(--line-strong);
 }
 
 .rail__nav {
@@ -74,6 +184,7 @@
 }
 
 .rail__link {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -212,6 +323,53 @@
   display: none;
 }
 
+/* Manual collapse mirrors the automatic one, so there is a single visual
+   result whichever way the rail got narrow. */
+.rail[data-collapsed='true'] {
+  width: 56px;
+  padding: 12px 0;
+  align-items: center;
+}
+
+.rail[data-collapsed='true'] .rail__link {
+  width: 34px;
+  justify-content: center;
+  padding: 0;
+}
+
+.rail[data-collapsed='true'] .rail__label,
+.rail[data-collapsed='true'] .rail__count,
+.rail[data-collapsed='true'] .rail__sectionLabel,
+.rail[data-collapsed='true'] .rail__preset,
+.rail[data-collapsed='true'] .rail__foot {
+  display: none;
+}
+
+.rail[data-collapsed='true'] .rail__link::after {
+  content: attr(data-label);
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+  padding: 4px 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--raised);
+  color: var(--ink);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease, transform 140ms ease;
+  z-index: 20;
+}
+
+.rail[data-collapsed='true'] .rail__link:hover::after,
+.rail[data-collapsed='true'] .rail__link:focus-visible::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
 /* ── tablet: the rail keeps its icons and drops its labels ───────────── */
 @media (max-width: 1099px) {
   .rail {
@@ -258,7 +416,10 @@
 
   .rail__label,
   .rail__count,
-  .rail__foot {
+  .rail__foot,
+  .rail__sectionLabel,
+  .rail__preset,
+  .rail__collapse {
     display: none;
   }
 

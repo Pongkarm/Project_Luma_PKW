@@ -10,6 +10,7 @@ type PreferencesState = {
   language: Language;
   lastMode: TaskType;
   advancedOpen: boolean;
+  railCollapsed: boolean;
   avoidOpen: boolean;
   preferredModel: string | null;
   setTheme: (theme: ThemeName) => void;
@@ -17,6 +18,7 @@ type PreferencesState = {
   toggleTheme: () => void;
   setLastMode: (mode: TaskType) => void;
   setAdvancedOpen: (open: boolean) => void;
+  toggleRail: () => void;
   setAvoidOpen: (open: boolean) => void;
   setPreferredModel: (model: string) => void;
 };
@@ -41,6 +43,7 @@ export const usePreferences = create<PreferencesState>()(
       language: systemLanguage(),
       lastMode: 'txt2img',
       advancedOpen: false,
+      railCollapsed: false,
       avoidOpen: false,
       preferredModel: null,
       setTheme: (theme) => set({ theme }),
@@ -48,6 +51,7 @@ export const usePreferences = create<PreferencesState>()(
       toggleTheme: () => set({ theme: get().theme === 'dark' ? 'light' : 'dark' }),
       setLastMode: (lastMode) => set({ lastMode }),
       setAdvancedOpen: (advancedOpen) => set({ advancedOpen }),
+      toggleRail: () => set({ railCollapsed: !get().railCollapsed }),
       setAvoidOpen: (avoidOpen) => set({ avoidOpen }),
       setPreferredModel: (preferredModel) => set({ preferredModel }),
     }),
