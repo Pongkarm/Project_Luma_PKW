@@ -123,6 +123,28 @@ Diffusion's text encoder has no Thai in its vocabulary, so a Thai prompt becomes
 produces an unrelated image. Prompt examples and placeholders stay English until the team
 decides how a translation step should work, which would have to live in the AI node.
 
+## Settings the backend may ignore
+
+The backend does not forward the stored generation record to the AI node — it
+builds a payload per `AI_MODE`, naming each field by hand. The `direct` branch
+names every field. The `callback` branch does not, and anything it omits never
+reaches the engine while the run still reports success.
+
+| Task | Ignored under `callback` |
+|---|---|
+| txt2img | seed, sampler, style (LoRA) |
+| img2img, inpaint | those three plus negative prompt, checkpoint, output size, change amount |
+
+`src/features/generate/ineffective.ts` mirrors those two payloads. Controls it
+names are disabled and badged rather than hidden — they work under `direct`, so
+the value stays in the draft and returns when the mode changes. When the
+backend does not report a mode, or is unreachable, nothing is disabled: the
+panel keeps its amber "may depend on the mode" dot instead of claiming a
+certainty it does not have.
+
+Re-read `process_generation` in `app/services/generation.py` if the backend's
+payloads change; nothing detects a drift automatically.
+
 ## Backend endpoints this build expects
 
 Three of these do not exist on `origin/backend` yet. They live on branch **`feat/models-proxy`**
