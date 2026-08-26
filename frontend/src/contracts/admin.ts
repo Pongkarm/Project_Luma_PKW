@@ -70,3 +70,12 @@ export type AuditRow = {
   detail: Record<string, string> | null;
   created_at: string;
 };
+
+export type AdminRoleRow = {
+  user_id: string;
+  username: string;
+  email: string;
+  role: AdminRole;
+  granted_by_username: string | null;
+  granted_at: string;
+};

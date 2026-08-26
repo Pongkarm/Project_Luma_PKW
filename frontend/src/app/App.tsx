@@ -5,6 +5,7 @@ import { AdminPlaceholder } from '../features/admin/AdminPlaceholder.tsx';
 import { AdminOverview } from '../features/admin/AdminOverview.tsx';
 import { AdminUsers } from '../features/admin/AdminUsers.tsx';
 import { AdminAudit } from '../features/admin/AdminAudit.tsx';
+import { AdminAdmins } from '../features/admin/AdminAdmins.tsx';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiError } from '../contracts/errors.ts';
 import { useSession } from '../features/auth/sessionStore.ts';
@@ -93,7 +94,7 @@ export function App() {
               <Route path="users" element={<AdminUsers />} />
               <Route path="activity" element={<AdminPlaceholder title="Activity" />} />
               <Route path="audit" element={<AdminAudit />} />
-              <Route path="admins" element={<AdminPlaceholder title="Admins" />} />
+              <Route path="admins" element={<AdminAdmins />} />
             </Route>
             <Route path="*" element={<Navigate to="/generate" replace />} />
           </Routes>

@@ -1,6 +1,7 @@
 import { request } from './apiClient.ts';
 import type {
   AdminMe,
+  AdminRoleRow,
   AuditRow,
   AdminRunRow,
   AdminStats,
@@ -37,6 +38,14 @@ export const adminService = {
       `/admin/users/${id}/status`,
       { method: 'PATCH', json: { is_active, reason } },
     ),
+
+  roles: () => request<AdminRoleRow[]>('/admin/roles'),
+
+  assignRole: (user_id: string, role: string) =>
+    request<void>('/admin/roles', { method: 'POST', json: { user_id, role } }),
+
+  revokeRole: (user_id: string) =>
+    request<void>(`/admin/roles/${user_id}`, { method: 'DELETE' }),
 
   audit: (page = 1) => request<Paged<AuditRow>>(`/admin/audit?page=${page}`),
 

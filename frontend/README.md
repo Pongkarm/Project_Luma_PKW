@@ -159,6 +159,40 @@ and must be merged and deployed before the features that use them work:
 Each degrades rather than breaking when absent: the model pickers fall back to the bundled list,
 and delete or profile changes report the failure instead of appearing to succeed.
 
+## Admin console
+
+A separate surface at `/admin`, for the people who run the system rather than
+use it. Three roles, and a role is a row in `admin_roles` rather than a column
+on `users` — the backend has no migrations, and `create_all()` creates tables
+it has never seen but never alters ones it has, so a column would mean running
+`ALTER TABLE` by hand against the live database.
+
+| Role | May |
+|---|---|
+| `reviewer` | Read everything, with emails masked and prompts withheld |
+| `admin` | The above, plus disable/enable accounts and read the audit log |
+| `owner` | The above, plus grant and revoke roles |
+
+The first owner comes from `ADMIN_BOOTSTRAP_EMAIL`, read once at startup and
+ignored thereafter. The role is looked up per request rather than signed into
+the token, so revoking one takes effect immediately instead of whenever the
+token expires.
+
+**The route guard is not the security boundary.** `/admin` refuses at the API;
+the sidebar simply avoids showing a control that would be refused. Typing the
+URL gets a 403 from the server, not a component that declines to render.
+
+Four things an admin deliberately cannot do, all enforced server-side:
+
+- change another user's email or password — that is an account-takeover path,
+  since whoever holds the address can request a reset
+- disable their own account
+- disable an owner
+- remove the last owner, which would leave nobody able to grant the role back
+
+Every change writes an `audit_events` row in the same transaction, so an action
+cannot succeed unlogged, and nothing anywhere updates or deletes those rows.
+
 ## Checks
 
 ```bash
