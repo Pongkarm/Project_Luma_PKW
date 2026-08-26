@@ -65,6 +65,12 @@ export function AdminAdmins() {
         </Alert>
       ) : null}
 
+      <p className="adm-desktoponly">
+        Granting and revoking roles is a desktop task. On a narrow screen the
+        table scrolls sideways and the controls end up out of reach, so open
+        this page on a computer.
+      </p>
+
       {roles.isPending ? (
         <AdminSkeletonRows rows={3} />
       ) : (

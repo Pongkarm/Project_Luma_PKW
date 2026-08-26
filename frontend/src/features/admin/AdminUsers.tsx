@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useOutletContext, useSearchParams } from 'react-router-dom';
 import { adminService } from '../../services/adminService.ts';
@@ -157,15 +157,43 @@ export function AdminUsers() {
 
 /** A drawer rather than a page, so the list keeps its scroll position. */
 function UserDrawer({ user, onClose }: { user: AdminUserRow; onClose: () => void }) {
+  const panel = useRef<HTMLElement>(null);
   const { data } = useQuery({
     queryKey: ['admin', 'user', user.id],
     queryFn: () => adminService.user(user.id),
   });
 
+  /*
+   * Escape closes it, and focus moves in on open and back to the page on
+   * close. The product's Dialog already does all of this; I wrote this panel
+   * from scratch and left it out, so the only ways out were the Close button
+   * and the scrim — neither of which a keyboard reaches without tabbing
+   * through the whole drawer first.
+   */
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    panel.current?.querySelector<HTMLElement>('button, a, input, select')?.focus();
+
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose();
+    }
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      previous?.focus?.();
+    };
+  }, [onClose]);
+
   return (
     <>
       <div className="adm-scrim" onClick={onClose} />
-      <aside className="adm-drawer" aria-label={`Details for ${user.username}`}>
+      <aside
+        ref={panel}
+        className="adm-drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Details for ${user.username}`}
+      >
         <header>
           <h2>{user.username}</h2>
           <Button size="sm" variant="ghost" icon="close" onClick={onClose}>

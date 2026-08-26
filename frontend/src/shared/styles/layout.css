@@ -1818,3 +1818,35 @@
     opacity: 1;
   }
 }
+
+
+/*
+ * Admin management on a phone.
+ *
+ * The row actions sit past the right edge at 390px — the table scrolls, so
+ * they are reachable, but a control that revokes somebody's access should not
+ * be something you have to go looking for. The plan for this console said
+ * serious management workflows would say so on a phone rather than offer a
+ * cramped version, and this is the page that meant.
+ */
+.adm-desktoponly {
+  display: none;
+}
+
+@media (width <= 620px) {
+  .adm-desktoponly {
+    display: block;
+    margin: 0 0 var(--sp-16);
+    padding: var(--sp-12);
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--r);
+    color: var(--ink-2);
+    font-size: var(--fs-base);
+  }
+
+  .adm-admins-table,
+  .adm-desktoponly + .adm-tablewrap,
+  .adm-desktoponly ~ .adm-act {
+    display: none;
+  }
+}
