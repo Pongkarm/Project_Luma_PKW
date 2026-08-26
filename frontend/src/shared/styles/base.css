@@ -113,12 +113,20 @@ a:hover {
   background: transparent;
 }
 
+/*
+ * Someone who has asked their system to reduce motion gets none of it. The
+ * durations here are deliberately not tokens: they are not a speed anyone
+ * should tune, they are "effectively zero, but not zero" — a real 0 would
+ * cancel transitionend and animationend events that code may be waiting on.
+ */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
+    /* stylelint-disable-next-line declaration-property-value-disallowed-list */
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
+    /* stylelint-disable-next-line declaration-property-value-disallowed-list */
     transition-duration: 0.001ms !important;
   }
 }
