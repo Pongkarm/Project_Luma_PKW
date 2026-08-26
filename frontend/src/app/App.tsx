@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AdminLayout } from '../features/admin/AdminLayout.tsx';
+import { AdminPlaceholder } from '../features/admin/AdminPlaceholder.tsx';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiError } from '../contracts/errors.ts';
 import { useSession } from '../features/auth/sessionStore.ts';
@@ -75,6 +77,20 @@ export function App() {
               <Route path="/history" element={<HistoryPage />} />
               <Route path="/history/:id" element={<HistoryPage />} />
               <Route path="/account" element={<AccountPage />} />
+            </Route>
+            <Route
+              path="/admin"
+              element={
+                <RequireAuth>
+                  <AdminLayout />
+                </RequireAuth>
+              }
+            >
+              <Route index element={<AdminPlaceholder title="Overview" />} />
+              <Route path="users" element={<AdminPlaceholder title="Users" />} />
+              <Route path="activity" element={<AdminPlaceholder title="Activity" />} />
+              <Route path="audit" element={<AdminPlaceholder title="Audit" />} />
+              <Route path="admins" element={<AdminPlaceholder title="Admins" />} />
             </Route>
             <Route path="*" element={<Navigate to="/generate" replace />} />
           </Routes>

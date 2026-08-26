@@ -1208,3 +1208,152 @@
 .runstrip__note .linklike:hover {
   color: var(--ink);
 }
+
+/* ── admin console ───────────────────────────────────────────────────── */
+
+/*
+ * The console inherits the tokens and inverts the priorities. The product is
+ * built for looking at one image; this is built for scanning a hundred rows,
+ * so rows are tight, text is small, and colour is spent almost entirely on
+ * status rather than on surfaces.
+ */
+.adm {
+  display: grid;
+  grid-template-columns: 216px 1fr;
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+.adm__rail {
+  border-right: 1px solid var(--line);
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-16) 0;
+}
+
+.adm__brand {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  letter-spacing: 0.1em;
+  padding: 0 var(--sp-16) var(--sp-20);
+  color: var(--ink);
+}
+
+.adm__brand span {
+  color: var(--accent);
+  margin-left: var(--sp-6);
+}
+
+.adm__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-8);
+  flex: 1;
+}
+
+.adm__link {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-10);
+  padding: var(--sp-8) var(--sp-10);
+  border-radius: var(--r);
+  color: var(--ink-2);
+  text-decoration: none;
+  font-size: var(--fs-base);
+  transition: background-color var(--dur-base) ease, color var(--dur-base) ease;
+}
+
+.adm__link:hover {
+  background: var(--panel-2);
+  color: var(--ink);
+}
+
+.adm__link--on {
+  background: var(--panel-2);
+  color: var(--ink);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+/*
+ * The current role, always on screen. An admin who cannot find a control
+ * should be able to see why without asking anyone.
+ */
+.adm__who {
+  padding: var(--sp-12) var(--sp-16) 0;
+  border-top: 1px solid var(--line);
+  margin-top: var(--sp-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.adm__whoName {
+  font-size: var(--fs-base);
+  color: var(--ink);
+}
+
+.adm__whoRole {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+
+.adm__main {
+  padding: var(--sp-24) var(--sp-32);
+  min-width: 0;
+}
+
+.adm__head { margin-bottom: var(--sp-20); }
+
+.adm__head h1 {
+  font-size: var(--fs-2xl);
+  margin: 0;
+}
+
+.adm-boot {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  color: var(--ink-3);
+  font-size: var(--fs-base);
+}
+
+.adm-notice {
+  max-width: 460px;
+  margin: 12vh auto 0;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-10);
+  color: var(--ink-2);
+}
+
+.adm-notice h2 {
+  font-size: var(--fs-lg);
+  color: var(--ink);
+  margin: 0;
+}
+
+.adm-notice p {
+  margin: 0;
+  font-size: var(--fs-base);
+}
+
+.adm-skel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* Tablet: the rail becomes a strip of icons; tables scroll inside themselves. */
+@media (width <= 1024px) {
+  .adm { grid-template-columns: 56px 1fr; }
+  .adm__link span, .adm__brand span, .adm__who { display: none; }
+  .adm__link { justify-content: center; }
+  .adm__main { padding: var(--sp-16); }
+}
