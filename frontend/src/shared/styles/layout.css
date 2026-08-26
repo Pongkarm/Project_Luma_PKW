@@ -1001,6 +1001,44 @@
   padding: var(--sp-40) var(--sp-24);
 }
 
+/*
+ * The card's own layout. These class names have been in the markup since the
+ * auth screens were built but never got rules, and the consequences were both
+ * of the things that looked wrong here.
+ *
+ * Width: a block element inside a centring flex parent shrinks to its content,
+ * so the card was as wide as its longest sentence — 199px in a 702px panel,
+ * which made the inputs and the button a narrow ribbon down the middle.
+ *
+ * Rhythm: with no gap, every child stacked flush. The subtitle sat directly on
+ * the first field's label with nothing between them, and the form's own 16px
+ * was the only breathing space on the entire card.
+ */
+.auth__card {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-24);
+}
+
+/* The title and its subtitle are one unit, so they stay close together. */
+.auth__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.auth__title {
+  font-size: var(--fs-4xl);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.auth__sub {
+  color: var(--ink-2);
+}
+
 @media (max-width: 520px) {
   .auth {
     /* dvh, not vh: mobile browser chrome slides away and vh would leave a gap */
@@ -1033,8 +1071,9 @@
   .auth__card .btn--primary {
     height: 48px;
   }
+}
 
-  .auth__rules {
+.auth__rules {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
