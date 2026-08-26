@@ -1616,7 +1616,7 @@
   border-left: 1px solid var(--line);
   padding: var(--sp-20);
   overflow-y: auto;
-  animation: luma-slide var(--dur-slow) var(--ease-out) both;
+  animation: drawer-in var(--dur-slow) var(--ease-out) both;
 }
 
 .adm-drawer header {
@@ -1792,5 +1792,29 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+}
+
+
+/*
+ * The drawer enters from the edge it is docked to.
+ *
+ * This used to borrow luma-slide, which is the indeterminate progress bar —
+ * it sweeps `left` from -34% to 100% and loops. With `both` holding the final
+ * frame, the drawer was parked at left: 100%, entirely off the right of the
+ * screen: it appeared for a moment and then flew away.
+ *
+ * The test at the time asked whether .adm-drawer existed in the DOM. It did.
+ * Presence is not visibility.
+ */
+@keyframes drawer-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0.4;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
   }
 }
