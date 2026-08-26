@@ -12,7 +12,7 @@
   gap: var(--sp-8);
   cursor: pointer;
   white-space: nowrap;
-  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+  transition: background-color var(--dur-quick) ease, border-color var(--dur-quick) ease, color var(--dur-quick) ease;
 }
 
 .btn:disabled {
@@ -568,7 +568,7 @@
 
 .disclosure__chevron {
   color: var(--ink-3);
-  transition: transform 140ms ease;
+  transition: transform var(--dur-base) ease;
 }
 
 .disclosure[aria-expanded='true'] .disclosure__chevron {
@@ -595,8 +595,8 @@
 .card--interactive {
   cursor: pointer;
   transition:
-    border-color 140ms ease,
-    box-shadow 140ms ease;
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) ease;
 }
 
 .card--interactive:hover {
@@ -646,9 +646,9 @@
 
 .icobtn {
   transition:
-    color 140ms ease,
-    border-color 140ms ease,
-    background-color 140ms ease;
+    color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    background-color var(--dur-base) ease;
 }
 
 /* ── motion ──────────────────────────────────────────────────────────── */
@@ -683,7 +683,7 @@
 
 /* The Advanced block used to appear instantly, with no sense of where from. */
 .disclosure__panel {
-  animation: ui-expand 180ms ease-out both;
+  animation: ui-expand var(--dur-slow) ease-out both;
   display: flex;
   flex-direction: column;
   gap: var(--sp-14);
@@ -692,20 +692,20 @@
 /* A result image arrives after its own authenticated request; fade it in so it
    does not snap into place a beat after everything else. */
 .img-in {
-  animation: ui-fade 220ms ease-out both;
+  animation: ui-fade var(--dur-slow) ease-out both;
 }
 
 /* Dropzone: the border alone was easy to miss mid-drag. */
 .drop--over {
   transform: scale(1.005);
-  transition: transform 140ms ease;
+  transition: transform var(--dur-base) ease;
 }
 
 .drop {
   transition:
-    border-color 140ms ease,
-    background-color 140ms ease,
-    transform 140ms ease;
+    border-color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    transform var(--dur-base) ease;
 }
 
 /* ── toast ───────────────────────────────────────────────────────────── */
@@ -732,7 +732,7 @@
   color: var(--ink);
   font-size: var(--fs-sm);
   box-shadow: var(--shadow-pop);
-  animation: ui-expand 200ms ease-out both;
+  animation: ui-expand var(--dur-slow) ease-out both;
 }
 
 .toast__icon {
@@ -765,7 +765,7 @@
   align-items: center;
   justify-content: center;
   padding: var(--sp-32);
-  animation: ui-fade 180ms ease-out both;
+  animation: ui-fade var(--dur-slow) ease-out both;
   cursor: zoom-out;
 }
 
@@ -774,7 +774,7 @@
   max-height: 100%;
   border-radius: var(--r);
   box-shadow: var(--shadow-pop);
-  animation: viewer-in 220ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+  animation: viewer-in var(--dur-slow) var(--ease-out) both;
   cursor: default;
 }
 
@@ -840,7 +840,7 @@
   background: var(--panel);
   color: var(--ink);
   font-size: var(--fs-sm);
-  transition: top 140ms ease;
+  transition: top var(--dur-base) ease;
 }
 
 .skip:focus {
@@ -900,7 +900,7 @@
   background: none;
   color: var(--ink-3);
   cursor: pointer;
-  transition: color 140ms ease;
+  transition: color var(--dur-base) ease;
 }
 
 .pw__toggle:hover {

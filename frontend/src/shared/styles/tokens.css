@@ -100,6 +100,25 @@
   --fs-3xl: 24px;     /* display numbers, avatar initials */
   --fs-4xl: 30px;     /* the one brand line on the auth screens */
 
+  /*
+   * Motion. Same story as the spacing: the values were reasonable one at a
+   * time, but 110 beside 120 and 180 beside 200 beside 220 are distinctions
+   * nobody perceives, and each new animation had to invent its own number.
+   *
+   * The loop durations for the spinner and the shimmer are deliberately not
+   * here — a repeating cycle is a different thing from a transition, and
+   * folding them into one scale would invite someone to reuse the wrong one.
+   */
+  --dur-instant: 60ms;  /* a press acknowledging itself */
+  --dur-quick: 120ms;   /* hover, focus, colour shifts */
+  --dur-base: 140ms;    /* the default for anything that moves */
+  --dur-slow: 200ms;    /* something entering or leaving the page */
+  --dur-slower: 280ms;  /* a full-screen surface */
+  --dur-slowest: 400ms; /* the one deliberate, noticeable entrance */
+
+  /* The house curve: quick to start, settles rather than stops. */
+  --ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
+
   /* Elevation. Flat surfaces use a hairline; only things that float cast one. */
   --shadow-card: 0 1px 2px rgb(0 0 0 / 18%);
 

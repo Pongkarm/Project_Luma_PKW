@@ -60,13 +60,17 @@ export function RunStrip({
   onSelect: (id: string) => void;
 }) {
   const t = useT();
-  const { data } = useQuery({
+  const { data, isPending, isError, refetch } = useQuery({
     queryKey: queryKeys.generations(1, STRIP_SIZE),
     queryFn: () => generationService.list({ page: 1, page_size: STRIP_SIZE }),
   });
 
   const runs = data?.items ?? [];
-  if (runs.length === 0) return null;
+
+  // Only a genuinely empty history hides the strip. A failed request used to
+  // take the same path, so a row of twelve images would vanish without a word
+  // and look like the runs had been lost.
+  if (!isPending && !isError && runs.length === 0) return null;
 
   return (
     <div className="runstrip">
@@ -76,16 +80,32 @@ export function RunStrip({
           {t('run.openHistory')}
         </Link>
       </div>
-      <div className="runstrip__row">
-        {runs.map((run) => (
-          <RunThumb
-            key={run.id}
-            run={run}
-            active={run.id === activeRunId}
-            onSelect={() => onSelect(run.id)}
-          />
-        ))}
-      </div>
+      {isError ? (
+        <div className="runstrip__note">
+          <Icon name="alert" size={14} />
+          <span>{t('run.recentFailed')}</span>
+          <button type="button" className="linklike" onClick={() => void refetch()}>
+            {t('run.tryAgain')}
+          </button>
+        </div>
+      ) : (
+        <div className="runstrip__row">
+          {isPending
+            ? Array.from({ length: 6 }, (_, index) => (
+                <span key={index} className="thumb thumb--loading">
+                  <span className="skeleton" style={{ width: '100%', height: '100%' }} />
+                </span>
+              ))
+            : runs.map((run) => (
+                <RunThumb
+                  key={run.id}
+                  run={run}
+                  active={run.id === activeRunId}
+                  onSelect={() => onSelect(run.id)}
+                />
+              ))}
+        </div>
+      )}
     </div>
   );
 }
