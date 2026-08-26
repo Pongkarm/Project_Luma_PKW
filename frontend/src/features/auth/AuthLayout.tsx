@@ -35,13 +35,13 @@ export function AuthLayout({
           <span className="brand__word">LUMA</span>
         </span>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-32)' }}>
           <h2 className="auth__tagline">{t('auth.tagline')}</h2>
           <div className="auth__features">
             {features.map((feature) => (
               <div className="auth__feature" key={feature.name}>
                 <Icon name={feature.icon} size={16} className="auth__featureIcon" />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-2)' }}>
                   <span className="auth__featureName">{t(feature.name)}</span>
                   <span className="auth__featureBody">{t(feature.body)}</span>
                 </div>

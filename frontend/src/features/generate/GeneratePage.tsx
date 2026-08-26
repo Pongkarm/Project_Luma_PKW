@@ -141,7 +141,7 @@ export function GeneratePage() {
         ) : (
           <>
             <div className="stagebar">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-10)', minWidth: 0 }}>
                 <span style={{ fontWeight: 600, fontSize: 'var(--fs-md)' }}>{t(modeTitleKeys[draft.mode])}</span>
                 {job ? (
                   <StatusChip status={job.status} />
@@ -222,7 +222,7 @@ function EmptyStage() {
 function SourcePreview({ url, caption }: { url: string; caption: string }) {
   const t = useT();
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-10)', alignItems: 'center' }}>
       <img
         src={url}
         alt={t('stage.startFrom')}

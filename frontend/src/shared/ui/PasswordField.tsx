@@ -24,7 +24,7 @@ export function PasswordField({ label, hint, error, className, ...rest }: Props)
   return (
     <div className="field">
       <label className="label" htmlFor={id}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>{label}</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-6)' }}>{label}</span>
       </label>
 
       <div className="pw">

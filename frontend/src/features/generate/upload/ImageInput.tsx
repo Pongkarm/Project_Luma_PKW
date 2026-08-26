@@ -58,9 +58,9 @@ export function ImageInput({ label, value, onChange }: Props) {
         <div
           style={{
             display: 'flex',
-            gap: 10,
+            gap: 'var(--sp-10)',
             alignItems: 'center',
-            padding: 8,
+            padding: 'var(--sp-8)',
             border: '1px solid var(--line)',
             borderRadius: 'var(--r)',
             background: 'var(--panel-2)',
@@ -80,7 +80,7 @@ export function ImageInput({ label, value, onChange }: Props) {
               background: 'var(--ph-image)',
             }}
           />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-2)', minWidth: 0, flex: 1 }}>
             <span
               style={{
                 fontSize: 'var(--fs-sm)',

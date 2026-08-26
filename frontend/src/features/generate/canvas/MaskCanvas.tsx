@@ -92,12 +92,12 @@ export function MaskCanvas({ editor, sourceUrl, onNaturalSize }: Props) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: 12,
+          gap: 'var(--sp-12)',
           padding: '0 12px 0 16px',
           flexWrap: 'wrap',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-10)' }}>
           <span style={{ fontWeight: 600, fontSize: 'var(--fs-md)' }}>{t('mask.title')}</span>
           <span className="mono" style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}>
             {editor.hasMask
@@ -106,7 +106,7 @@ export function MaskCanvas({ editor, sourceUrl, onNaturalSize }: Props) {
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-6)' }}>
           <Segmented
             iconsOnly
             ariaLabel={t('mask.tool')}
@@ -118,7 +118,7 @@ export function MaskCanvas({ editor, sourceUrl, onNaturalSize }: Props) {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 8,
+              gap: 'var(--sp-8)',
               height: 28,
               padding: '0 10px 0 9px',
               border: '1px solid var(--line)',
@@ -165,11 +165,11 @@ export function MaskCanvas({ editor, sourceUrl, onNaturalSize }: Props) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: 20,
+          padding: 'var(--sp-20)',
           overflow: 'auto',
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-10)', alignItems: 'center' }}>
           <div
             style={{
               position: 'relative',
@@ -220,9 +220,9 @@ export function MaskCanvas({ editor, sourceUrl, onNaturalSize }: Props) {
             />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-16)', flexWrap: 'wrap' }}>
             <span
-              style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-6)', fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}
             >
               <span
                 style={{ width: 9, height: 9, borderRadius: 2, background: 'var(--accent)', opacity: 0.55 }}
@@ -231,7 +231,7 @@ export function MaskCanvas({ editor, sourceUrl, onNaturalSize }: Props) {
             </span>
             <span
               className="mono"
-              style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--fs-2xs)', color: 'var(--ink-3)' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-6)', fontSize: 'var(--fs-2xs)', color: 'var(--ink-3)' }}
             >
               <Icon name="info" size={12} />
               {t('mask.shortcuts')}

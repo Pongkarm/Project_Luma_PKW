@@ -13,14 +13,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
-  gap: 12px;
+  padding: 0 var(--sp-16);
+  gap: var(--sp-12);
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--sp-10);
   color: var(--ink);
   text-decoration: none;
 }
@@ -41,20 +41,20 @@
   justify-content: center;
   font-family: var(--font-mono);
   font-weight: 700;
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 
 .brand__word {
   font-weight: 600;
   letter-spacing: 0.06em;
-  font-size: 13px;
+  font-size: var(--fs-base);
 }
 
 /* ── top bar ─────────────────────────────────────────────────────────── */
 .topbar__cluster {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--sp-12);
 }
 
 .topbar__divider {
@@ -68,9 +68,9 @@
 .status-pill {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: var(--sp-8);
   height: 26px;
-  padding: 0 10px;
+  padding: 0 var(--sp-10);
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--panel-2);
@@ -85,7 +85,7 @@
   }
 
   .status-pill {
-    padding: 0 8px;
+    padding: 0 var(--sp-8);
   }
 }
 
@@ -108,18 +108,18 @@
   width: 56px;
   height: 56px;
   border-radius: var(--r-lg);
-  font-size: 24px;
+  font-size: var(--fs-3xl);
 }
 
 .topbar__user {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--sp-8);
   color: var(--ink-2);
   font-size: var(--fs-md);
   font-weight: 500;
   text-decoration: none;
-  padding: 3px 6px 3px 3px;
+  padding: var(--sp-4) var(--sp-6) var(--sp-4) var(--sp-4);
   border-radius: 999px;
   transition: background-color 140ms ease;
 }
@@ -136,18 +136,18 @@
   max-width: 620px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: var(--sp-16);
 }
 
 .account__header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px;
+  gap: var(--sp-16);
+  padding: var(--sp-20);
 }
 
 .account__name {
-  font-size: 20px;
+  font-size: var(--fs-2xl);
   font-weight: 600;
   letter-spacing: -0.015em;
 }
@@ -164,7 +164,7 @@
 
 .account__statNum {
   font-family: var(--font-mono);
-  font-size: 26px;
+  font-size: var(--fs-3xl);
   font-weight: 600;
   line-height: 1.1;
 }
@@ -179,8 +179,8 @@
 .account__section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px 18px;
+  gap: var(--sp-12);
+  padding: var(--sp-16) var(--sp-16);
 }
 
 @media (max-width: 560px) {
@@ -207,8 +207,8 @@
   background: var(--panel);
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 12px 10px;
+  gap: var(--sp-20);
+  padding: var(--sp-12) var(--sp-10);
   transition: width 180ms cubic-bezier(0.2, 0.7, 0.3, 1);
 }
 
@@ -222,7 +222,7 @@
 .rail__section {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--sp-4);
 }
 
 .rail__sectionLabel {
@@ -231,8 +231,8 @@
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--ink-3);
-  padding: 0 10px;
-  margin-bottom: 2px;
+  padding: 0 var(--sp-10);
+  margin-bottom: var(--sp-2);
 }
 
 /* Generate is what people came to do, so it reads as an action, not a link. */
@@ -279,9 +279,9 @@
 .rail__preset {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--sp-8);
   height: 30px;
-  padding: 0 10px;
+  padding: 0 var(--sp-10);
   border: none;
   border-radius: var(--r);
   background: transparent;
@@ -305,7 +305,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--sp-8);
   height: 28px;
   border: 1px solid var(--line);
   border-radius: var(--r);
@@ -324,20 +324,20 @@
 .rail__nav {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--sp-2);
 }
 
 .rail__link {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--sp-10);
   height: 34px;
-  padding: 0 10px;
+  padding: 0 var(--sp-10);
   border-radius: var(--r);
   color: var(--ink-3);
   font-weight: 500;
-  font-size: 13px;
+  font-size: var(--fs-base);
   text-decoration: none;
 }
 
@@ -356,7 +356,7 @@
 .rail__count {
   margin-left: auto;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--ink-3);
 }
 
@@ -375,8 +375,8 @@
 .rail__engine {
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-size: 11.5px;
+  gap: var(--sp-8);
+  font-size: var(--fs-xs);
   color: var(--ink-3);
 }
 
@@ -417,8 +417,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 0 16px;
+  gap: var(--sp-12);
+  padding: 0 var(--sp-16);
 }
 
 .stage {
@@ -427,7 +427,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: var(--sp-24);
   overflow: auto;
   position: relative;
 }
@@ -490,10 +490,10 @@
 .result__bar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--sp-12);
   flex-wrap: wrap;
   justify-content: space-between;
-  padding: 10px 12px;
+  padding: var(--sp-10) var(--sp-12);
   border-top: 1px solid var(--line);
   background: var(--panel);
 }
@@ -559,8 +559,8 @@
 .kbd {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 7px;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-8);
   border: 1px solid var(--line-strong);
   border-bottom-width: 2px;
   border-radius: var(--r-sm);
@@ -585,17 +585,17 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 14px 16px;
+  gap: var(--sp-16);
+  padding: var(--sp-14) var(--sp-16);
 }
 
 .controls__foot {
   flex: none;
   border-top: 1px solid var(--line);
-  padding: 12px 16px;
+  padding: var(--sp-12) var(--sp-16);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--sp-8);
 }
 
 .tabbar {
@@ -606,7 +606,7 @@
    result whichever way the rail got narrow. */
 .rail[data-collapsed='true'] {
   width: 56px;
-  padding: 12px 0;
+  padding: var(--sp-12) 0;
   align-items: center;
 }
 
@@ -630,7 +630,7 @@
   left: calc(100% + 10px);
   top: 50%;
   transform: translateY(-50%) translateX(-4px);
-  padding: 4px 9px;
+  padding: var(--sp-4) var(--sp-8);
   border: 1px solid var(--line-strong);
   border-radius: var(--r-sm);
   background: var(--raised);
@@ -653,7 +653,7 @@
 @media (max-width: 1099px) {
   .rail {
     width: 56px;
-    padding: 10px 0;
+    padding: var(--sp-10) 0;
     align-items: center;
   }
 
@@ -674,7 +674,7 @@
     left: calc(100% + 10px);
     top: 50%;
     transform: translateY(-50%) translateX(-4px);
-    padding: 4px 9px;
+    padding: var(--sp-4) var(--sp-8);
     border: 1px solid var(--line-strong);
     border-radius: var(--r-sm);
     background: var(--raised);
@@ -724,7 +724,7 @@
   }
 
   .stage {
-    padding: 14px;
+    padding: var(--sp-14);
   }
 
   .controls {
@@ -739,15 +739,15 @@
     background: var(--panel);
     align-items: center;
     justify-content: space-around;
-    padding: 0 12px;
+    padding: 0 var(--sp-12);
   }
 
   .tabbar__link {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 3px;
-    font-size: 10.5px;
+    gap: var(--sp-4);
+    font-size: var(--fs-2xs);
     color: var(--ink-3);
     text-decoration: none;
     min-width: 64px;
@@ -776,18 +776,18 @@
   flex: none;
   border-top: 1px solid var(--line);
   background: var(--panel);
-  padding: 12px 16px;
+  padding: var(--sp-12) var(--sp-16);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--sp-8);
 }
 
 .runstrip__row {
   display: flex;
-  gap: 8px;
+  gap: var(--sp-8);
   align-items: center;
   overflow-x: auto;
-  padding-bottom: 2px;
+  padding-bottom: var(--sp-2);
 }
 
 .thumb {
@@ -829,12 +829,12 @@
 .grid-runs {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 14px;
+  gap: var(--sp-14);
   align-content: start;
   /* max-content, not auto: the cards clip their own overflow, which lets an
      auto-sized row ignore their real height and cut the caption off. */
   grid-auto-rows: max-content;
-  padding: 16px;
+  padding: var(--sp-16);
   overflow-y: auto;
   flex: 1;
 }
@@ -859,7 +859,7 @@
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--sp-8);
   color: var(--ink-3);
 }
 
@@ -878,14 +878,14 @@
 
 .runcard__body {
   flex: none;
-  padding: 9px 11px;
+  padding: var(--sp-8) var(--sp-12);
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: var(--sp-4);
 }
 
 .runcard__prompt {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -917,12 +917,12 @@
   display: none;
   position: relative;
   overflow: hidden;
-  padding: 56px 56px 44px;
+  padding: var(--sp-56) var(--sp-56) var(--sp-40);
   background: var(--panel);
   border-right: 1px solid var(--line);
   flex-direction: column;
   justify-content: space-between;
-  gap: 48px;
+  gap: var(--sp-48);
 }
 
 @media (min-width: 940px) {
@@ -951,7 +951,7 @@
 }
 
 .auth__tagline {
-  font-size: 30px;
+  font-size: var(--fs-4xl);
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.25;
@@ -962,35 +962,35 @@
 .auth__features {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: var(--sp-16);
   max-width: 46ch;
 }
 
 .auth__feature {
   display: flex;
-  gap: 12px;
+  gap: var(--sp-12);
   align-items: flex-start;
 }
 
 .auth__featureIcon {
   color: var(--accent-text);
-  margin-top: 2px;
+  margin-top: var(--sp-2);
 }
 
 .auth__featureName {
-  font-size: 14.5px;
+  font-size: var(--fs-md);
   font-weight: 600;
 }
 
 .auth__featureBody {
-  font-size: 13.5px;
+  font-size: var(--fs-base);
   color: var(--ink-3);
   line-height: 1.55;
 }
 
 .auth__foot {
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: var(--fs-xs);
   color: var(--ink-3);
 }
 
@@ -998,7 +998,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 24px;
+  padding: var(--sp-40) var(--sp-24);
 }
 
 @media (max-width: 520px) {
@@ -1008,17 +1008,17 @@
   }
 
   .auth__panel {
-    padding: 28px 18px;
+    padding: var(--sp-24) var(--sp-16);
     align-items: flex-start;
-    padding-top: 48px;
+    padding-top: var(--sp-48);
   }
 
   .auth__title {
-    font-size: 24px;
+    font-size: var(--fs-3xl);
   }
 
   .auth__tagline {
-    font-size: 26px;
+    font-size: var(--fs-3xl);
   }
 
   /*
@@ -1026,7 +1026,7 @@
    * here is the only reliable way to stop the whole layout jumping on tap.
    */
   .auth__card .input {
-    font-size: 16px;
+    font-size: var(--fs-xl);
     height: 46px;
   }
 
@@ -1037,15 +1037,15 @@
   .auth__rules {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  margin-top: 2px;
+  gap: var(--sp-4);
+  margin-top: var(--sp-2);
 }
 
 .auth__rule {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12.5px;
+  gap: var(--sp-8);
+  font-size: var(--fs-sm);
   color: var(--ink-3);
   transition: color 200ms ease;
 }
@@ -1060,7 +1060,7 @@
 
 .auth__alt {
   text-align: center;
-  font-size: 13.5px;
+  font-size: var(--fs-base);
   color: var(--ink-3);
 }
 
@@ -1113,7 +1113,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 34px 24px;
+  padding: var(--sp-32) var(--sp-24);
   background: var(--bg);
 }
 
@@ -1122,14 +1122,14 @@
   max-width: 360px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--sp-16);
 }
 
 .centered-note {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: var(--sp-14);
   text-align: center;
   max-width: 360px;
 }

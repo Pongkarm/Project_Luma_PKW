@@ -75,7 +75,7 @@ function DimensionRow({ label, ariaLabel, value, onCommit }: RowProps) {
   const fill = ((value - min) / (max - min)) * 100;
 
   return (
-    <div className="field" style={{ gap: 4 }}>
+    <div className="field field--tight">
       <div className="label">
         <label htmlFor={id}>{label}</label>
         <input
@@ -182,7 +182,7 @@ export function SizeControl({ label, width, height, onChange, defaultSize }: Pro
     <div className="field">
       <div className="label">
         <span>{label ?? t('size.label')}</span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-8)' }}>
           <span className="label__meta mono">
             {width} × {height} px · {ratioLabel(width, height)}
           </span>
@@ -229,7 +229,7 @@ export function SizeControl({ label, width, height, onChange, defaultSize }: Pro
         </span>
       </div>
 
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 'var(--sp-6)', flexWrap: 'wrap' }}>
         {sizePresets.map((preset) => {
           const selected = !customOpen && preset === activePreset;
           return (
@@ -239,7 +239,7 @@ export function SizeControl({ label, width, height, onChange, defaultSize }: Pro
               className={`btn btn--sm ${selected ? 'btn--secondary' : 'btn--ghost'}`}
               aria-pressed={selected}
               title={`${t(`size.${preset.id}` as TKey)} · ${preset.width} × ${preset.height}`}
-              style={{ gap: 6, border: selected ? undefined : '1px solid var(--line)' }}
+              style={{ gap: 'var(--sp-6)', border: selected ? undefined : '1px solid var(--line)' }}
               onClick={() => {
                 setCustomOpen(false);
                 setLocked(false);
@@ -263,7 +263,7 @@ export function SizeControl({ label, width, height, onChange, defaultSize }: Pro
       </div>
 
       {isCustom ? (
-        <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap', marginTop: 4 }}>
+        <div style={{ display: 'flex', gap: 'var(--sp-14)', alignItems: 'center', flexWrap: 'wrap', marginTop: 'var(--sp-4)' }}>
           <span
             style={{
               width: 56,
@@ -277,7 +277,7 @@ export function SizeControl({ label, width, height, onChange, defaultSize }: Pro
           >
             <ShapeGlyph width={width} height={height} box={52} />
           </span>
-          <div style={{ flex: '1 1 190px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ flex: '1 1 190px', display: 'flex', flexDirection: 'column', gap: 'var(--sp-10)' }}>
             <DimensionRow
               label={t('size.width')}
               ariaLabel={t('size.widthPx')}

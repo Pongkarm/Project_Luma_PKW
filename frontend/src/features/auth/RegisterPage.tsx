@@ -62,7 +62,7 @@ export function RegisterPage() {
 
   return (
     <AuthLayout title={t('auth.createTitle')} subtitle={t('auth.createSub')}>
-      <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-16)' }}>
         {error ? (
           <div className="auth__error">
             <Alert tone="error">{error}</Alert>
@@ -127,7 +127,7 @@ export function RegisterPage() {
             </span>
           </div>
 
-          <div style={{ marginTop: 14 }}>
+          <div style={{ marginTop: 'var(--sp-14)' }}>
             <PasswordField
               label={t('auth.confirmPassword')}
               value={confirm}
@@ -145,7 +145,7 @@ export function RegisterPage() {
           block
           busy={busy}
           disabled={!ready}
-          style={{ marginTop: 2 }}
+          style={{ marginTop: 'var(--sp-2)' }}
         >
           {t('auth.createAccount')}
         </Button>

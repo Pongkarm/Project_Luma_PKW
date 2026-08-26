@@ -77,13 +77,13 @@ export function RunDetail({
           ) : run.status === 'completed' ? (
             <span className="skeleton" style={{ width: '100%', height: 160 }} />
           ) : (
-            <div style={{ padding: 24 }}>
+            <div style={{ padding: 'var(--sp-24)' }}>
               <StatusChip status={run.status} />
             </div>
           )}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-8)' }}>
           <span className="label" style={{ padding: 0 }}>
             <span className="eyebrow">{t('history.prompt')}</span>
             <button
@@ -102,7 +102,7 @@ export function RunDetail({
         </div>
 
         {run.negative_prompt ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-8)' }}>
             <span className="eyebrow">{t('history.avoided')}</span>
             <p style={{ fontSize: 'var(--fs-sm)', lineHeight: 1.55, color: 'var(--ink-3)' }}>
               {run.negative_prompt}
@@ -111,7 +111,7 @@ export function RunDetail({
         ) : null}
 
         {run.status === 'failed' && run.error_message ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-8)' }}>
             <span className="eyebrow">{t('history.whyFailed')}</span>
             <p
               className="mono"
@@ -135,7 +135,7 @@ export function RunDetail({
         </div>
 
         {run.source_image_path ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-8)' }}>
             <span className="eyebrow">{t('history.startedFrom')}</span>
             <img
               src={uploadService.publicUrl(`/uploads/${run.source_image_path.split(/[\\/]/).pop()}`)}

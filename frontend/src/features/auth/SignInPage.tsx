@@ -45,7 +45,7 @@ export function SignInPage() {
 
   return (
     <AuthLayout title={t('auth.signIn')} subtitle={t('auth.signInSub')}>
-      <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-16)' }}>
         {error ? (
           <div className="auth__error">
             <Alert tone="error">{error}</Alert>
@@ -75,7 +75,7 @@ export function SignInPage() {
           block
           busy={busy}
           disabled={!username || !password}
-          style={{ marginTop: 2 }}
+          style={{ marginTop: 'var(--sp-2)' }}
         >
           {t('auth.signIn')}
         </Button>

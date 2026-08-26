@@ -15,7 +15,7 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: var(--fs-md);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -64,7 +64,7 @@ a:hover {
 }
 
 .eyebrow {
-  font-size: 10.5px;
+  font-size: var(--fs-2xs);
   font-weight: 600;
   letter-spacing: 0.09em;
   text-transform: uppercase;

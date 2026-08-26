@@ -91,7 +91,7 @@ export function ProfileCard() {
         <span className="avatar avatar--lg" aria-hidden="true">
           {(user?.username ?? '?').slice(0, 1)}
         </span>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-2)', minWidth: 0 }}>
           <span className="account__name">{user?.username ?? '—'}</span>
           <span className="account__email">{user?.email ?? '—'}</span>
           <span className="account__email">
@@ -101,7 +101,7 @@ export function ProfileCard() {
         <div className="account__stat">
           <div className="account__statNum">{user?.total_generations ?? 0}</div>
           <div className="account__statLabel">{t('account.runs')}</div>
-          <Button size="sm" icon="sliders" onClick={open} style={{ marginTop: 8 }}>
+          <Button size="sm" icon="sliders" onClick={open} style={{ marginTop: 'var(--sp-8)' }}>
             {t('account.edit')}
           </Button>
         </div>
@@ -113,7 +113,7 @@ export function ProfileCard() {
     <section className="card account__section">
       <span className="eyebrow">{t('account.edit')}</span>
 
-      <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-14)' }}>
         {error ? <Alert tone="error">{error}</Alert> : null}
 
         <TextField
@@ -179,7 +179,7 @@ export function ProfileCard() {
               </span>
             </div>
 
-            <div style={{ marginTop: 14 }}>
+            <div style={{ marginTop: 'var(--sp-14)' }}>
               <PasswordField
                 label={t('auth.confirmPassword')}
                 value={confirmNew}
@@ -207,7 +207,7 @@ export function ProfileCard() {
           />
         </div>
 
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 'var(--sp-8)' }}>
           <Button type="button" onClick={() => setEditing(false)} disabled={busy}>
             {t('account.cancel')}
           </Button>

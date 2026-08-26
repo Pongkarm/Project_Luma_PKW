@@ -47,8 +47,8 @@ export function SessionExpiredDialog() {
 
   return (
     <Dialog open={expired} title={t('session.title')}>
-      <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-14)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-6)' }}>
           <Icon name="lock" size={18} />
           <h2 style={{ fontSize: 'var(--fs-lg)', fontWeight: 600 }}>{t('session.title')}</h2>
           <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--ink-3)', lineHeight: 1.55 }}>
@@ -66,7 +66,7 @@ export function SessionExpiredDialog() {
           onChange={(event) => setPassword(event.target.value)}
         />
 
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 'var(--sp-8)' }}>
           <Button type="button" onClick={signOut} style={{ flex: 1 }}>
             {t('session.signOut')}
           </Button>

@@ -24,7 +24,7 @@ export function AccountPage() {
         <span style={{ fontWeight: 600, fontSize: 'var(--fs-md)' }}>{t('account.title')}</span>
       </div>
 
-      <div style={{ padding: 24, overflowY: 'auto', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ padding: 'var(--sp-24)', overflowY: 'auto', display: 'flex', justifyContent: 'center' }}>
         <div className="account">
           <ProfileCard />
 

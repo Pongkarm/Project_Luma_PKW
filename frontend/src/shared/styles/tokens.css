@@ -55,26 +55,50 @@
   --r-lg: 8px;
   --ctl: 32px;
 
-  /* spacing scale */
-  --s1: 4px;
-  --s2: 8px;
-  --s3: 12px;
-  --s4: 16px;
-  --s5: 24px;
-  --s6: 32px;
-  --s7: 48px;
+  /*
+   * Spacing scale, named by the pixels it produces so a value can be read
+   * without a lookup. Steps are 2px apart at the small end because that is
+   * where this interface actually works — an icon beside a label, a label
+   * above its own hint — and widen once the gaps become structural.
+   *
+   * The previous --s1..--s7 scale stepped by 4px and was used exactly once in
+   * the whole product; everything else was a bare number, which is how the
+   * same .field ended up with three different gaps on three different screens.
+   */
+  --sp-2: 2px;
+  --sp-4: 4px;
+  --sp-6: 6px;
+  --sp-8: 8px;
+  --sp-10: 10px;
+  --sp-12: 12px;
+  --sp-14: 14px;
+  --sp-16: 16px;
+  --sp-20: 20px;
+  --sp-24: 24px;
+  --sp-32: 32px;
+  --sp-40: 40px;
+  --sp-48: 48px;
+  --sp-56: 56px;
 
 
   /*
-   * Type scale. Every size in the product comes from these five steps — the
-   * interface previously used nine values that differed by half a pixel, which
-   * read as noise rather than hierarchy.
+   * Type scale. The five small steps were already here, but only the inline
+   * styles used them: the stylesheets carried fourteen literal sizes, among
+   * them 11 beside 11.5, 12 beside 12.5 beside 13 beside 13.5, and 14 beside
+   * 14.5. Half-pixel neighbours are not hierarchy — nobody can see them, and
+   * they leave the next person guessing which one to copy. The display sizes
+   * are new: headings had no tokens at all.
    */
   --fs-2xs: 10.5px;   /* eyebrows, mono meta */
   --fs-xs: 11.5px;    /* hints, captions */
   --fs-sm: 12.5px;    /* secondary text */
+  --fs-base: 13.5px;  /* dense UI text, table cells */
   --fs-md: 14px;      /* body, control labels */
   --fs-lg: 15px;      /* emphasis */
+  --fs-xl: 16px;      /* card titles */
+  --fs-2xl: 20px;     /* page and section headings */
+  --fs-3xl: 24px;     /* display numbers, avatar initials */
+  --fs-4xl: 30px;     /* the one brand line on the auth screens */
 
   /* Elevation. Flat surfaces use a hairline; only things that float cast one. */
   --shadow-card: 0 1px 2px rgb(0 0 0 / 18%);

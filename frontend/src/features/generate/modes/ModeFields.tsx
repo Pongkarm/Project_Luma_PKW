@@ -58,7 +58,7 @@ export function ModeFields({
       />
 
       {source && output ? (
-        <div className="field" style={{ gap: 4, marginTop: -4 }}>
+        <div className="field field--tight" style={{ marginTop: -4 }}>
           <div className="label">
             <span>{t('size.output')}</span>
             <span className="label__meta mono">
@@ -70,7 +70,7 @@ export function ModeFields({
           ) : scaled ? (
             <span
               className="field__hint"
-              style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}
+              style={{ display: 'flex', gap: 'var(--sp-6)', alignItems: 'flex-start' }}
             >
               <Icon name="info" size={12} />
               <span>

@@ -119,17 +119,17 @@ export function HistoryPage() {
     <div className="app__workspace">
       <main className="main" id="main" tabIndex={-1}>
         <div className="stagebar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-10)' }}>
             <span style={{ fontWeight: 600, fontSize: 'var(--fs-md)' }}>{t('history.title')}</span>
             <span className="mono" style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}>
               {total === 1 ? t('history.run', { count: total }) : t('history.runs', { count: total })}
             </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-10)' }}>
             <span className="mono" style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}>
               {t('history.range', { from, to, total })}
             </span>
-            <div style={{ display: 'flex', gap: 4 }}>
+            <div style={{ display: 'flex', gap: 'var(--sp-4)' }}>
               <IconButton
                 icon="chevronLeft"
                 label={t('history.prev')}
@@ -147,7 +147,7 @@ export function HistoryPage() {
         </div>
 
         {isError ? (
-          <div style={{ padding: 16 }}>
+          <div style={{ padding: 'var(--sp-16)' }}>
             <Alert tone="error">{t('history.loadFailed')}</Alert>
           </div>
         ) : isLoading ? (

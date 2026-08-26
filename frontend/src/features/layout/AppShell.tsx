@@ -91,7 +91,7 @@ export function AppShell() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 8,
+              gap: 'var(--sp-8)',
               color: 'var(--ink-2)',
               fontSize: 'var(--fs-sm)',
               fontWeight: 500,

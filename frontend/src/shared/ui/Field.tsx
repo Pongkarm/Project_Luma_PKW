@@ -15,7 +15,7 @@ function FieldShell({ label, htmlFor, meta, hint, error, children }: FieldShellP
   return (
     <div className="field">
       <label className="label" htmlFor={htmlFor}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>{label}</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-6)' }}>{label}</span>
         {meta ? <span className="label__meta mono">{meta}</span> : null}
       </label>
       {children}

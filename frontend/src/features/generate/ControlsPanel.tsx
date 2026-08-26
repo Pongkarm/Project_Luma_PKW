@@ -119,9 +119,9 @@ export function ControlsPanel({
         />
 
         {presets.length > 0 ? (
-          <div className="field" style={{ gap: 6 }}>
+          <div className="field">
             <span className="eyebrow">{t('preset.saved')}</span>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 'var(--sp-6)', flexWrap: 'wrap' }}>
               {presets.map((preset) => (
                 <button
                   key={preset.id}
@@ -266,14 +266,14 @@ export function ControlsPanel({
 
           <div className={`field${inert.has('seed') ? ' is-inert' : ''}`}>
             <div className="label">
-              <label htmlFor="seed-field" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <label htmlFor="seed-field" style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-6)' }}>
                 {t('gen.seed')}
                 {inert.has('seed') ? <NoEffect /> : <span className="modedot" title={t('gen.modeDot')} />}
                 {changedMark('seed', defaultDraft.seed)}
               </label>
               <span className="label__meta">{t('gen.seedBlank')}</span>
             </div>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 'var(--sp-8)' }}>
               <input
                 id="seed-field"
                 className="input mono"
@@ -295,13 +295,13 @@ export function ControlsPanel({
             <span className="field__hint">{t('gen.seedHelp')}</span>
           </div>
           {draft.mode !== 'txt2img' ? (
-            <div className={`field${inert.has('size') ? ' is-inert' : ''}`} style={{ gap: 8 }}>
+            <div className={`field${inert.has('size') ? ' is-inert' : ''}`} style={{ gap: 'var(--sp-8)' }}>
               <label
                 className="label"
                 style={{ cursor: 'pointer' }}
                 htmlFor="size-override"
               >
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-6)' }}>
                   {t('size.byHand')}
                   {inert.has('size') ? <NoEffect /> : null}
                 </span>
@@ -404,9 +404,9 @@ export function ControlsPanel({
           </SelectField>
           <div className="hairline" />
 
-          <div className="field" style={{ gap: 6 }}>
+          <div className="field">
             <span className="label">{t('preset.saveThese')}</span>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 'var(--sp-8)' }}>
               <input
                 className="input"
                 placeholder={t('preset.namePlaceholder')}
@@ -439,14 +439,14 @@ export function ControlsPanel({
               {t('preset.hint')}
             </span>
             {presets.length > 0 ? (
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 2 }}>
+              <div style={{ display: 'flex', gap: 'var(--sp-6)', flexWrap: 'wrap', marginTop: 'var(--sp-2)' }}>
                 {presets.map((preset) => (
                   <span
                     key={preset.id}
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: 4,
+                      gap: 'var(--sp-4)',
                       fontSize: 'var(--fs-xs)',
                       color: 'var(--ink-3)',
                       border: '1px solid var(--line)',
@@ -495,7 +495,7 @@ export function ControlsPanel({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 6,
+            gap: 'var(--sp-6)',
           }}
         >
           {submitHint}

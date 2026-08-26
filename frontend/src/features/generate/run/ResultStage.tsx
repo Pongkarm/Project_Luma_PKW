@@ -134,7 +134,7 @@ export function ResultStage({
                 fontSize: 'var(--fs-2xs)',
                 color: 'var(--ink-3)',
                 textAlign: 'left',
-                marginTop: 8,
+                marginTop: 'var(--sp-8)',
                 wordBreak: 'break-word',
               }}
             >
@@ -156,7 +156,7 @@ export function ResultStage({
         {image.url ? (
           <img className="img-in" src={image.url} alt={job.prompt} />
         ) : image.failed ? (
-          <div style={{ padding: 32 }}>
+          <div style={{ padding: 'var(--sp-32)' }}>
             <Alert tone="error">{t('run.imageFailed')}</Alert>
           </div>
         ) : (
@@ -169,7 +169,7 @@ export function ResultStage({
           {job.width} × {job.height} · {job.steps} steps · cfg {job.cfg_scale} ·{' '}
           {formatDuration(job.duration_seconds)}
         </span>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 'var(--sp-8)' }}>
           <a
             className="btn btn--sm btn--secondary"
             href={image.url ?? undefined}

@@ -43,9 +43,9 @@ export function Slider({
   }
 
   return (
-    <div className="field" style={{ gap: 6 }}>
+    <div className="field">
       <div className="label">
-        <label htmlFor={id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <label htmlFor={id} style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-6)' }}>
           {label}
         </label>
         {showNumber ? (
