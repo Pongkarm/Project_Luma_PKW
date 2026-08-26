@@ -1766,3 +1766,31 @@
   color: var(--ink-3);
   font-style: normal;
 }
+
+/*
+ * The top bar on a phone. The cluster holds the engine pill, the inference
+ * mode, the language switch, the theme toggle and the person's name, which at
+ * 390px is more than fits — it overflowed by 14px for anyone whose username
+ * ran longer than "alice", and by more again in Thai.
+ *
+ * The inference mode is the first thing to go: it is diagnostic, it is the
+ * widest item, and nobody administers a callback queue from a phone. The name
+ * then truncates rather than pushing the row wider.
+ */
+@media (width <= 520px) {
+  .topbar__cluster {
+    gap: var(--sp-8);
+    min-width: 0;
+  }
+
+  .topbar__cluster .mono {
+    display: none;
+  }
+
+  .topbar__user {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
