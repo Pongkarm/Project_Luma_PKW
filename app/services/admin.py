@@ -9,9 +9,10 @@ from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from sqlalchemy import String, case, cast, func, or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
-from app.models import AdminRole, Generation, User
+from app.core.permissions import Role, get_role
+from app.models import AdminRole, AuditEvent, Generation, User
 
 # เพดานฝั่งเซิร์ฟเวอร์ ไม่ให้ ?page_size=100000 ดูดทั้งตารางออกไป
 MAX_PAGE_SIZE = 100
@@ -288,3 +289,94 @@ def stats(db: Session, days: int = 14) -> dict:
         "by_model": group(Generation.model_name),
         "window_days": days,
     }
+
+
+def record_audit(
+    db: Session,
+    actor_id: UUID,
+    action: str,
+    target_type: str | None = None,
+    target_id: UUID | None = None,
+    detail: dict | None = None,
+) -> None:
+    """
+    บันทึกการกระทำลง audit_events
+
+    ตั้งใจไม่ commit ในนี้ ผู้เรียกต้อง commit ครั้งเดียวพร้อมกับการกระทำที่มัน
+    บันทึก ถ้าเขียน log ไม่สำเร็จ การกระทำนั้นต้อง rollback ตามไปด้วย —
+    ไม่มีทางที่การกระทำจะสำเร็จโดยไม่ทิ้งร่องรอย
+    """
+    db.add(
+        AuditEvent(
+            actor_id=actor_id,
+            action=action,
+            target_type=target_type,
+            target_id=target_id,
+            detail=detail,
+        )
+    )
+
+
+def set_user_active(
+    db: Session, actor: User, target_id: UUID, is_active: bool, reason: str
+) -> tuple[bool, str | None]:
+    """
+    ปิดหรือเปิดบัญชี คืน (สำเร็จ, เหตุผลที่ปฏิเสธ)
+
+    การปฏิเสธทั้งสองข้อตรวจที่นี่ ไม่ใช่ที่หน้าจอ หน้าจอแค่บอกล่วงหน้าว่าจะถูก
+    ปฏิเสธเพราะอะไร
+    """
+    target = db.query(User).filter(User.id == target_id).first()
+    if target is None:
+        return False, "ไม่พบผู้ใช้"
+
+    if target.id == actor.id:
+        # ปิดบัญชีตัวเอง = ล็อกตัวเองออกทันที และถ้าเป็น owner คนสุดท้ายก็คือ
+        # ล็อกทุกคนออกถาวร
+        return False, "ปิดบัญชีของตัวเองไม่ได้"
+
+    target_role = get_role(db, target.id)
+    if target_role == Role.OWNER:
+        return False, "ปิดบัญชีของเจ้าของระบบไม่ได้"
+
+    if target.is_active == is_active:
+        return False, "บัญชีอยู่ในสถานะนี้อยู่แล้ว"
+
+    target.is_active = is_active
+    record_audit(
+        db,
+        actor_id=actor.id,
+        action="user.enable" if is_active else "user.disable",
+        target_type="user",
+        target_id=target.id,
+        detail={"reason": reason, "username": target.username},
+    )
+    db.commit()
+    return True, None
+
+
+def list_audit(
+    db: Session, page: int = 1, page_size: int = 25
+) -> tuple[list[dict], int]:
+    page_size = min(page_size, MAX_PAGE_SIZE)
+    actor = aliased(User)
+    stmt = select(AuditEvent, actor.username).join(actor, actor.id == AuditEvent.actor_id)
+    total = db.execute(select(func.count()).select_from(stmt.subquery())).scalar_one()
+    rows = db.execute(
+        stmt.order_by(AuditEvent.created_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    ).all()
+    return [
+        {
+            "id": e.id,
+            "actor_id": e.actor_id,
+            "actor_username": name,
+            "action": e.action,
+            "target_type": e.target_type,
+            "target_id": e.target_id,
+            "detail": e.detail,
+            "created_at": e.created_at,
+        }
+        for e, name in rows
+    ], total

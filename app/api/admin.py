@@ -20,10 +20,12 @@ from app.db.database import get_db
 from app.models import User
 from app.schemas.admin import (
     AdminMeResponse,
+    AuditListResponse,
     AdminRunListResponse,
     AdminStatsResponse,
     AdminUserDetail,
     AdminUserListResponse,
+    UserStatusUpdate,
 )
 from app.services import admin as svc
 
@@ -140,3 +142,51 @@ def read_generations(
         items=_redact(items, role, is_run=True),
         total=total, page=page, page_size=min(page_size, svc.MAX_PAGE_SIZE),
     )
+
+
+@router.patch("/users/{user_id}/status", response_model=AdminUserDetail)
+def set_user_status(
+    user_id: UUID,
+    body: UserStatusUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(Role.ADMIN)),
+):
+    """
+    ปิดหรือเปิดบัญชี — การกระทำเดียวที่แอดมินทำกับบัญชีคนอื่นได้
+
+    ตั้งใจไม่มี endpoint สำหรับเปลี่ยนอีเมลหรือรหัสผ่านของผู้ใช้ นั่นดูเหมือน
+    ฟีเจอร์ที่ช่วยเหลือ แต่จริง ๆ คือเส้นทางยึดบัญชี: เปลี่ยนอีเมลแล้วขอรีเซ็ตรหัส
+    """
+    ok, refusal = svc.set_user_active(db, current_user, user_id, body.is_active, body.reason)
+    if not ok:
+        if refusal == "ไม่พบผู้ใช้":
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=refusal)
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=refusal)
+
+    detail = svc.get_user_detail(db, user_id)
+    role = get_role(db, current_user.id)
+    runs, _ = svc.list_runs(db, user_id=user_id, page_size=10)
+    return AdminUserDetail(
+        user=_redact([detail], role, is_run=False)[0],
+        recent_runs=_redact(runs, role, is_run=True),
+        failures=svc.failure_groups(
+            db, datetime.now(timezone.utc) - timedelta(days=30), user_id=user_id
+        ),
+    )
+
+
+@router.get("/audit", response_model=AuditListResponse)
+def read_audit(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(25, ge=1, le=100),
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role(Role.ADMIN)),
+):
+    """
+    ไทม์ไลน์การกระทำของแอดมิน
+
+    อ่านอย่างเดียวโดยโครงสร้าง ไม่มี route ไหนแก้หรือลบแถวในตารางนี้เลย
+    log ที่แอดมินแก้ได้ไม่ใช่หลักฐานอะไรทั้งนั้น
+    """
+    items, total = svc.list_audit(db, page=page, page_size=page_size)
+    return AuditListResponse(items=items, total=total, page=page, page_size=page_size)

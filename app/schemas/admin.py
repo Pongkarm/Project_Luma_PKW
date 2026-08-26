@@ -116,3 +116,33 @@ class AdminUserDetail(BaseModel):
     user: AdminUserRow
     recent_runs: list[AdminRunRow]
     failures: list[FailureGroup]
+
+
+class UserStatusUpdate(BaseModel):
+    """
+    เหตุผลเป็นฟิลด์บังคับ ไม่ใช่พิธีกรรม — มันคือสิ่งที่ทำให้ audit log อ่านรู้เรื่อง
+    ในอีกสามสัปดาห์ และการต้องพิมพ์คือจังหวะหยุดที่กันการกดพลาด
+    """
+
+    is_active: bool
+    reason: str = Field(min_length=3, max_length=200)
+
+
+class AuditRow(BaseModel):
+    id: UUID
+    actor_id: UUID
+    actor_username: str
+    action: str
+    target_type: str | None
+    target_id: UUID | None
+    detail: dict | None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AuditListResponse(BaseModel):
+    items: list[AuditRow] = Field(default_factory=list)
+    total: int
+    page: int
+    page_size: int
