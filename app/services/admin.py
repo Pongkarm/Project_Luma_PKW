@@ -11,7 +11,7 @@ from uuid import UUID
 from sqlalchemy import String, case, cast, func, or_, select
 from sqlalchemy.orm import Session, aliased
 
-from app.core.permissions import Role, get_role
+from app.core.permissions import NAME_TO_ROLE, Role, get_role
 from app.models import AdminRole, AuditEvent, Generation, User
 
 # เพดานฝั่งเซิร์ฟเวอร์ ไม่ให้ ?page_size=100000 ดูดทั้งตารางออกไป
@@ -380,3 +380,73 @@ def list_audit(
         }
         for e, name in rows
     ], total
+
+
+def list_admins(db: Session) -> list[dict]:
+    granter = aliased(User)
+    rows = db.execute(
+        select(AdminRole, User.username, User.email, granter.username)
+        .join(User, User.id == AdminRole.user_id)
+        .outerjoin(granter, granter.id == AdminRole.granted_by)
+        .order_by(AdminRole.granted_at)
+    ).all()
+    return [
+        {
+            "user_id": r.user_id,
+            "username": name,
+            "email": email,
+            "role": r.role,
+            "granted_by_username": by,
+            "granted_at": r.granted_at,
+        }
+        for r, name, email, by in rows
+    ]
+
+
+def set_admin_role(
+    db: Session, actor: User, target_id: UUID, role: str | None
+) -> tuple[bool, str | None]:
+    """
+    มอบ เปลี่ยน หรือถอนสิทธิ์ role=None คือถอน
+
+    การปฏิเสธสองข้อที่นี่คือสิ่งที่กันไม่ให้ระบบล็อกตัวเองออกถาวร ถ้าเจ้าของ
+    คนสุดท้ายถอนสิทธิ์ตัวเอง จะไม่มีใครมอบสิทธิ์คืนให้ใครได้อีกเลย ทางแก้เดียว
+    คือแก้ฐานข้อมูลด้วยมือ
+    """
+    if role is not None and role not in NAME_TO_ROLE:
+        return False, "ระดับสิทธิ์ไม่ถูกต้อง"
+
+    target = db.query(User).filter(User.id == target_id).first()
+    if target is None:
+        return False, "ไม่พบผู้ใช้"
+
+    existing = db.query(AdminRole).filter(AdminRole.user_id == target_id).first()
+    owners = db.query(AdminRole).filter(AdminRole.role == "owner").count()
+    losing_owner = existing is not None and existing.role == "owner" and role != "owner"
+
+    if losing_owner and owners <= 1:
+        return False, "ถอนสิทธิ์เจ้าของคนสุดท้ายไม่ได้ จะไม่มีใครมอบสิทธิ์คืนได้อีก"
+    if target_id == actor.id and losing_owner:
+        return False, "ลดสิทธิ์ของตัวเองไม่ได้"
+
+    if role is None:
+        if existing is None:
+            return False, "ผู้ใช้คนนี้ไม่มีสิทธิ์อยู่แล้ว"
+        db.delete(existing)
+        action = "role.revoke"
+        detail = {"username": target.username, "was": existing.role}
+    elif existing is None:
+        db.add(AdminRole(user_id=target_id, role=role, granted_by=actor.id))
+        action = "role.grant"
+        detail = {"username": target.username, "role": role}
+    else:
+        if existing.role == role:
+            return False, "ผู้ใช้คนนี้มีสิทธิ์ระดับนี้อยู่แล้ว"
+        detail = {"username": target.username, "was": existing.role, "role": role}
+        existing.role = role
+        existing.granted_by = actor.id
+        action = "role.change"
+
+    record_audit(db, actor.id, action, "user", target_id, detail)
+    db.commit()
+    return True, None

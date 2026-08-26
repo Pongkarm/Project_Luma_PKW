@@ -24,7 +24,9 @@ from app.schemas.admin import (
     AdminRunListResponse,
     AdminStatsResponse,
     AdminUserDetail,
+    AdminRoleRow,
     AdminUserListResponse,
+    RoleAssign,
     UserStatusUpdate,
 )
 from app.services import admin as svc
@@ -190,3 +192,42 @@ def read_audit(
     """
     items, total = svc.list_audit(db, page=page, page_size=page_size)
     return AuditListResponse(items=items, total=total, page=page, page_size=page_size)
+
+
+@router.get("/roles", response_model=list[AdminRoleRow])
+def read_roles(
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role(Role.OWNER)),
+):
+    """ใครถืออำนาจอยู่บ้าง หน้าเล็กแต่เดิมพันสูง"""
+    return svc.list_admins(db)
+
+
+@router.post("/roles", status_code=status.HTTP_204_NO_CONTENT)
+def assign_role(
+    body: RoleAssign,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(Role.OWNER)),
+):
+    """
+    มอบหรือเปลี่ยนระดับสิทธิ์ให้ผู้ใช้ที่สมัครไว้แล้วเท่านั้น
+
+    ตั้งใจรับ user_id ไม่ใช่อีเมลเป็นข้อความ — มอบอำนาจให้คนที่ยังไม่มีตัวตน
+    ไม่ได้ และการพิมพ์อีเมลผิดคือการเปิดประตูทิ้งไว้เงียบ ๆ
+    """
+    ok, refusal = svc.set_admin_role(db, current_user, body.user_id, body.role)
+    if not ok:
+        code = status.HTTP_404_NOT_FOUND if refusal == "ไม่พบผู้ใช้" else status.HTTP_409_CONFLICT
+        raise HTTPException(status_code=code, detail=refusal)
+
+
+@router.delete("/roles/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def revoke_role(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(Role.OWNER)),
+):
+    ok, refusal = svc.set_admin_role(db, current_user, user_id, None)
+    if not ok:
+        code = status.HTTP_404_NOT_FOUND if refusal == "ไม่พบผู้ใช้" else status.HTTP_409_CONFLICT
+        raise HTTPException(status_code=code, detail=refusal)

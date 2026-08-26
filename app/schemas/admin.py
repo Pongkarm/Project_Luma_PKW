@@ -146,3 +146,19 @@ class AuditListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class AdminRoleRow(BaseModel):
+    user_id: UUID
+    username: str
+    email: str
+    role: str
+    granted_by_username: str | None
+    granted_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RoleAssign(BaseModel):
+    user_id: UUID
+    role: str = Field(description="owner | admin | reviewer")
