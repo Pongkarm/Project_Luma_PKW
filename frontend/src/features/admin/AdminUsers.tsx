@@ -7,6 +7,7 @@ import { Icon } from '../../shared/ui/Icon.tsx';
 import { formatDateTime } from '../../shared/utils/format.ts';
 import type { AdminMe, AdminUserRow } from '../../contracts/admin.ts';
 import { AdminEmpty, AdminSkeletonRows, AdminUnavailable } from './AdminStates.tsx';
+import { StatusControl } from './StatusControl.tsx';
 
 /**
  * Find one person and understand their standing.
@@ -219,10 +220,7 @@ function UserDrawer({ user, onClose }: { user: AdminUserRow; onClose: () => void
           <AdminSkeletonRows rows={4} height={28} />
         )}
 
-        <p className="adm-soon">
-          Disabling an account arrives in the next phase, together with the audit
-          trail that records who did it and why.
-        </p>
+        <StatusControl user={data?.user ?? user} onDone={onClose} />
       </aside>
     </>
   );

@@ -59,3 +59,14 @@ export type AdminRunRow = {
 };
 
 export type Paged<T> = { items: T[]; total: number; page: number; page_size: number };
+
+export type AuditRow = {
+  id: string;
+  actor_id: string;
+  actor_username: string;
+  action: string;
+  target_type: string | null;
+  target_id: string | null;
+  detail: Record<string, string> | null;
+  created_at: string;
+};

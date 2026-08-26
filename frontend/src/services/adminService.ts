@@ -1,6 +1,7 @@
 import { request } from './apiClient.ts';
 import type {
   AdminMe,
+  AuditRow,
   AdminRunRow,
   AdminStats,
   AdminUserRow,
@@ -30,6 +31,14 @@ export const adminService = {
     request<{ user: AdminUserRow; recent_runs: AdminRunRow[]; failures: { message: string; count: number }[] }>(
       `/admin/users/${id}`,
     ),
+
+  setUserStatus: (id: string, is_active: boolean, reason: string) =>
+    request<{ user: AdminUserRow; recent_runs: AdminRunRow[] }>(
+      `/admin/users/${id}/status`,
+      { method: 'PATCH', json: { is_active, reason } },
+    ),
+
+  audit: (page = 1) => request<Paged<AuditRow>>(`/admin/audit?page=${page}`),
 
   generations: (params: {
     user_id?: string;
