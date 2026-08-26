@@ -39,7 +39,7 @@ export function AiModeBadge() {
       style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-3)', letterSpacing: '0.04em' }}
       title={t('engine.modeReported')}
     >
-      {data.aiMode.toUpperCase()} MODE
+      {t('engine.modeBadge', { mode: data.aiMode.toUpperCase() })}
     </span>
   );
 }

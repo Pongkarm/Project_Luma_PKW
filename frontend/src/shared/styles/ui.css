@@ -71,10 +71,6 @@
   background: var(--fail-wash);
 }
 
-.btn--block {
-  width: 100%;
-}
-
 .btn--lg {
   height: 38px;
   font-size: var(--fs-base);
@@ -85,6 +81,41 @@
   padding: 0 var(--sp-10);
   font-size: var(--fs-sm);
   font-weight: 500;
+}
+
+/*
+ * A full-width button is the one place a label may wrap. Thai runs about twice
+ * the length of English for the same action — the inpaint submit reads
+ * "สร้างเฉพาะพื้นที่ที่ระบาย" where English says "Repaint" — and a fixed height
+ * with nowrap pushes that out of a 372px panel instead of letting it take a
+ * second line. Declared after the size variants so its auto height wins.
+ *
+ * Inline buttons keep nowrap on purpose: their labels are short, and a toolbar
+ * button that grew taller than its neighbours would look broken rather than
+ * accommodating.
+ */
+.btn--block {
+  width: 100%;
+  height: auto;
+  min-height: var(--ctl);
+  padding-block: var(--sp-6);
+  white-space: normal;
+  text-wrap: balance;
+}
+
+.btn--block.btn--lg {
+  height: auto;
+  min-height: 38px;
+}
+
+.btn--block.btn--sm {
+  height: auto;
+  min-height: 28px;
+}
+
+/* The icon keeps its size while the label takes the space it needs. */
+.btn > svg {
+  flex: none;
 }
 
 .btn--disabled-visual:disabled {

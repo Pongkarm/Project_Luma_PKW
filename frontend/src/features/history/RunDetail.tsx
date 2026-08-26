@@ -5,7 +5,7 @@ import { useAuthedImage } from '../../shared/hooks/useAuthedImage.ts';
 import { formatDateTime, formatDuration } from '../../shared/utils/format.ts';
 import { uploadService } from '../../services/uploadService.ts';
 import type { Generation } from '../../contracts/generation.ts';
-import { useT } from '../../shared/hooks/useT.ts';
+import { useT, useLanguage } from '../../shared/hooks/useT.ts';
 import { useState } from 'react';
 import { useDeleteRun } from '../generate/run/useDeleteRun.ts';
 import { DeleteRunDialog } from '../generate/run/DeleteRunDialog.tsx';
@@ -41,6 +41,7 @@ export function RunDetail({
   });
   const image = useAuthedImage(run.id, run.status === 'completed');
   const t = useT();
+  const language = useLanguage();
 
   return (
     <aside className="controls" aria-label={t('history.details')}>
@@ -128,10 +129,10 @@ export function RunDetail({
           <Fact label={t('history.size')} value={`${run.width} × ${run.height}`} />
           <Fact label={t('history.stepsCfg')} value={`${run.steps} · ${run.cfg_scale}`} />
           <Fact label={t('history.sampler')} value={run.sampler_name} />
-          <Fact label={t('history.took')} value={formatDuration(run.duration_seconds)} />
+          <Fact label={t('history.took')} value={formatDuration(run.duration_seconds, language)} />
           {/* The seed actually used is never returned, so only what was sent can be shown. */}
           <Fact label={t('history.seedSent')} value={run.seed === null ? t('history.random') : String(run.seed)} />
-          <Fact label={t('history.created')} value={formatDateTime(run.created_at)} />
+          <Fact label={t('history.created')} value={formatDateTime(run.created_at, language)} />
         </div>
 
         {run.source_image_path ? (

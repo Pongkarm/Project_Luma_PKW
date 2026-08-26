@@ -5,7 +5,7 @@ import { useAuthedImage } from '../../../shared/hooks/useAuthedImage.ts';
 import { useElapsed } from '../../../shared/hooks/useElapsed.ts';
 import { formatDuration, formatElapsed } from '../../../shared/utils/format.ts';
 import type { Generation } from '../../../contracts/generation.ts';
-import { useT } from '../../../shared/hooks/useT.ts';
+import { useT, useLanguage } from '../../../shared/hooks/useT.ts';
 import { useToasts } from '../../../shared/ui/Toast.tsx';
 import { useState } from 'react';
 import { useDeleteRun } from './useDeleteRun.ts';
@@ -44,6 +44,7 @@ export function ResultStage({
     onDeleted();
   });
   const t = useT();
+  const language = useLanguage();
   const showToast = useToasts((state) => state.show);
   const running = job.status === 'pending' || job.status === 'processing';
   const elapsed = useElapsed(startedAt ? new Date(startedAt) : null, running && !stalled);
@@ -167,7 +168,7 @@ export function ResultStage({
       <div className="result__bar">
         <span className="result__meta">
           {job.width} × {job.height} · {job.steps} steps · cfg {job.cfg_scale} ·{' '}
-          {formatDuration(job.duration_seconds)}
+          {formatDuration(job.duration_seconds, language)}
         </span>
         <div style={{ display: 'flex', gap: 'var(--sp-8)' }}>
           <a

@@ -10,3 +10,12 @@ export function useT() {
     [language],
   );
 }
+
+/**
+ * The chosen language itself, for the few things Intl formats rather than the
+ * dictionary — dates and durations. Kept beside useT so a component that needs
+ * both reaches for one module.
+ */
+export function useLanguage() {
+  return usePreferences((state) => state.language);
+}

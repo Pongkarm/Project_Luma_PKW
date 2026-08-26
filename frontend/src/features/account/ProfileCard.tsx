@@ -4,7 +4,7 @@ import { TextField } from '../../shared/ui/Field.tsx';
 import { PasswordField } from '../../shared/ui/PasswordField.tsx';
 import { Alert } from '../../shared/ui/Alert.tsx';
 import { Icon } from '../../shared/ui/Icon.tsx';
-import { useT } from '../../shared/hooks/useT.ts';
+import { useT, useLanguage } from '../../shared/hooks/useT.ts';
 import { useToasts } from '../../shared/ui/Toast.tsx';
 import { useSession } from '../auth/sessionStore.ts';
 import { userService } from '../../services/userService.ts';
@@ -21,6 +21,7 @@ import { passwordIsAcceptable, passwordRules } from '../auth/passwordRules.ts';
  */
 export function ProfileCard() {
   const t = useT();
+  const language = useLanguage();
   const user = useSession((state) => state.user);
   const setUser = useSession((state) => state.setUser);
   const showToast = useToasts((state) => state.show);
@@ -95,7 +96,7 @@ export function ProfileCard() {
           <span className="account__name">{user?.username ?? '—'}</span>
           <span className="account__email">{user?.email ?? '—'}</span>
           <span className="account__email">
-            {t('account.memberSince')} {user ? formatDateTime(user.created_at) : '—'}
+            {t('account.memberSince')} {user ? formatDateTime(user.created_at, language) : '—'}
           </span>
         </div>
         <div className="account__stat">
