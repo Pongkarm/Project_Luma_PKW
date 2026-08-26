@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AdminLayout } from '../features/admin/AdminLayout.tsx';
 import { AdminPlaceholder } from '../features/admin/AdminPlaceholder.tsx';
+import { AdminOverview } from '../features/admin/AdminOverview.tsx';
+import { AdminUsers } from '../features/admin/AdminUsers.tsx';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiError } from '../contracts/errors.ts';
 import { useSession } from '../features/auth/sessionStore.ts';
@@ -86,8 +88,8 @@ export function App() {
                 </RequireAuth>
               }
             >
-              <Route index element={<AdminPlaceholder title="Overview" />} />
-              <Route path="users" element={<AdminPlaceholder title="Users" />} />
+              <Route index element={<AdminOverview />} />
+              <Route path="users" element={<AdminUsers />} />
               <Route path="activity" element={<AdminPlaceholder title="Activity" />} />
               <Route path="audit" element={<AdminPlaceholder title="Audit" />} />
               <Route path="admins" element={<AdminPlaceholder title="Admins" />} />

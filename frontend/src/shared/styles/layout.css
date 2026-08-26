@@ -1357,3 +1357,342 @@
   .adm__link { justify-content: center; }
   .adm__main { padding: var(--sp-16); }
 }
+
+/* ── admin: overview ─────────────────────────────────────────────────── */
+
+.adm__sub {
+  color: var(--ink-3);
+  font-size: var(--fs-base);
+  margin: var(--sp-4) 0 0;
+}
+
+.adm-figs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--sp-12);
+  margin-bottom: var(--sp-24);
+}
+
+.adm-fig {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--panel);
+  padding: var(--sp-14) var(--sp-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  text-decoration: none;
+}
+
+.adm-fig--link {
+  transition: border-color var(--dur-base) ease;
+}
+
+.adm-fig--link:hover {
+  border-color: var(--line-strong);
+}
+
+.adm-fig__v {
+  font-size: var(--fs-2xl);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.adm-fig__v--ok {
+  color: var(--done);
+}
+
+.adm-fig__v--warn {
+  color: var(--running);
+}
+
+.adm-fig__l {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+
+.adm-panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--sp-16);
+}
+
+.adm-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--panel);
+  padding: var(--sp-16);
+}
+
+.adm-panel h2 {
+  font-size: var(--fs-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  margin: 0 0 var(--sp-12);
+  font-weight: 500;
+}
+
+.adm-panel__empty {
+  color: var(--ink-3);
+  font-size: var(--fs-base);
+  margin: 0;
+}
+
+.adm-fails {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+}
+
+.adm-fails li {
+  display: flex;
+  gap: var(--sp-10);
+  align-items: baseline;
+  font-size: var(--fs-base);
+}
+
+.adm-fails__n {
+  font-family: var(--font-mono);
+  color: var(--fail);
+  font-variant-numeric: tabular-nums;
+  min-width: 28px;
+  text-align: right;
+}
+
+.adm-fails__msg {
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adm-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-2);
+  height: 72px;
+  margin-bottom: var(--sp-12);
+}
+
+.adm-bars__b {
+  flex: 1;
+  background: var(--accent);
+  opacity: 0.75;
+  border-radius: 2px 2px 0 0;
+}
+
+.adm-mix {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  font-size: var(--fs-base);
+  color: var(--ink-2);
+}
+
+.adm-mix li {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* ── admin: users ────────────────────────────────────────────────────── */
+
+.adm-filters {
+  display: flex;
+  gap: var(--sp-8);
+  margin-bottom: var(--sp-12);
+  flex-wrap: wrap;
+}
+
+.adm-search {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+  flex: 1 1 260px;
+  color: var(--ink-3);
+}
+
+.adm-search .input {
+  flex: 1;
+}
+
+.adm-tablewrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--panel);
+}
+
+.adm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-base);
+}
+
+.adm-table th {
+  text-align: left;
+  font-weight: 500;
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-3);
+  background: var(--panel-2);
+  padding: var(--sp-8) var(--sp-12);
+  position: sticky;
+  top: 0;
+  white-space: nowrap;
+}
+
+.adm-table td {
+  padding: var(--sp-10) var(--sp-12);
+  border-top: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.adm-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.adm-table tbody tr {
+  cursor: pointer;
+  transition: background-color var(--dur-quick) ease;
+}
+
+.adm-table tbody tr:hover {
+  background: var(--panel-2);
+}
+
+.adm-st {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: var(--sp-2) var(--sp-6);
+  border-radius: 3px;
+}
+
+.adm-st--on {
+  color: var(--done);
+  background: color-mix(in srgb, var(--done) 14%, transparent);
+}
+
+.adm-st--off {
+  color: var(--fail);
+  background: color-mix(in srgb, var(--fail) 14%, transparent);
+}
+
+.adm-tag {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  text-transform: uppercase;
+  color: var(--accent-text);
+  margin-left: var(--sp-6);
+}
+
+/* ── admin: drawer ───────────────────────────────────────────────────── */
+
+.adm-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 45%);
+  animation: ui-fade var(--dur-base) ease both;
+}
+
+.adm-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(480px, 100vw);
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+  padding: var(--sp-20);
+  overflow-y: auto;
+  animation: luma-slide var(--dur-slow) var(--ease-out) both;
+}
+
+.adm-drawer header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--sp-16);
+}
+
+.adm-drawer h2 {
+  margin: 0;
+  font-size: var(--fs-lg);
+}
+
+.adm-drawer h3 {
+  font-size: var(--fs-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  margin: var(--sp-20) 0 var(--sp-10);
+  font-weight: 500;
+}
+
+.adm-facts {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+}
+
+.adm-facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-16);
+  font-size: var(--fs-base);
+}
+
+.adm-facts dt {
+  color: var(--ink-3);
+}
+
+.adm-facts dd {
+  margin: 0;
+  color: var(--ink);
+  text-align: right;
+}
+
+.adm-runs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.adm-runs li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+  font-size: var(--fs-xs);
+}
+
+.adm-runs__meta {
+  color: var(--ink-2);
+}
+
+.adm-runs__when {
+  margin-left: auto;
+  color: var(--ink-3);
+}
+
+.adm-soon {
+  margin-top: var(--sp-20);
+  padding-top: var(--sp-12);
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
