@@ -47,7 +47,7 @@ export function ResultStage({
   const language = useLanguage();
   const showToast = useToasts((state) => state.show);
   const running = job.status === 'pending' || job.status === 'processing';
-  const elapsed = useElapsed(startedAt ? new Date(startedAt) : null, running && !stalled);
+  const elapsed = useElapsed(startedAt, running && !stalled);
   const image = useAuthedImage(job.id, job.status === 'completed');
 
   if (stalled) {
