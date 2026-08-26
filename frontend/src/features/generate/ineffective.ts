@@ -33,6 +33,13 @@ export function ineffectiveIn(aiMode: string | null, task: TaskType): ReadonlySe
   return task === 'txt2img' ? CALLBACK_TXT2IMG : CALLBACK_EDIT;
 }
 
+/*
+ * These three sets are shared, not rebuilt per call: they are read during
+ * render, and handing back a fresh Set each time would allocate on every
+ * keystroke for no gain. ReadonlySet is what keeps that safe — a caller that
+ * casts the type away and mutates one of these poisons it for every other
+ * caller, so don't.
+ */
 const EMPTY: ReadonlySet<Adjustable> = new Set();
 
 // callback_payload for /ai/generate carries prompt, negative_prompt, model,

@@ -1,6 +1,6 @@
 import { Slider } from '../../../shared/ui/Slider.tsx';
 import { Icon } from '../../../shared/ui/Icon.tsx';
-import { limits, fitToEngine, needsDownscale } from '../../../config/limits.ts';
+import { limits, fitToEngine, resizeKind } from '../../../config/limits.ts';
 import { ImageInput } from '../upload/ImageInput.tsx';
 import type { SourceImage } from '../draftStore.ts';
 import type { TaskType } from '../../../contracts/generation.ts';
@@ -47,7 +47,7 @@ export function ModeFields({
   const isInpaint = mode === 'inpaint';
   const fitted = source ? fitToEngine(source.width, source.height) : null;
   const output = sizeOverride ? { width, height } : fitted;
-  const scaled = source ? needsDownscale(source.width, source.height) : false;
+  const resize = source ? resizeKind(source.width, source.height) : 'none';
 
   return (
     <>
@@ -67,18 +67,24 @@ export function ModeFields({
           </div>
           {sizeOverride ? (
             <span className="field__hint">{t('size.byHandOn')}</span>
-          ) : scaled ? (
+          ) : resize !== 'none' ? (
             <span
               className="field__hint"
               style={{ display: 'flex', gap: 'var(--sp-6)', alignItems: 'flex-start' }}
             >
               <Icon name="info" size={12} />
               <span>
-                {t('size.scaled', {
-                  w: source.width,
-                  h: source.height,
-                  max: limits.dimension.max,
-                })}
+                {resize === 'down'
+                  ? t('size.scaled', {
+                      w: source.width,
+                      h: source.height,
+                      max: limits.dimension.max,
+                    })
+                  : t('size.enlarged', {
+                      w: source.width,
+                      h: source.height,
+                      min: limits.dimension.min,
+                    })}
               </span>
             </span>
           ) : (

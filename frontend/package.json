@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint:css": "stylelint \"src/**/*.css\"",
+    "check": "npm run build && npm run lint && npm run lint:css && npm run test",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.102.1",
@@ -22,7 +26,10 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.4",
     "oxlint": "^1.75.0",
+    "stylelint": "^17.14.1",
+    "stylelint-config-standard": "^40.0.0",
     "typescript": "~6.0.2",
-    "vite": "^8.2.0"
+    "vite": "^8.2.0",
+    "vitest": "^4.1.11"
   }
 }

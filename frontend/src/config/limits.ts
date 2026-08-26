@@ -74,6 +74,9 @@ export const sizePresets = [
 /** Snap to the multiple of 8 Forge expects, then clamp into the engine's range. */
 export function snapDimension(value: number): number {
   const { min, max, multipleOf } = limits.dimension;
+  // Math.min/Math.max propagate NaN rather than clamping it, so an empty or
+  // half-typed field would have travelled all the way to the request as NaN.
+  if (!Number.isFinite(value)) return min;
   const snapped = Math.round(value / multipleOf) * multipleOf;
   return Math.min(max, Math.max(min, snapped));
 }
@@ -97,4 +100,18 @@ export function fitToEngine(width: number, height: number): { width: number; hei
 /** True when the engine cannot work at the source image's own size. */
 export function needsDownscale(width: number, height: number): boolean {
   return Math.max(width, height) > limits.dimension.max;
+}
+
+/**
+ * How fitToEngine will change a source image, if at all.
+ *
+ * needsDownscale alone answered only half the question. The engine's range has
+ * a floor as well as a ceiling, so an image under 256px is resized too — and
+ * because nothing reported that, the panel told the person their output
+ * "matches your image" while quietly enlarging it.
+ */
+export function resizeKind(width: number, height: number): 'none' | 'down' | 'up' {
+  if (needsDownscale(width, height)) return 'down';
+  const fitted = fitToEngine(width, height);
+  return fitted.width !== width || fitted.height !== height ? 'up' : 'none';
 }

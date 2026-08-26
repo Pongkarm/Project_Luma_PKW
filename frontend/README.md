@@ -159,6 +159,26 @@ and must be merged and deployed before the features that use them work:
 Each degrades rather than breaking when absent: the model pickers fall back to the bundled list,
 and delete or profile changes report the failure instead of appearing to succeed.
 
+## Checks
+
+```bash
+npm run check     # build + lint + lint:css + test, in that order
+```
+
+Individually: `npm run build` (tsc + vite), `npm run lint` (oxlint — five known
+warnings, zero errors), `npm run lint:css` (stylelint), `npm test` (vitest).
+
+The CSS linter earns its place: a `@media` block in `layout.css` was missing its
+closing brace and had silently swallowed seventeen rules that were written for
+every screen, so they only applied below 520px. Nothing else in the toolchain
+noticed — the stylesheet still parsed, it just meant something different.
+
+The tests cover the logic that has actually broken here rather than aiming at a
+coverage number: engine limits and dimension snapping, which caused a real 422;
+the callback-mode field mirror; dictionary parity between the two languages,
+which used to be checked by hand after every copy change; date and duration
+formatting; and the password rules.
+
 ## Notes on the API this was built against
 
 Everything below was verified against a running backend, not read from documentation.

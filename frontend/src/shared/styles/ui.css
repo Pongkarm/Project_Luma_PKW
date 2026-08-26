@@ -133,6 +133,10 @@
   background: var(--panel-2);
   color: var(--ink-2);
   cursor: pointer;
+  transition:
+    color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    background-color var(--dur-base) ease;
 }
 
 .icobtn:hover:not(:disabled) {
@@ -151,6 +155,7 @@
 }
 
 /* ── fields ──────────────────────────────────────────────────────────── */
+
 /*
  * One gap, declared once. This class previously carried gap: 7px and was then
  * overridden inline in five places with 4 and 6, so the same field breathed
@@ -486,6 +491,10 @@
   border: 1px dashed var(--line-strong);
   border-radius: var(--r-lg);
   background: var(--panel);
+  transition:
+    border-color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    transform var(--dur-base) ease;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -506,6 +515,7 @@
   border-color: var(--accent);
   background: var(--accent-wash);
   color: var(--accent-text);
+  transform: scale(1.005);
 }
 
 .drop--busy,
@@ -675,12 +685,6 @@
   transform: translateY(0.5px);
 }
 
-.icobtn {
-  transition:
-    color var(--dur-base) ease,
-    border-color var(--dur-base) ease,
-    background-color var(--dur-base) ease;
-}
 
 /* ── motion ──────────────────────────────────────────────────────────── */
 
@@ -727,17 +731,7 @@
 }
 
 /* Dropzone: the border alone was easy to miss mid-drag. */
-.drop--over {
-  transform: scale(1.005);
-  transition: transform var(--dur-base) ease;
-}
 
-.drop {
-  transition:
-    border-color var(--dur-base) ease,
-    background-color var(--dur-base) ease,
-    transform var(--dur-base) ease;
-}
 
 /* ── toast ───────────────────────────────────────────────────────────── */
 .toasts {

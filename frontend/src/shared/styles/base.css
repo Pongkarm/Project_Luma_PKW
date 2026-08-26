@@ -140,10 +140,19 @@ a:hover {
   line-height: 1.4;
 }
 
+/*
+ * Thai writes without spaces between words, so the browser's own dictionary
+ * decides where a line may break; line-break: loose is what tells it to use the
+ * relaxed Thai rules. word-break: break-word used to sit here — it is
+ * deprecated, inconsistently implemented, and in the engines that do honour it
+ * permits a break anywhere, which can split a Thai cluster mid-syllable.
+ * overflow-wrap is the supported property and only breaks a run that has no
+ * legal break point at all, which is the fallback actually wanted.
+ */
 :root[lang='th'] p,
 :root[lang='th'] .field__hint,
 :root[lang='th'] .alert,
 :root[lang='th'] .runcard__prompt {
-  word-break: break-word;
+  overflow-wrap: break-word;
   line-break: loose;
 }
