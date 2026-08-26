@@ -17,6 +17,8 @@ import { SizeControl } from './modes/SizeControl.tsx';
 import { usePresets, type PresetValues } from './presetStore.ts';
 import { useT } from '../../shared/hooks/useT.ts';
 import { useToasts } from '../../shared/ui/Toast.tsx';
+import { useIneffective } from './ineffective.ts';
+import { NoEffect } from './NoEffect.tsx';
 
 type Props = {
   canPaintMask: boolean;
@@ -39,6 +41,9 @@ export function ControlsPanel({
   const t = useT();
   const showToast = useToasts((state) => state.show);
   const { checkpoints, loras } = useModels();
+  // Controls the backend will not forward in the mode it is running in.
+  // Empty whenever the mode is unknown, so uncertainty never disables anything.
+  const inert = useIneffective(draft.mode);
   const presets = usePresets((state) => state.presets);
   const savePreset = usePresets((state) => state.save);
   const removePreset = usePresets((state) => state.remove);
@@ -168,12 +173,14 @@ export function ControlsPanel({
           label={
             <>
               {t('gen.avoidToggle')}
-              <span className="modedot" title={t('gen.modeDot')} />
+              {inert.size > 0 ? null : <span className="modedot" title={t('gen.modeDot')} />}
+              {inert.has('negativePrompt') ? <NoEffect /> : null}
             </>
           }
           summary={draft.negativePrompt ? t('gen.avoidSet') : t('gen.avoidNone')}
         >
           <TextAreaField
+            disabled={inert.has('negativePrompt')}
             label={t('gen.avoid')}
             meta={`${draft.negativePrompt.length} / ${limits.negativePrompt.max}`}
             rows={2}
@@ -190,7 +197,13 @@ export function ControlsPanel({
         </span>
 
         <SelectField
-          label={t('gen.model')}
+          disabled={inert.has('model')}
+          label={
+            <>
+              {t('gen.model')}
+              {inert.has('model') ? <NoEffect /> : null}
+            </>
+          }
           value={draft.modelName}
           onChange={(event) => {
             draft.patch({ modelName: event.target.value });
@@ -224,7 +237,7 @@ export function ControlsPanel({
           label={
             <>
               {t('gen.step3')} · {t('gen.advanced')}
-              <span className="modedot" title={t('gen.modeDotSome')} />
+              {inert.size > 0 ? null : <span className="modedot" title={t('gen.modeDotSome')} />}
             </>
           }
           summary={
@@ -235,6 +248,14 @@ export function ControlsPanel({
                 : t('gen.changedMany', { count: changed.size })
           }
         >
+          {inert.size > 0 ? (
+            <Alert tone="note">
+              <strong>{t('mode.calloutTitle')}</strong>
+              <br />
+              {t('mode.calloutBody')}
+            </Alert>
+          ) : null}
+
           {changed.size > 0 ? (
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -4 }}>
               <Button size="sm" icon="refresh" onClick={resetAdvanced}>
@@ -243,11 +264,11 @@ export function ControlsPanel({
             </div>
           ) : null}
 
-          <div className="field">
+          <div className={`field${inert.has('seed') ? ' is-inert' : ''}`}>
             <div className="label">
               <label htmlFor="seed-field" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {t('gen.seed')}
-                <span className="modedot" title={t('gen.modeDot')} />
+                {inert.has('seed') ? <NoEffect /> : <span className="modedot" title={t('gen.modeDot')} />}
                 {changedMark('seed', defaultDraft.seed)}
               </label>
               <span className="label__meta">{t('gen.seedBlank')}</span>
@@ -256,6 +277,7 @@ export function ControlsPanel({
               <input
                 id="seed-field"
                 className="input mono"
+                disabled={inert.has('seed')}
                 inputMode="numeric"
                 placeholder="284119075"
                 value={draft.seed}
@@ -265,6 +287,7 @@ export function ControlsPanel({
               />
               <IconButton
                 icon="refresh"
+                disabled={inert.has('seed')}
                 label={t('gen.seedRandom')}
                 onClick={() => draft.patch({ seed: '' })}
               />
@@ -272,16 +295,20 @@ export function ControlsPanel({
             <span className="field__hint">{t('gen.seedHelp')}</span>
           </div>
           {draft.mode !== 'txt2img' ? (
-            <div className="field" style={{ gap: 8 }}>
+            <div className={`field${inert.has('size') ? ' is-inert' : ''}`} style={{ gap: 8 }}>
               <label
                 className="label"
                 style={{ cursor: 'pointer' }}
                 htmlFor="size-override"
               >
-                <span>{t('size.byHand')}</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {t('size.byHand')}
+                  {inert.has('size') ? <NoEffect /> : null}
+                </span>
                 <input
                   id="size-override"
                   type="checkbox"
+                  disabled={inert.has('size')}
                   checked={draft.sizeOverride}
                   onChange={(event) => draft.patch({ sizeOverride: event.target.checked })}
                 />
@@ -334,10 +361,13 @@ export function ControlsPanel({
             {t('gen.cfgHelp')}
           </span>
           <SelectField
+            disabled={inert.has('samplerName')}
             label={
               <>
                 {t('gen.sampler')}
-                <span className="modedot" title={t('gen.modeDot')} />
+                {inert.has('samplerName')
+                  ? <NoEffect />
+                  : <span className="modedot" title={t('gen.modeDot')} />}
                 {changedMark('samplerName', defaultDraft.samplerName)}
               </>
             }
@@ -352,10 +382,13 @@ export function ControlsPanel({
             ))}
           </SelectField>
           <SelectField
+            disabled={inert.has('loraId')}
             label={
               <>
                 {t('gen.style')}
-                <span className="modedot" title={t('gen.modeDot')} />
+                {inert.has('loraId')
+                  ? <NoEffect />
+                  : <span className="modedot" title={t('gen.modeDot')} />}
                 {changedMark('loraId', defaultDraft.loraId)}
               </>
             }

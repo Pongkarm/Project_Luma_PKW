@@ -6,6 +6,8 @@ import type { SourceImage } from '../draftStore.ts';
 import type { TaskType } from '../../../contracts/generation.ts';
 import { SizeControl } from './SizeControl.tsx';
 import { useT } from '../../../shared/hooks/useT.ts';
+import { useIneffective } from '../ineffective.ts';
+import { NoEffect } from '../NoEffect.tsx';
 
 type Props = {
   mode: TaskType;
@@ -36,6 +38,7 @@ export function ModeFields({
   sizeOverride,
 }: Props) {
   const t = useT();
+  const inert = useIneffective(mode);
 
   if (mode === 'txt2img') {
     return <SizeControl width={width} height={height} onChange={onSize} />;
@@ -85,10 +88,13 @@ export function ModeFields({
       ) : null}
 
       <Slider
+        disabled={inert.has('denoisingStrength')}
         label={
           <>
             {t('size.changeAmount')}
-            <span className="modedot" title={t('gen.modeDot')} />
+            {inert.has('denoisingStrength')
+              ? <NoEffect />
+              : <span className="modedot" title={t('gen.modeDot')} />}
           </>
         }
         value={denoisingStrength}

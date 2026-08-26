@@ -1,17 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { systemService } from '../../services/systemService.ts';
-import { queryKeys } from '../../services/queryKeys.ts';
 import { useT } from '../../shared/hooks/useT.ts';
-
-function useEngineStatus() {
-  return useQuery({
-    queryKey: queryKeys.engineStatus,
-    queryFn: () => systemService.engineStatus(),
-    staleTime: 30_000,
-    refetchInterval: 60_000,
-    refetchIntervalInBackground: false,
-  });
-}
+import { useEngineStatus } from '../../shared/hooks/useEngineStatus.ts';
 
 /**
  * Compact status for the top bar. The rail footer version disappeared whenever
