@@ -94,10 +94,16 @@ def login(
             detail="บัญชีนี้ถูกปิดใช้งาน",
         )
 
-    # 4. ถ้าถูก → สร้าง "กุญแจ" (JWT Token)
+    # 4. บันทึกเวลาเข้าใช้ครั้งล่าสุด
+    # คอลัมน์นี้ถูกประกาศไว้ตั้งแต่แรกแต่ไม่เคยมีใครเขียนค่าลงไป จึงเป็น NULL
+    # ทุกแถวมาตลอด แผงแอดมินต้องใช้ค่านี้ตอบว่าใครยังใช้งานอยู่
+    user.last_login_at = func.now()
+    db.commit()
+
+    # 5. สร้าง "กุญแจ" (JWT Token)
     access_token = create_access_token(data={"sub": str(user.id)})
 
-    # 5. ส่งกุญแจกลับไป
+    # 6. ส่งกุญแจกลับไป
     return {"access_token": access_token, "token_type": "bearer"}
 
 
