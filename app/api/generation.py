@@ -1,6 +1,6 @@
 from uuid import UUID
 from pathlib import Path
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, status, Query
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Response, status, Query
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
@@ -123,6 +123,33 @@ def _detect_media_type(path: Path) -> str:
         ".jpeg": "image/jpeg",
     }
     return ext_map.get(path.suffix.lower(), "image/png")
+
+
+# ─────────────────────────────────────────
+# 3b. DELETE /generations/{generation_id} (ลบงาน)
+# ─────────────────────────────────────────
+@router.delete("/{generation_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_generation(
+    generation_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    ลบงานสร้างภาพหนึ่งชิ้น พร้อมไฟล์ภาพบนดิสก์ — ย้อนกลับไม่ได้
+    """
+    deleted = generation_service.delete_generation(
+        db=db,
+        user_id=current_user.id,
+        generation_id=generation_id,
+    )
+
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Generation job not found",
+        )
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 # ─────────────────────────────────────────

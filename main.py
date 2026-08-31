@@ -5,8 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.db.database import engine, Base
-from app.models import User, Generation
-from app.api import auth, generation, callback, upload
+from app.api import auth, generation, callback, upload, models, admin
 from app.core.config import settings
 
 # 💡 ตั้งค่าระบบ Logging กลาง
@@ -18,12 +17,44 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def _bootstrap_owner() -> None:
+    """
+    มอบสิทธิ์ owner ให้อีเมลใน ADMIN_BOOTSTRAP_EMAIL ถ้ายังไม่มี owner เลย
+
+    ทำงานครั้งเดียวจริง ๆ: พอมี owner แล้วฟังก์ชันนี้ไม่ทำอะไรอีก แม้ตัวแปร
+    จะยังอยู่ใน .env ก็ตาม ตัวแปรที่หลงเหลือจึงไม่สามารถแอบคืนสิทธิ์ให้ใคร
+    ที่เพิ่งถูกถอดออกไปได้
+    """
+    from sqlalchemy.orm import Session
+
+    from app.core.config import settings
+    from app.models import AdminRole, User
+
+    email = (settings.ADMIN_BOOTSTRAP_EMAIL or "").strip()
+    if not email:
+        return
+
+    with Session(engine) as db:
+        if db.query(AdminRole).filter(AdminRole.role == "owner").first():
+            return
+        user = db.query(User).filter(User.email == email).first()
+        if user is None:
+            logger.warning(
+                "ADMIN_BOOTSTRAP_EMAIL=%s ยังไม่ได้สมัครสมาชิก — ข้ามการมอบสิทธิ์", email
+            )
+            return
+        db.add(AdminRole(user_id=user.id, role="owner", granted_by=None))
+        db.commit()
+        logger.info("มอบสิทธิ์ owner ให้ %s เรียบร้อย", email)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # สร้างตารางใน Database เมื่อเซิร์ฟเวอร์เริ่มทำงาน
     try:
         Base.metadata.create_all(bind=engine)
         logger.info("Database tables initialized successfully.")
+        _bootstrap_owner()
     except Exception as e:
         logger.warning(f"Could not initialize tables on startup: {e}")
     yield
@@ -50,6 +81,8 @@ app.include_router(auth.router)
 app.include_router(generation.router)
 app.include_router(callback.router)
 app.include_router(upload.router)
+app.include_router(models.router)
+app.include_router(admin.router)
 
 
 @app.get("/", tags=["Health Check"])

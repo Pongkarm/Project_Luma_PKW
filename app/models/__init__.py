@@ -77,3 +77,56 @@ class Generation(Base):
     completed_at = Column(DateTime(timezone=True), nullable=True)
 
     user = relationship("User", back_populates="generations")
+
+
+class AdminRole(Base):
+    """
+    ใครเป็นผู้ดูแลระบบ และในระดับไหน
+
+    เก็บเป็นตารางแยก ไม่ใช่คอลัมน์ใน users เพราะ create_all() สร้างตารางใหม่ให้เอง
+    แต่ไม่เคยสั่ง ALTER TABLE — คอลัมน์ใหม่จึงต้องรัน SQL มือบนฐานข้อมูลจริง
+    ส่วนตารางใหม่แค่ pull แล้ว restart
+
+    การไม่มีแถว = ไม่ใช่แอดมิน ซึ่งเป็นค่าเริ่มต้นที่ปลอดภัย
+    """
+
+    __tablename__ = "admin_roles"
+
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    role = Column(String(20), nullable=False)  # owner | admin | reviewer
+    granted_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    granted_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", foreign_keys=[user_id])
+
+
+class AuditEvent(Base):
+    """
+    บันทึกทุกการกระทำของแอดมินที่เปลี่ยนสถานะระบบ
+
+    เขียนใน transaction เดียวกับการกระทำที่มันบันทึก ถ้าเขียน log ไม่สำเร็จ
+    การกระทำนั้นต้อง rollback ตามไปด้วย — ไม่มีทางที่การกระทำจะสำเร็จโดยไม่มีร่องรอย
+
+    ไม่มี route ไหนแก้หรือลบแถวในตารางนี้ log ที่แอดมินแก้ได้ไม่ใช่หลักฐานอะไรเลย
+    """
+
+    __tablename__ = "audit_events"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
+    )
+    actor_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    action = Column(String(50), nullable=False)
+    target_type = Column(String(30), nullable=True)
+    target_id = Column(UUID(as_uuid=True), nullable=True)
+    detail = Column(JSON, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    actor = relationship("User", foreign_keys=[actor_id])
