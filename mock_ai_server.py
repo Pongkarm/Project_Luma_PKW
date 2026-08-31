@@ -4,6 +4,7 @@ LUMA Mock AI Server
 1. Direct Mode (POST /generate): สำหรับ txt2img, img2img, inpaint
 2. Async Callback Mode (POST /ai/generate & POST /ai/edit): ตามสเปก Distributed Inference Node
 """
+import os
 import io
 import time
 import base64
@@ -255,7 +256,7 @@ async def execute_callback_task(
 
     headers = {
         "Content-Type": "application/json",
-        "X-LUMA-INTERNAL-SECRET": secret_header or "luma-distributed-token-secret-6710301009"
+        "X-LUMA-INTERNAL-SECRET": secret_header or os.environ.get("AI_CALLBACK_SECRET", "")
     }
 
     if callback_url:

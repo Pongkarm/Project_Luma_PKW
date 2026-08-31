@@ -35,7 +35,7 @@ services:
       AI_SERVER_URL: http://mock-ai:8001/generate
       AI_SERVER_DIRECT_URL: http://mock-ai:8001/generate
       AI_SERVER_CALLBACK_URL: http://mock-ai:8001/ai/generate
-      AI_CALLBACK_SECRET: luma-distributed-token-secret-6710301009
+      AI_CALLBACK_SECRET: ${AI_CALLBACK_SECRET}
       BACKEND_CALLBACK_URL: http://backend:8000/api/callback
     ports:
       - "8000:8000"

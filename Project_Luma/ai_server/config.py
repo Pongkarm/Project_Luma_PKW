@@ -12,7 +12,7 @@ class AIConfig:
     BACKEND_CALLBACK_URL = os.environ.get("BACKEND_CALLBACK_URL", "http://192.168.1.20:5000/api/callback")
     
     # Internal Security Secret
-    INTERNAL_SECRET = os.environ.get("LUMA_INTERNAL_SECRET", "luma-distributed-token-secret-6710301009")
+    INTERNAL_SECRET = os.environ.get("LUMA_INTERNAL_SECRET", "")
 
     # Image Resolution & VRAM Limits (Recommended by Iris)
     MAX_IMAGE_WIDTH = 768

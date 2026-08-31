@@ -23,7 +23,7 @@ class Config:
     CALLBACK_URL = os.environ.get('CALLBACK_URL', 'http://192.168.1.20:5000/api/callback')
     
     # Internal Security Secret
-    INTERNAL_SECRET = os.environ.get('LUMA_INTERNAL_SECRET', 'luma-distributed-token-secret-6710301009')
+    INTERNAL_SECRET = os.environ.get('LUMA_INTERNAL_SECRET', '')
 
     # Uploads Storage
     UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')

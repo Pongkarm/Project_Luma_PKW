@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     AI_SERVER_URL: str = "http://localhost:8001/generate"
     AI_SERVER_DIRECT_URL: str = "http://localhost:8001/generate"
     AI_SERVER_CALLBACK_URL: str = "http://localhost:8001/ai/generate"
-    AI_CALLBACK_SECRET: str = "luma-distributed-token-secret-6710301009"
+    AI_CALLBACK_SECRET: str
     BACKEND_CALLBACK_URL: str = "http://localhost:8000/api/callback"
     OUTPUTS_DIR: Path = Path("./outputs")
     UPLOADS_DIR: Path = Path("./uploads")
@@ -27,13 +27,18 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-LEAKED_KEYS = {
+LEAKED_SECRETS = {
     "luma-super-secret-jwt-key-2024-cdti-image-processing",
+    "luma-distributed-token-secret-6710301009",
     "CHANGE_ME_GENERATE_A_NEW_ONE",
 }
 
-if settings.SECRET_KEY in LEAKED_KEYS or len(settings.SECRET_KEY) < 32:
-    raise RuntimeError(
-        "SECRET_KEY ยังเป็นค่าที่หลุดสาธารณะหรือสั้นเกินไป — "
-        'สร้างใหม่: python -c "import secrets; print(secrets.token_urlsafe(64))"'
-    )
+for name, value in (
+    ("SECRET_KEY", settings.SECRET_KEY),
+    ("AI_CALLBACK_SECRET", settings.AI_CALLBACK_SECRET),
+):
+    if value in LEAKED_SECRETS or len(value) < 32:
+        raise RuntimeError(
+            f"{name} ยังเป็นค่าที่หลุดสาธารณะหรือสั้นเกินไป — "
+            'สร้างใหม่: python -c "import secrets; print(secrets.token_urlsafe(64))"'
+        )

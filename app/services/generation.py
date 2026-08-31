@@ -427,7 +427,15 @@ async def process_generation_task(
             timeout_config = httpx.Timeout(timeout=180.0, connect=10.0)
             async with httpx.AsyncClient(timeout=timeout_config) as client:
                 try:
-                    response = await client.post(target_url, json=direct_payload)
+                    headers = {
+                        "Content-Type": "application/json",
+                        "X-LUMA-INTERNAL-SECRET": settings.AI_CALLBACK_SECRET,
+                    }
+                    response = await client.post(
+                        target_url,
+                        json=direct_payload,
+                        headers=headers
+                    )
                     response.raise_for_status()
                     data = response.json()
                 except Exception as e:

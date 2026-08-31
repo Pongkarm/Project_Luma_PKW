@@ -52,13 +52,15 @@ async def test_service_process_direct_txt2img_success(db: Session, test_user: Us
     mock_resp.json.return_value = {"status": "completed", "image_base64": fake_b64}
     mock_resp.raise_for_status = MagicMock()
 
-    with patch("httpx.AsyncClient.post", return_value=mock_resp):
+    with patch("httpx.AsyncClient.post", return_value=mock_resp) as mock_post:
         await generation_service.process_generation_task(gen.id)
 
     db.refresh(gen)
     assert gen.status == GenerationStatus.COMPLETED.value
     assert gen.output_path is not None
     assert Path(gen.output_path).is_file()
+    assert mock_post.call_args is not None
+    assert mock_post.call_args.kwargs["headers"]["X-LUMA-INTERNAL-SECRET"] == settings.AI_CALLBACK_SECRET
 
 
 @pytest.mark.asyncio
