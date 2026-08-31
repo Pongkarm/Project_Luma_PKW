@@ -22,3 +22,14 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = Settings()
+
+LEAKED_KEYS = {
+    "luma-super-secret-jwt-key-2024-cdti-image-processing",
+    "CHANGE_ME_GENERATE_A_NEW_ONE",
+}
+
+if settings.SECRET_KEY in LEAKED_KEYS or len(settings.SECRET_KEY) < 32:
+    raise RuntimeError(
+        "SECRET_KEY ยังเป็นค่าที่หลุดสาธารณะหรือสั้นเกินไป — "
+        'สร้างใหม่: python -c "import secrets; print(secrets.token_urlsafe(64))"'
+    )

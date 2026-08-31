@@ -30,7 +30,7 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://luma_app:luma_secure_2024@db:5432/luma_db
-      SECRET_KEY: luma-super-secret-jwt-key-2024-cdti-image-processing
+      SECRET_KEY: ${SECRET_KEY}
       AI_MODE: direct
       AI_SERVER_URL: http://mock-ai:8001/generate
       AI_SERVER_DIRECT_URL: http://mock-ai:8001/generate
