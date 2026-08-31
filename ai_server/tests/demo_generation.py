@@ -5,7 +5,7 @@ import os
 import httpx
 
 AI_SERVER_URL = "http://127.0.0.1:7860"
-SECRET = "luma-distributed-token-secret-6710301009"
+SECRET = os.environ.get("LUMA_INTERNAL_SECRET", "")
 
 def run_e2e_demo():
     print("==================================================")
