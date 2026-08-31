@@ -50,10 +50,14 @@ class TestEdgeCases(unittest.TestCase):
         response = self.client.post("/ai/generate", json=payload, headers=bad_headers)
         self.assertEqual(response.status_code, 403)
         
-        # 2. Missing secret token (No header)
+        # 2. Missing secret token on POST /ai/generate (No header)
         missing_resp = self.client.post("/ai/generate", json=payload, headers={})
         self.assertEqual(missing_resp.status_code, 403)
-        print("[PASS] Edge Case 4: Invalid and Missing Secret blocked (HTTP 403)")
+
+        # 3. Missing secret token on GET /ai/task/{task_id} (No header)
+        missing_get = self.client.get("/ai/task/test-auth", headers={})
+        self.assertEqual(missing_get.status_code, 403)
+        print("[PASS] Edge Case 4: Invalid and Missing Secret blocked across POST & GET (HTTP 403)")
 
     def test_05_cancel_nonexistent_task(self):
         """Edge Case 5: Cancelling non-existent task returns HTTP 404"""

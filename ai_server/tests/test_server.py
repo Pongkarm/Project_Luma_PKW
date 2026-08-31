@@ -68,7 +68,7 @@ class TestAIServer(unittest.TestCase):
         self.assertEqual(data["task_id"], task_id)
 
         # Check in-memory task status
-        status_resp = self.client.get(f"/ai/task/{task_id}")
+        status_resp = self.client.get(f"/ai/task/{task_id}", headers=headers)
         self.assertEqual(status_resp.status_code, 200)
         print(f"[PASS] Generate & State: Task ID = {task_id}, State = {status_resp.json()['status']}")
 

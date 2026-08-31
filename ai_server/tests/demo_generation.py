@@ -40,7 +40,7 @@ def run_e2e_demo():
         print("\n[2] Polling Task State from AI Server...")
         for attempt in range(1, 15):
             time.sleep(0.5)
-            status_resp = client.get(f"{AI_SERVER_URL}/ai/task/{task_id}")
+            status_resp = client.get(f"{AI_SERVER_URL}/ai/task/{task_id}", headers=headers)
             if status_resp.status_code == 200:
                 s_data = status_resp.json()
                 print(f"    Attempt {attempt}: Status = '{s_data.get('status')}'")

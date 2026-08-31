@@ -6,6 +6,13 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 load_dotenv(os.path.join(os.path.dirname(BASE_DIR), ".env"))
 
+LEAKED_SECRETS = {
+    "luma-distributed-token-secret-6710301009",
+    "your-secure-random-32char-secret-here",
+    "CHANGE_ME",
+    "CHANGE_ME_GENERATE_A_NEW_ONE",
+}
+
 class AIConfig:
     # Server Binding
     HOST = os.environ.get("AI_HOST", "0.0.0.0")
@@ -17,8 +24,11 @@ class AIConfig:
     
     # Internal Security Secret (Must be configured via Environment Variable)
     INTERNAL_SECRET = os.environ.get("LUMA_INTERNAL_SECRET")
-    if not INTERNAL_SECRET or len(INTERNAL_SECRET) < 32:
-        raise RuntimeError("LUMA_INTERNAL_SECRET ยังไม่ได้ตั้ง หรือสั้นเกินไป (ต้องมีความยาวอย่างน้อย 32 ตัวอักษร) — กรุณาตั้งใน .env ก่อนรัน")
+    if not INTERNAL_SECRET or INTERNAL_SECRET in LEAKED_SECRETS or len(INTERNAL_SECRET) < 32:
+        raise RuntimeError(
+            "LUMA_INTERNAL_SECRET ยังไม่ได้ตั้ง เป็นค่าตัวอย่าง หรือสั้นเกินไป — "
+            'สร้างใหม่: python -c "import secrets; print(secrets.token_urlsafe(48))"'
+        )
 
     # Safety Limits & Constraints (Single Source of Truth)
     MIN_PROMPT_LENGTH = 1

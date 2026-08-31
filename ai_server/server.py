@@ -506,8 +506,12 @@ async def cancel_ai_task(
     }
 
 @app.get("/ai/task/{task_id}")
-async def get_ai_task_status(task_id: str):
+async def get_ai_task_status(
+    task_id: str,
+    x_luma_internal_secret: Optional[str] = Header(None)
+):
     """Returns real-time in-memory status of an AI Task."""
+    verify_internal_secret(x_luma_internal_secret)
     info = task_queue.get_task_status(task_id)
     if not info:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found in memory")
