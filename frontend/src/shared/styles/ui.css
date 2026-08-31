@@ -938,31 +938,3 @@
 
 /* ── controls the current inference mode ignores ─────────────────────── */
 
-/*
- * A setting the backend will not forward is disabled rather than hidden: it is
- * a real setting that works under the other mode, so removing it would be a
- * lie in the opposite direction. The badge carries the reason on hover, and
- * the whole row drops in contrast so the eye skips it while scanning.
- */
-.no-effect {
-  font-size: var(--fs-xs);
-  line-height: 1;
-  padding: var(--sp-2) var(--sp-6);
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  color: var(--ink-3);
-  background: var(--panel-2);
-  white-space: nowrap;
-  flex: none;
-  cursor: help;
-}
-
-.is-inert {
-  opacity: 0.55;
-}
-
-/* Labels stay readable — dimming twice is unreadable, not merely quiet. */
-.is-inert .label,
-.is-inert label {
-  opacity: 1;
-}

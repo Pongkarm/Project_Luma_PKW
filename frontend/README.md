@@ -123,41 +123,22 @@ Diffusion's text encoder has no Thai in its vocabulary, so a Thai prompt becomes
 produces an unrelated image. Prompt examples and placeholders stay English until the team
 decides how a translation step should work, which would have to live in the AI node.
 
-## Settings the backend may ignore
-
-The backend does not forward the stored generation record to the AI node — it
-builds a payload per `AI_MODE`, naming each field by hand. The `direct` branch
-names every field. The `callback` branch does not, and anything it omits never
-reaches the engine while the run still reports success.
-
-| Task | Ignored under `callback` |
-|---|---|
-| txt2img | seed, sampler, style (LoRA) |
-| img2img, inpaint | those three plus negative prompt, checkpoint, output size, change amount |
-
-`src/features/generate/ineffective.ts` mirrors those two payloads. Controls it
-names are disabled and badged rather than hidden — they work under `direct`, so
-the value stays in the draft and returns when the mode changes. When the
-backend does not report a mode, or is unreachable, nothing is disabled: the
-panel keeps its amber "may depend on the mode" dot instead of claiming a
-certainty it does not have.
-
-Re-read `process_generation` in `app/services/generation.py` if the backend's
-payloads change; nothing detects a drift automatically.
-
 ## Backend endpoints this build expects
 
-Three of these do not exist on `origin/backend` yet. They live on branch **`feat/models-proxy`**
-and must be merged and deployed before the features that use them work:
+All of these are on `origin/backend` as of 31 Aug 2026. `feat/models-proxy` and
+`feat/admin` were merged into it and then deleted, so the branches this file
+used to point at no longer exist.
 
-| Endpoint | Used for | Status |
-|---|---|---|
-| `GET /api/models` | Real checkpoint and LoRA lists from the AI node | on `feat/models-proxy` |
-| `DELETE /generations/{id}` | Removing an image and its record | on `feat/models-proxy` |
-| `PATCH /auth/me` | Changing username, email or password | on `feat/models-proxy` |
+| Endpoint | Used for |
+|---|---|
+| `GET /api/models` | Real checkpoint and LoRA lists from the AI node |
+| `DELETE /generations/{id}` | Removing an image and its record |
+| `PATCH /auth/me` | Changing username, email or password |
 
-Each degrades rather than breaking when absent: the model pickers fall back to the bundled list,
-and delete or profile changes report the failure instead of appearing to succeed.
+Each still degrades rather than breaking when absent: the model pickers fall back to the
+bundled list, and delete or profile changes report the failure instead of appearing to succeed.
+That behaviour is worth keeping — it is what let this build ship against a backend that did
+not have them yet.
 
 ## Admin console
 

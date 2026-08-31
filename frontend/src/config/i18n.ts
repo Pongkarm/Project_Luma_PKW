@@ -297,11 +297,7 @@ export const dictionary = {
     'engine.unavailable': 'Status unavailable',
     'engine.online': 'Online',
     'engine.modeReported': 'Inference mode reported by the backend',
-    'mode.noEffect': 'no effect',
-    'mode.noEffectWhy': 'This backend is running in callback mode, which does not pass this value on to the image engine. It is kept for when the mode changes.',
-    'mode.calloutTitle': 'Some settings do not apply right now',
     'engine.modeBadge': '{mode} MODE',
-    'mode.calloutBody': 'The backend is in callback mode. The greyed-out settings below are still saved, but this mode does not forward them, so changing them would not change the image.',
 
     'error.400': 'That request could not be accepted.',
     'error.401': 'Your session ended. Sign in again to keep working.',
@@ -610,11 +606,7 @@ export const dictionary = {
     'engine.unavailable': 'ไม่ทราบสถานะ',
     'engine.online': 'พร้อมใช้งาน',
     'engine.modeReported': 'โหมดประมวลผลที่ระบบรายงาน',
-    'mode.noEffect': 'ไม่มีผล',
-    'mode.noEffectWhy': 'ระบบหลังบ้านทำงานในโหมด callback ซึ่งไม่ส่งค่านี้ต่อไปให้ตัวสร้างภาพ ค่าที่ตั้งไว้ยังถูกเก็บไว้ให้ เผื่อเปลี่ยนโหมดในภายหลัง',
-    'mode.calloutTitle': 'ตอนนี้บางค่ายังใช้ไม่ได้',
     'engine.modeBadge': 'โหมด {mode}',
-    'mode.calloutBody': 'ระบบหลังบ้านอยู่ในโหมด callback ค่าที่เป็นสีจางด้านล่างยังถูกบันทึกไว้ แต่โหมดนี้ไม่ส่งค่าเหล่านั้นต่อ ปรับแล้วภาพจึงไม่เปลี่ยน',
 
     'error.400': 'ระบบไม่รับคำขอนี้',
     'error.401': 'เซสชันหมดอายุแล้ว กรุณาเข้าสู่ระบบอีกครั้ง',
