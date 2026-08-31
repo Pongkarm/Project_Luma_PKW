@@ -353,11 +353,19 @@ async def process_generation_task(
                 callback_payload = {
                     "task_id": str(generation.id),
                     "prompt": generation.prompt,
+                    "negative_prompt": generation.negative_prompt,
+                    "model": generation.model_name,
                     "image_base64": source_b64,
                     "mask_base64": mask_b64,
                     "mode": "inpaint" if generation.task_type == GenerationTaskType.INPAINT.value else "img2img",
                     "steps": generation.steps,
                     "cfg_scale": generation.cfg_scale,
+                    "lora_config": generation.lora_config,
+                    "seed": generation.seed,
+                    "sampler_name": generation.sampler_name,
+                    "denoising_strength": generation.denoising_strength,
+                    "width": generation.width,
+                    "height": generation.height,
                     "callback_url": settings.BACKEND_CALLBACK_URL,
                 }
                 target_url = edit_endpoint
@@ -370,6 +378,8 @@ async def process_generation_task(
                     "lora_config": generation.lora_config,
                     "steps": generation.steps,
                     "cfg_scale": generation.cfg_scale,
+                    "seed": generation.seed,
+                    "sampler_name": generation.sampler_name,
                     "width": generation.width,
                     "height": generation.height,
                     "callback_url": settings.BACKEND_CALLBACK_URL,
