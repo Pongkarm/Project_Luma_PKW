@@ -1,10 +1,11 @@
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from app.db.database import engine, Base
+from app.db.database import engine, Base, SessionLocal
 from app.api import auth, generation, callback, upload, models, admin
 from app.core.config import settings
 
@@ -90,16 +91,38 @@ def read_root():
     return {"message": "LUMA Backend is running! 🚀"}
 
 
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger.exception(f"Unhandled error on {request.method} {request.url.path}: {exc}")
+    headers = {}
+    origin = request.headers.get("origin")
+    if origin:
+        headers["Access-Control-Allow-Origin"] = origin
+        headers["Access-Control-Allow-Credentials"] = "true"
+        headers["Access-Control-Allow-Methods"] = "*"
+        headers["Access-Control-Allow-Headers"] = "*"
+    return JSONResponse(status_code=500, content={"detail": "Internal Server Error"}, headers=headers)
+
+
 @app.get("/healthz", tags=["Health Check"])
 def health_check():
     """Health check endpoint สำหรับ Nginx, Frontend, และ DevOps"""
-    return {
-        "status": "healthy",
+    db_state = "connected"
+    try:
+        with SessionLocal() as db:
+            db.execute(text("SELECT 1"))
+    except Exception as exc:
+        logger.error(f"Health check: database unreachable | {exc}")
+        db_state = "unreachable"
+
+    body = {
+        "status": "healthy" if db_state == "connected" else "degraded",
         "service": "LUMA Backend API",
         "version": "1.2.0",
         "ai_mode": settings.AI_MODE,
-        "database": "connected"
+        "database": db_state,
     }
+    return JSONResponse(status_code=200 if db_state == "connected" else 503, content=body)
 
 
 @app.get("/api/status", tags=["System"])
