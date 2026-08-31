@@ -19,6 +19,8 @@ def cleanup_stale_cache(max_age_days: int = 7, max_size_mb: int = 500):
     files = []
 
     for f in os.listdir(cache_dir):
+        if f == ".gitkeep":
+            continue
         fpath = os.path.join(cache_dir, f)
         if os.path.isfile(fpath):
             stat = os.stat(fpath)

@@ -10,10 +10,15 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 from ai_server.server import app
 from ai_server.config import AIConfig
 from ai_server.services.prompt_builder import build_prompt_with_lora
+from ai_server.services.queue_manager import task_queue
 
 class TestAIServer(unittest.TestCase):
     def setUp(self):
-        self.client = TestClient(app)
+        self.client_ctx = TestClient(app)
+        self.client = self.client_ctx.__enter__()
+
+    def tearDown(self):
+        self.client_ctx.__exit__(None, None, None)
 
     def test_01_health_check(self):
         """Test GET /ai/health endpoint and GPU VRAM detection"""
@@ -52,7 +57,8 @@ class TestAIServer(unittest.TestCase):
             "prompt": "a magical girl casting spell in a forest",
             "model": "counterfeitV30_v30.safetensors",
             "lora": "SousouNoFrieren_Frieren_IlluXL.safetensors",
-            "steps": 20
+            "steps": 20,
+            "callback_url": "none"
         }
         headers = {"X-LUMA-INTERNAL-SECRET": AIConfig.INTERNAL_SECRET}
         response = self.client.post("/ai/generate", json=payload, headers=headers)
@@ -72,7 +78,8 @@ class TestAIServer(unittest.TestCase):
         payload = {
             "task_id": task_id,
             "prompt": "a landscape to be cancelled",
-            "steps": 50
+            "steps": 50,
+            "callback_url": "none"
         }
         headers = {"X-LUMA-INTERNAL-SECRET": AIConfig.INTERNAL_SECRET}
         self.client.post("/ai/generate", json=payload, headers=headers)
@@ -82,6 +89,37 @@ class TestAIServer(unittest.TestCase):
         self.assertEqual(del_resp.status_code, 200)
         self.assertEqual(del_resp.json()["status"], "cancelled")
         print(f"[PASS] Task Cancellation: Successfully cancelled {task_id}")
+
+    def test_06_edit_img2img_and_inpaint(self):
+        """Test POST /ai/edit for both img2img and inpaint modes"""
+        headers = {"X-LUMA-INTERNAL-SECRET": AIConfig.INTERNAL_SECRET}
+        dummy_img = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        
+        # 1. img2img
+        img2img_payload = {
+            "task_id": "test-edit-img2img-001",
+            "prompt": "change hair to blue",
+            "image_base64": dummy_img,
+            "mode": "img2img",
+            "denoising_strength": 0.6,
+            "callback_url": "none"
+        }
+        res1 = self.client.post("/ai/edit", json=img2img_payload, headers=headers)
+        self.assertEqual(res1.status_code, 202)
+        
+        # 2. inpaint
+        inpaint_payload = {
+            "task_id": "test-edit-inpaint-001",
+            "prompt": "replace with golden goblet",
+            "image_base64": dummy_img,
+            "mask_base64": dummy_img,
+            "mode": "inpaint",
+            "denoising_strength": 0.85,
+            "callback_url": "none"
+        }
+        res2 = self.client.post("/ai/edit", json=inpaint_payload, headers=headers)
+        self.assertEqual(res2.status_code, 202)
+        print("[PASS] Edit Endpoints: Both img2img and inpaint accepted (HTTP 202)")
 
 if __name__ == "__main__":
     unittest.main()

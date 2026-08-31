@@ -19,16 +19,25 @@ def encode_image_to_base64(image: Image.Image, format: str = "WEBP", quality: in
     encoded = base64.b64encode(buffer.getvalue()).decode("utf-8")
     return f"data:image/{format.lower()};base64,{encoded}"
 
-def enforce_max_resolution(image: Image.Image, max_dim: int = AIConfig.MAX_IMAGE_WIDTH) -> Image.Image:
-    """Ensures image dimensions do not exceed safety limits for Inpainting VRAM."""
+def enforce_max_resolution(image: Image.Image, min_dim: int = AIConfig.MIN_IMAGE_WIDTH, max_dim: int = AIConfig.MAX_IMAGE_WIDTH) -> Image.Image:
+    """Ensures image dimensions stay within safe bounds for VRAM (256 - 768 px, divisible by 8)."""
     w, h = image.size
-    if w <= max_dim and h <= max_dim:
-        return image
     
-    ratio = min(max_dim / w, max_dim / h)
-    new_w = int(w * ratio)
-    new_h = int(h * ratio)
+    if w < min_dim or h < min_dim:
+        ratio = max(min_dim / max(w, 1), min_dim / max(h, 1))
+        w = int(w * ratio)
+        h = int(h * ratio)
+    elif w > max_dim or h > max_dim:
+        ratio = min(max_dim / w, max_dim / h)
+        w = int(w * ratio)
+        h = int(h * ratio)
+    
     # Ensure divisible by 8 for SD Latent dimensions
-    new_w = (new_w // 8) * 8
-    new_h = (new_h // 8) * 8
-    return image.resize((new_w, new_h), Image.Resampling.LANCZOS)
+    new_w = max((w // 8) * 8, min_dim)
+    new_h = max((h // 8) * 8, min_dim)
+    new_w = min(new_w, max_dim)
+    new_h = min(new_h, max_dim)
+    
+    if (new_w, new_h) != image.size:
+        return image.resize((new_w, new_h), Image.Resampling.LANCZOS)
+    return image

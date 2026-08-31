@@ -39,6 +39,11 @@ async def send_callback_with_retry(
         except Exception as e:
             print(f"[CACHE WARN] Failed to write local cache: {e}")
 
+    # If callback_url is None, empty, or "none", skip network delivery (used in tests)
+    if not callback_url or str(callback_url).lower() in ["none", "null", ""]:
+        print(f"[CALLBACK SKIP] No callback destination specified for task {task_id}.")
+        return True
+
     # Retry loop with exponential backoff
     delays = [1.0, 2.0, 4.0]
     async with httpx.AsyncClient(timeout=15.0) as client:

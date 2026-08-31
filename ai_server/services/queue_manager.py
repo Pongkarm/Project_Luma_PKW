@@ -12,20 +12,40 @@ class AITaskQueue:
     In-memory FIFO Task Queue with State Tracking and Soft/Hard Cancellation.
     """
     def __init__(self):
-        self._queue = asyncio.Queue()
+        self._loop = None
+        self._queue = None
         self._worker_task = None
         self.is_busy = False
         self.current_task_id: Optional[str] = None
         self._current_task_future: Optional[asyncio.Future] = None
         self._task_states: Dict[str, dict] = {}
 
+    def _ensure_queue(self):
+        try:
+            curr_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            curr_loop = None
+
+        if self._queue is None or self._loop != curr_loop:
+            self._loop = curr_loop
+            self._queue = asyncio.Queue()
+            self._worker_task = None
+
     def start_worker(self):
+        self._ensure_queue()
         if self._worker_task is None or self._worker_task.done():
             self._worker_task = asyncio.create_task(self._process_queue())
             print("[QUEUE] Background Task Queue worker started.")
 
+    def stop_worker(self):
+        if self._worker_task and not self._worker_task.done():
+            self._worker_task.cancel()
+            self._worker_task = None
+            print("[QUEUE] Background Task Queue worker stopped.")
+
     async def enqueue(self, task_data: dict, handler: Callable[[dict], Any]) -> int:
         """Adds a new generation task to the FIFO queue."""
+        self._ensure_queue()
         self.start_worker()
         task_id = task_data.get("task_id", f"task-{int(time.time()*1000)}")
         task_data["task_id"] = task_id
@@ -79,7 +99,7 @@ class AITaskQueue:
             print(f"[QUEUE HARD CANCEL] Interrupting active GPU task: {task_id}")
             
             # Send interrupt signal to Forge API
-            await interrupt_forge_generation()
+            await asyncio.to_thread(interrupt_forge_generation)
 
             # Cancel current async future if running
             if self._current_task_future and not self._current_task_future.done():
@@ -172,6 +192,9 @@ class AITaskQueue:
                     self._current_task_future = None
                     self._queue.task_done()
 
+            except asyncio.CancelledError:
+                print("[QUEUE WORKER] Worker cancelled, exiting loop.")
+                break
             except Exception as loop_err:
                 print(f"[QUEUE WORKER FATAL] Loop error: {loop_err}")
                 await asyncio.sleep(1)

@@ -40,6 +40,7 @@ async def lifespan(app: FastAPI):
     task_queue.start_worker()
     yield
     print("🛑 LUMA AI Server Shutting down...")
+    task_queue.stop_worker()
     clear_vram_cache()
 
 app = FastAPI(
@@ -63,18 +64,18 @@ from typing import Optional, Union, List, Any
 # --- Pydantic Schemas with Strict Input Constraints (Compatible with Backend) ---
 class GenerateRequest(BaseModel):
     task_id: str
-    prompt: str = Field(..., min_length=1, max_length=500, description="Prompt text (max 500 chars)")
-    negative_prompt: Optional[str] = Field("blurry, low quality, distorted, bad anatomy", max_length=500)
+    prompt: str = Field(..., min_length=AIConfig.MIN_PROMPT_LENGTH, max_length=AIConfig.MAX_PROMPT_LENGTH, description="Prompt text (max 2000 chars)")
+    negative_prompt: Optional[str] = Field("blurry, low quality, distorted, bad anatomy", max_length=AIConfig.MAX_NEGATIVE_PROMPT_LENGTH)
     model: Optional[str] = None
-    model_name: Optional[str] = "counterfeitV30_v30.safetensors"
+    model_name: Optional[str] = AIConfig.DEFAULT_MODEL
     lora: Optional[str] = None
     lora_config: Optional[Any] = None  # Can be list, dict, or string from backend
-    sampler_name: Optional[str] = "DPM++ 2M Karras"
-    steps: Optional[int] = Field(25, ge=1, le=50, description="Denoising steps (1-50)")
-    cfg_scale: Optional[float] = Field(7.5, ge=1.0, le=20.0, description="CFG scale (1.0-20.0)")
+    sampler_name: Optional[str] = AIConfig.DEFAULT_SAMPLER
+    steps: Optional[int] = Field(AIConfig.DEFAULT_STEPS, ge=AIConfig.MIN_STEPS, le=AIConfig.MAX_STEPS, description="Denoising steps (1-50)")
+    cfg_scale: Optional[float] = Field(AIConfig.DEFAULT_CFG, ge=AIConfig.MIN_CFG, le=AIConfig.MAX_CFG, description="CFG scale (1.0-20.0)")
     seed: Optional[int] = None
-    width: Optional[int] = Field(512, ge=256, le=768, description="Image width (256-768, divisible by 8)")
-    height: Optional[int] = Field(512, ge=256, le=768, description="Image height (256-768, divisible by 8)")
+    width: Optional[int] = Field(AIConfig.DEFAULT_WIDTH, ge=AIConfig.MIN_IMAGE_WIDTH, le=AIConfig.MAX_IMAGE_WIDTH, description="Image width (256-768, divisible by 8)")
+    height: Optional[int] = Field(AIConfig.DEFAULT_HEIGHT, ge=AIConfig.MIN_IMAGE_HEIGHT, le=AIConfig.MAX_IMAGE_HEIGHT, description="Image height (256-768, divisible by 8)")
     task_type: Optional[str] = "txt2img"
     source_image_path: Optional[str] = None
     image_base64: Optional[str] = None
@@ -85,12 +86,22 @@ class GenerateRequest(BaseModel):
 
 class EditRequest(BaseModel):
     task_id: str
-    prompt: str = Field(..., min_length=1, max_length=500)
+    prompt: str = Field(..., min_length=AIConfig.MIN_PROMPT_LENGTH, max_length=AIConfig.MAX_PROMPT_LENGTH, description="Prompt text (max 2000 chars)")
+    negative_prompt: Optional[str] = Field("blurry, low quality, distorted, bad anatomy", max_length=AIConfig.MAX_NEGATIVE_PROMPT_LENGTH)
     image_base64: str
     mask_base64: Optional[str] = None
     mode: Optional[str] = "inpaint"  # inpaint | img2img
-    steps: Optional[int] = Field(25, ge=1, le=50)
-    cfg_scale: Optional[float] = Field(7.5, ge=1.0, le=20.0)
+    model: Optional[str] = None
+    model_name: Optional[str] = AIConfig.DEFAULT_MODEL
+    lora: Optional[str] = None
+    lora_config: Optional[Any] = None
+    sampler_name: Optional[str] = AIConfig.DEFAULT_SAMPLER
+    steps: Optional[int] = Field(AIConfig.DEFAULT_STEPS, ge=AIConfig.MIN_STEPS, le=AIConfig.MAX_STEPS)
+    cfg_scale: Optional[float] = Field(AIConfig.DEFAULT_CFG, ge=AIConfig.MIN_CFG, le=AIConfig.MAX_CFG)
+    seed: Optional[int] = None
+    width: Optional[int] = None
+    height: Optional[int] = None
+    denoising_strength: Optional[float] = 0.75
     callback_url: Optional[str] = AIConfig.BACKEND_CALLBACK_URL
     correlation_id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4())[:8])
 
@@ -105,7 +116,9 @@ def verify_internal_secret(token: Optional[str]):
 from ai_server.services.forge_client import (
     is_forge_online, 
     run_txt2img, 
-    run_inpaint
+    run_img2img,
+    run_inpaint,
+    set_forge_model
 )
 
 def extract_primary_lora(data: dict) -> Optional[str]:
@@ -145,7 +158,7 @@ def handle_txt2img_inference(data: dict) -> str:
     """
     raw_prompt = data.get("prompt", "")
     lora_id = extract_primary_lora(data)
-    model_name = data.get("model_name") or data.get("model") or "counterfeitV30_v30.safetensors"
+    model_name = data.get("model_name") or data.get("model") or AIConfig.DEFAULT_MODEL
     
     # Auto-inject LoRA trigger word and syntax
     enriched_prompt, lora_tag = build_prompt_with_lora(raw_prompt, lora_id)
@@ -156,58 +169,107 @@ def handle_txt2img_inference(data: dict) -> str:
         print("[ENGINE] WebUI Forge Engine is ONLINE on port 7861. Running on GPU...")
         forge_res = run_txt2img(
             prompt=enriched_prompt,
-            negative_prompt=data.get("negative_prompt") if data.get("negative_prompt") else "blurry, low quality, distorted, bad anatomy",
-            steps=data.get("steps", 25),
-            cfg_scale=data.get("cfg_scale", 7.5),
-            width=data.get("width", 512),
-            height=data.get("height", 512),
+            negative_prompt=data.get("negative_prompt") if data.get("negative_prompt") else AIConfig.DEFAULT_NEGATIVE_PROMPT,
+            steps=data.get("steps", AIConfig.DEFAULT_STEPS),
+            cfg_scale=data.get("cfg_scale", AIConfig.DEFAULT_CFG),
+            width=data.get("width", AIConfig.DEFAULT_WIDTH),
+            height=data.get("height", AIConfig.DEFAULT_HEIGHT),
+            sampler_name=data.get("sampler_name", AIConfig.DEFAULT_SAMPLER),
+            seed=data.get("seed"),
             checkpoint=model_name
         )
         if forge_res:
             return forge_res
 
     # 2. High-Fidelity Fallback Preview (for Standalone Dev & Safety)
-    print("[ENGINE] Running High-Fidelity Fallback Renderer...")
-    w = min(data.get("width", 512), AIConfig.MAX_IMAGE_WIDTH)
-    h = min(data.get("height", 512), AIConfig.MAX_IMAGE_HEIGHT)
+    if not AIConfig.ALLOW_FALLBACK_RENDER:
+        raise RuntimeError("WebUI Forge GPU engine is offline and fallback rendering is disabled.")
+
+    print("[ENGINE] Running High-Fidelity Fallback Renderer for txt2img...")
+    w = min(data.get("width", AIConfig.DEFAULT_WIDTH), AIConfig.MAX_IMAGE_WIDTH)
+    h = min(data.get("height", AIConfig.DEFAULT_HEIGHT), AIConfig.MAX_IMAGE_HEIGHT)
 
     img = Image.new("RGB", (w, h), color=(18, 22, 30))
     draw = ImageDraw.Draw(img)
-    draw.rectangle([(16, 16), (w - 16, h - 16)], outline=(88, 166, 255), width=3)
-    draw.text((36, 36), "✨ LUMA AI Generated Image", fill=(255, 255, 255))
+    draw.rectangle([(16, 16), (w - 16, h - 16)], outline=(255, 100, 100), width=3)
+    draw.text((36, 36), "⚠️ PREVIEW ONLY — Forge GPU offline [txt2img]", fill=(255, 100, 100))
     draw.text((36, 75), f"Prompt: {enriched_prompt[:65]}...", fill=(180, 210, 255))
     draw.text((36, 115), f"Model: {model_name} | LoRA: {lora_id or 'None'}", fill=(130, 160, 200))
     draw.text((36, 145), f"Resolution: {w}x{h} | Steps: {data.get('steps', 25)}", fill=(100, 130, 170))
 
     return encode_image_to_base64(img, format="WEBP")
 
-def handle_inpaint_inference(data: dict) -> str:
-    """Handles inpainting with mask tensor, resolution safety, and Forge/fallback execution."""
+def handle_edit_inference(data: dict) -> str:
+    """
+    Handles img2img and inpainting with mask tensor, LoRA auto-injection,
+    checkpoint resolution, resolution safety, and Forge/fallback execution.
+    """
     raw_prompt = data.get("prompt", "")
     orig_b64 = data.get("image_base64")
     mask_b64 = data.get("mask_base64")
+    lora_id = extract_primary_lora(data)
+    model_name = data.get("model_name") or data.get("model") or AIConfig.DEFAULT_MODEL
+    mode = (data.get("mode") or ("inpaint" if mask_b64 else "img2img")).lower()
 
-    # 1. Try Live Forge Inpainting
-    if mask_b64 and is_forge_online():
-        print("[ENGINE] Running Inpaint on live Forge GPU Engine...")
-        inpaint_res = run_inpaint(
-            image_base64=orig_b64,
-            mask_base64=mask_b64,
-            prompt=raw_prompt,
-            steps=data.get("steps", 25),
-            cfg_scale=data.get("cfg_scale", 7.5)
-        )
-        if inpaint_res:
-            return inpaint_res
+    # Auto-inject LoRA trigger word and syntax
+    enriched_prompt, lora_tag = build_prompt_with_lora(raw_prompt, lora_id)
+    print(f"[EDIT PROMPT ENRICHED] Mode: '{mode}' | Raw: '{raw_prompt}' -> Enriched: '{enriched_prompt}' (LoRA: {lora_id})")
 
-    # 2. Fallback Inpaint Composite
+    # 1. Try Live Forge GPU Inference
+    if is_forge_online():
+        print(f"[ENGINE] WebUI Forge Engine is ONLINE on port 7861. Running {mode} on GPU...")
+        if mode == "inpaint" and mask_b64:
+            inpaint_res = run_inpaint(
+                image_base64=orig_b64,
+                mask_base64=mask_b64,
+                prompt=enriched_prompt,
+                negative_prompt=data.get("negative_prompt") if data.get("negative_prompt") else AIConfig.DEFAULT_NEGATIVE_PROMPT,
+                steps=data.get("steps", AIConfig.DEFAULT_STEPS),
+                cfg_scale=data.get("cfg_scale", AIConfig.DEFAULT_CFG),
+                denoising_strength=data.get("denoising_strength", 0.75),
+                sampler_name=data.get("sampler_name", AIConfig.DEFAULT_SAMPLER),
+                seed=data.get("seed"),
+                checkpoint=model_name
+            )
+            if inpaint_res:
+                return inpaint_res
+        else:  # img2img mode (no mask)
+            img2img_res = run_img2img(
+                image_base64=orig_b64,
+                prompt=enriched_prompt,
+                negative_prompt=data.get("negative_prompt") if data.get("negative_prompt") else AIConfig.DEFAULT_NEGATIVE_PROMPT,
+                steps=data.get("steps", AIConfig.DEFAULT_STEPS),
+                cfg_scale=data.get("cfg_scale", AIConfig.DEFAULT_CFG),
+                denoising_strength=data.get("denoising_strength", 0.75),
+                width=data.get("width"),
+                height=data.get("height"),
+                sampler_name=data.get("sampler_name", AIConfig.DEFAULT_SAMPLER),
+                seed=data.get("seed"),
+                checkpoint=model_name
+            )
+            if img2img_res:
+                return img2img_res
+
+    # 2. Fallback Preview (for Standalone Dev & Safety)
+    if not AIConfig.ALLOW_FALLBACK_RENDER:
+        raise RuntimeError(f"WebUI Forge GPU engine is offline and fallback rendering is disabled for {mode}.")
+
+    print(f"[ENGINE] Running High-Fidelity Fallback Renderer for {mode}...")
     orig_img = decode_base64_to_image(orig_b64)
     orig_img = enforce_max_resolution(orig_img, max_dim=AIConfig.MAX_IMAGE_WIDTH)
     w, h = orig_img.size
+    
+    # Overlay fallback banner
     draw = ImageDraw.Draw(orig_img)
-    draw.text((20, h - 40), "✨ LUMA Inpainted Region", fill=(0, 255, 200))
+    banner_h = 44
+    draw.rectangle([(0, h - banner_h), (w, h)], fill=(10, 15, 25))
+    draw.text((16, h - 34), f"⚠️ PREVIEW ONLY — Forge GPU offline [{mode}]", fill=(255, 100, 100))
+    draw.text((16, h - 18), f"Prompt: {enriched_prompt[:40]}... | Model: {model_name[:20]}", fill=(180, 200, 220))
     
     return encode_image_to_base64(orig_img, format="WEBP")
+
+# Alias for backwards compatibility
+handle_inpaint_inference = handle_edit_inference
 
 # --- REST Endpoints ---
 @app.get("/", response_class=HTMLResponse)

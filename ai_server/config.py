@@ -15,13 +15,28 @@ class AIConfig:
     # Internal Security Secret
     INTERNAL_SECRET = os.environ.get("LUMA_INTERNAL_SECRET", "luma-distributed-token-secret-6710301009")
 
-    # Image Resolution & VRAM Limits (Recommended by Iris)
+    # Safety Limits & Constraints (Single Source of Truth)
+    MIN_PROMPT_LENGTH = 1
+    MAX_PROMPT_LENGTH = 2000
+    MAX_NEGATIVE_PROMPT_LENGTH = 2000
+    MIN_STEPS = 1
+    MAX_STEPS = 50
+    MIN_CFG = 1.0
+    MAX_CFG = 20.0
+    MIN_IMAGE_WIDTH = 256
     MAX_IMAGE_WIDTH = 768
+    MIN_IMAGE_HEIGHT = 256
     MAX_IMAGE_HEIGHT = 768
     DEFAULT_WIDTH = 512
     DEFAULT_HEIGHT = 512
     DEFAULT_STEPS = 25
     DEFAULT_CFG = 7.5
+    DEFAULT_SAMPLER = "DPM++ 2M Karras"
+    DEFAULT_MODEL = "counterfeitV30_v30.safetensors"
+    DEFAULT_NEGATIVE_PROMPT = "blurry, low quality, distorted, bad anatomy"
+
+    # Fallback Mode Flag (Allow mock rendering when Forge is offline)
+    ALLOW_FALLBACK_RENDER = os.environ.get("ALLOW_FALLBACK_RENDER", "true").lower() == "true"
 
     # Stability Matrix Shared Models
     SM_DATA_DIR = os.environ.get("SM_DATA_DIR", "D:/StabilityMatrix-win-x64/Data")
