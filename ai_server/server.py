@@ -107,10 +107,10 @@ class EditRequest(BaseModel):
 
 # --- Security Verification Helper ---
 def verify_internal_secret(token: Optional[str]):
-    if token and token != AIConfig.INTERNAL_SECRET:
+    if not token or token != AIConfig.INTERNAL_SECRET:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
-            detail="Invalid X-LUMA-INTERNAL-SECRET header"
+            detail="Invalid or missing X-LUMA-INTERNAL-SECRET header"
         )
 
 from ai_server.services.forge_client import (

@@ -12,6 +12,10 @@ __pycache__/
 .env.*
 !.env.example
 
+# Internal Prompts & Security Directives (DO NOT COMMIT)
+*PROMPT*.md
+PROMPT*.md
+
 # Testing & Coverage
 .pytest_cache/
 .coverage

@@ -1,7 +1,10 @@
-# ai_server/config.py
 import os
+from dotenv import load_dotenv
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+# Load local .env files if present
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+load_dotenv(os.path.join(os.path.dirname(BASE_DIR), ".env"))
 
 class AIConfig:
     # Server Binding
@@ -12,8 +15,10 @@ class AIConfig:
     BACKEND_CALLBACK_URL = os.environ.get("BACKEND_CALLBACK_URL", "http://127.0.0.1:8000/api/callback")
     LAN_BACKEND_CALLBACK_URL = os.environ.get("LAN_BACKEND_CALLBACK_URL", "http://192.168.1.20:8000/api/callback")
     
-    # Internal Security Secret
-    INTERNAL_SECRET = os.environ.get("LUMA_INTERNAL_SECRET", "luma-distributed-token-secret-6710301009")
+    # Internal Security Secret (Must be configured via Environment Variable)
+    INTERNAL_SECRET = os.environ.get("LUMA_INTERNAL_SECRET")
+    if not INTERNAL_SECRET or len(INTERNAL_SECRET) < 32:
+        raise RuntimeError("LUMA_INTERNAL_SECRET ยังไม่ได้ตั้ง หรือสั้นเกินไป (ต้องมีความยาวอย่างน้อย 32 ตัวอักษร) — กรุณาตั้งใน .env ก่อนรัน")
 
     # Safety Limits & Constraints (Single Source of Truth)
     MIN_PROMPT_LENGTH = 1

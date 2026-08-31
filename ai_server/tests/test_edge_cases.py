@@ -42,12 +42,18 @@ class TestEdgeCases(unittest.TestCase):
         print("[PASS] Edge Case 3: Steps > 50 rejected (HTTP 422)")
 
     def test_04_unauthorized_request_forbidden(self):
-        """Edge Case 4: Invalid internal secret should be rejected with HTTP 403"""
+        """Edge Case 4: Invalid or missing internal secret should be rejected with HTTP 403"""
         payload = {"task_id": "test-auth", "prompt": "valid prompt"}
+        
+        # 1. Invalid secret token
         bad_headers = {"X-LUMA-INTERNAL-SECRET": "wrong-secret-hacker"}
         response = self.client.post("/ai/generate", json=payload, headers=bad_headers)
         self.assertEqual(response.status_code, 403)
-        print("[PASS] Edge Case 4: Invalid Secret blocked (HTTP 403)")
+        
+        # 2. Missing secret token (No header)
+        missing_resp = self.client.post("/ai/generate", json=payload, headers={})
+        self.assertEqual(missing_resp.status_code, 403)
+        print("[PASS] Edge Case 4: Invalid and Missing Secret blocked (HTTP 403)")
 
     def test_05_cancel_nonexistent_task(self):
         """Edge Case 5: Cancelling non-existent task returns HTTP 404"""

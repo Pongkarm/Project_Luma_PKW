@@ -90,12 +90,11 @@ class TestAIServer(unittest.TestCase):
         self.assertEqual(del_resp.json()["status"], "cancelled")
         print(f"[PASS] Task Cancellation: Successfully cancelled {task_id}")
 
-    def test_06_edit_img2img_and_inpaint(self):
-        """Test POST /ai/edit for both img2img and inpaint modes"""
+    def test_06_edit_img2img(self):
+        """Test POST /ai/edit in img2img mode"""
         headers = {"X-LUMA-INTERNAL-SECRET": AIConfig.INTERNAL_SECRET}
         dummy_img = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
         
-        # 1. img2img
         img2img_payload = {
             "task_id": "test-edit-img2img-001",
             "prompt": "change hair to blue",
@@ -104,10 +103,15 @@ class TestAIServer(unittest.TestCase):
             "denoising_strength": 0.6,
             "callback_url": "none"
         }
-        res1 = self.client.post("/ai/edit", json=img2img_payload, headers=headers)
-        self.assertEqual(res1.status_code, 202)
+        res = self.client.post("/ai/edit", json=img2img_payload, headers=headers)
+        self.assertEqual(res.status_code, 202)
+        print("[PASS] Edit img2img accepted (HTTP 202)")
+
+    def test_07_edit_inpaint(self):
+        """Test POST /ai/edit in inpaint mode with mask"""
+        headers = {"X-LUMA-INTERNAL-SECRET": AIConfig.INTERNAL_SECRET}
+        dummy_img = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
         
-        # 2. inpaint
         inpaint_payload = {
             "task_id": "test-edit-inpaint-001",
             "prompt": "replace with golden goblet",
@@ -117,9 +121,9 @@ class TestAIServer(unittest.TestCase):
             "denoising_strength": 0.85,
             "callback_url": "none"
         }
-        res2 = self.client.post("/ai/edit", json=inpaint_payload, headers=headers)
-        self.assertEqual(res2.status_code, 202)
-        print("[PASS] Edit Endpoints: Both img2img and inpaint accepted (HTTP 202)")
+        res = self.client.post("/ai/edit", json=inpaint_payload, headers=headers)
+        self.assertEqual(res.status_code, 202)
+        print("[PASS] Edit inpaint accepted (HTTP 202)")
 
 if __name__ == "__main__":
     unittest.main()
