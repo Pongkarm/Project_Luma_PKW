@@ -276,6 +276,108 @@ async def cancel_generation(
 
 
 # ────────────────────────────────────────
+# 3d. ตรวจสอบ Progress แบบ Proxy (GET /generations/{id}/progress)
+# ────────────────────────────────────────
+async def get_generation_progress(
+    db: Session,
+    user_id: UUID,
+    generation_id: UUID
+) -> dict:
+    """
+    Proxy ขอข้อมูลสถานะและความคืบหน้าของ Task (Progress & Queue) จาก Node 3
+    - ป้องกันความปลอดภัยโดยซ่อน Node 3 ไว้หลัง Backend
+    - ตรวจสอบสิทธิ์การเข้าถึงข้อมูลของผู้ใช้ (Data Isolation)
+    - Fallback ไปยังสถานะในฐานข้อมูลหาก Node 3 ไม่ตอบสนอง
+    """
+    stmt = select(Generation).where(
+        Generation.id == generation_id,
+        Generation.user_id == user_id
+    )
+    generation = db.execute(stmt).scalar_one_or_none()
+
+    if generation is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Generation job not found"
+        )
+
+    # ตรวจสอบ Timeout ก่อน
+    _check_and_apply_timeout(generation, db)
+
+    # 1. กรณีงานใน DB เสร็จสิ้นแล้ว (Completed)
+    if generation.status == GenerationStatus.COMPLETED.value:
+        return {
+            "task_id": generation.id,
+            "status": "completed",
+            "progress": 1.0,
+            "queue_position": 0,
+            "total_queued": 0,
+            "step": generation.steps or 0,
+            "total_steps": generation.steps or 0,
+            "elapsed": generation.duration_seconds,
+            "seed": generation.seed,
+            "error": None,
+        }
+
+    # 2. กรณีงานใน DB ล้มเหลว (Failed)
+    if generation.status == GenerationStatus.FAILED.value:
+        return {
+            "task_id": generation.id,
+            "status": "failed",
+            "progress": 0.0,
+            "queue_position": 0,
+            "total_queued": 0,
+            "step": 0,
+            "total_steps": generation.steps or 0,
+            "elapsed": generation.duration_seconds,
+            "seed": generation.seed,
+            "error": generation.error_message,
+        }
+
+    # 3. กรณีงานกำลัง Pending หรือ Processing: ยิง Proxy ไปยัง Node 3 (หากอยู่ในโหมด callback)
+    if settings.AI_MODE == "callback" and settings.AI_SERVER_CALLBACK_URL:
+        task_url = settings.AI_SERVER_CALLBACK_URL.replace("/ai/generate", f"/ai/task/{generation_id}")
+        headers = {}
+        if settings.AI_CALLBACK_SECRET:
+            headers["X-LUMA-INTERNAL-SECRET"] = settings.AI_CALLBACK_SECRET
+
+        try:
+            async with httpx.AsyncClient(timeout=3.0) as client:
+                res = await client.get(task_url, headers=headers)
+                if res.status_code == 200:
+                    data = res.json()
+                    data["task_id"] = generation.id
+                    if "status" not in data:
+                        data["status"] = generation.status
+                    if "seed" not in data:
+                        data["seed"] = generation.seed
+                    return data
+        except Exception as e:
+            logger.warning(f"Failed to fetch progress from AI node: {e}")
+
+    # Fallback กรณีติดต่อ Node 3 ไม่ได้ หรือรันในโหมด direct
+    elapsed = None
+    if generation.created_at:
+        created = generation.created_at
+        if created.tzinfo is None:
+            created = created.replace(tzinfo=timezone.utc)
+        elapsed = round((datetime.now(timezone.utc) - created).total_seconds(), 2)
+
+    return {
+        "task_id": generation.id,
+        "status": generation.status,
+        "progress": 0.0 if generation.status == "pending" else 0.5,
+        "queue_position": 1 if generation.status == "pending" else 0,
+        "total_queued": 1 if generation.status == "pending" else 0,
+        "step": 0,
+        "total_steps": generation.steps or 20,
+        "elapsed": elapsed,
+        "seed": generation.seed,
+        "error": None,
+    }
+
+
+# ────────────────────────────────────────
 # 4. สร้างงานใหม่ (POST /generations)
 # ────────────────────────────────────────
 def _resolve_storage_path(path_or_url: Optional[str]) -> Optional[str]:
@@ -670,6 +772,8 @@ def process_ai_callback(
     generation.status = GenerationStatus.COMPLETED.value
     generation.output_path = str(file_path.resolve())
     generation.completed_at = datetime.now(timezone.utc)
+    if payload.seed is not None:
+        generation.seed = payload.seed
     if payload.generation_time:
         generation.duration_seconds = payload.generation_time
     elif generation.created_at:

@@ -339,6 +339,26 @@ async def cancel_mock_task(
     }
 
 
+@app.get("/ai/task/{task_id}")
+async def get_mock_task_status(
+    task_id: str,
+    x_luma_internal_secret: Optional[str] = Header(None)
+):
+    """Returns mock progress, queue position and step metrics"""
+    logger.info(f"[Mock AI] Task status checked: {task_id}")
+    return {
+        "task_id": task_id,
+        "status": "processing",
+        "queue_position": 1,
+        "total_queued": 1,
+        "progress": 0.65,
+        "step": 13,
+        "total_steps": 20,
+        "elapsed": 1.25,
+        "seed": 12345678,
+    }
+
+
 @app.get("/ai/health")
 async def ai_health():
     return {

@@ -11,6 +11,7 @@ from app.schemas.generation import (
     GenerationCreate,
     GenerationResponse,
     GenerationListResponse,
+    GenerationProgressResponse,
 )
 from app.services import generation as generation_service
 
@@ -176,6 +177,29 @@ async def cancel_generation(
         generation_id=generation_id,
     )
     return GenerationResponse.model_validate(generation)
+
+
+# ─────────────────────────────────────────
+# 3d. GET /generations/{generation_id}/progress (ความคืบหน้าและคิว)
+# ─────────────────────────────────────────
+@router.get(
+    "/{generation_id}/progress",
+    response_model=GenerationProgressResponse,
+    summary="Get generation live progress and queue position (Proxy to Node 3)"
+)
+async def get_generation_progress(
+    generation_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    ดึงความคืบหน้าของงานสร้างภาพ (Live Progress & Queue) โดยเชื่อมต่อไปยัง Node 3 ผ่าน Backend Proxy
+    """
+    return await generation_service.get_generation_progress(
+        db=db,
+        user_id=current_user.id,
+        generation_id=generation_id,
+    )
 
 
 # ─────────────────────────────────────────

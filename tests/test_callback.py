@@ -255,3 +255,43 @@ def test_callback_data_url_prefix_webp_stripped_properly(
     with Image.open(gen.output_path) as img:
         img.verify()
 
+
+def test_callback_saves_seed_to_database(
+    client: TestClient,
+    test_user: User,
+    sample_image_base64: str,
+    db: Session
+):
+    """ทดสอบว่าเมื่อ Callback ส่ง seed มา จะถูกบันทึกลงใน generations.seed ในฐานข้อมูล"""
+    gen = Generation(
+        id=uuid.uuid4(),
+        user_id=test_user.id,
+        task_type="txt2img",
+        prompt="random seed test",
+        model_name="sd-v1-5",
+        sampler_name="Euler a",
+        steps=20,
+        cfg_scale=7.0,
+        width=512,
+        height=512,
+        status="processing",
+        seed=-1
+    )
+    db.add(gen)
+    db.commit()
+
+    payload = {
+        "task_id": str(gen.id),
+        "status": "completed",
+        "image_base64": sample_image_base64,
+        "generation_time": 2.0,
+        "seed": 99887766
+    }
+    headers = {"X-LUMA-INTERNAL-SECRET": settings.AI_CALLBACK_SECRET}
+    response = client.post("/api/callback", json=payload, headers=headers)
+    assert response.status_code == 200
+
+    db.refresh(gen)
+    assert gen.status == "completed"
+    assert gen.seed == 99887766
+

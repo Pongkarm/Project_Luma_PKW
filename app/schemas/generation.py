@@ -156,6 +156,7 @@ class AICallbackPayload(BaseModel):
     error: str | None = Field(default=None, description="ข้อความ Error")
     error_message: str | None = Field(default=None, description="Alias ข้อความ Error")
     generation_time: float | None = Field(default=None, description="เวลาประมวลผล (วินาที)")
+    seed: int | None = Field(default=None, description="Seed จริงที่ใช้ในการประมวลผล GPU")
 
 
 class AICallbackResponse(BaseModel):
@@ -165,3 +166,18 @@ class AICallbackResponse(BaseModel):
     status: str
     duplicate: bool = False
     message: str = "Callback processed successfully"
+
+
+class GenerationProgressResponse(BaseModel):
+    """Schema รายงานความคืบหน้าของงานและคิวประมวลผล (Proxy จาก Node 3)"""
+    task_id: UUID
+    status: str
+    queue_position: int | None = 0
+    total_queued: int | None = 0
+    progress: float | None = 0.0
+    step: int | None = 0
+    total_steps: int | None = 0
+    elapsed: float | None = None
+    seed: int | None = None
+    error: str | None = None
+    message: str | None = None

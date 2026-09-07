@@ -245,3 +245,129 @@ def test_create_generation_with_lora_list_and_dict(client: TestClient, auth_head
     }
     res_list = client.post("/generations", json=payload_list, headers=auth_headers)
     assert res_list.status_code == 201
+
+
+def test_get_progress_completed(client: TestClient, test_user: User, auth_headers: dict, db: Session):
+    """ทดสอบดึง progress สำหรับงานที่เสร็จแล้ว (status=completed, progress=1.0, seed คงเดิม)"""
+    gen = Generation(
+        id=uuid.uuid4(),
+        user_id=test_user.id,
+        task_type="txt2img",
+        prompt="completed progress test",
+        model_name="sd-v1-5",
+        sampler_name="Euler a",
+        steps=25,
+        cfg_scale=7.0,
+        width=512,
+        height=512,
+        status="completed",
+        seed=12345678,
+        duration_seconds=3.2
+    )
+    db.add(gen)
+    db.commit()
+
+    res = client.get(f"/generations/{gen.id}/progress", headers=auth_headers)
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "completed"
+    assert data["progress"] == 1.0
+    assert data["queue_position"] == 0
+    assert data["seed"] == 12345678
+
+
+def test_get_progress_failed(client: TestClient, test_user: User, auth_headers: dict, db: Session):
+    """ทดสอบดึง progress สำหรับงานที่ล้มเหลว (status=failed, progress=0.0)"""
+    gen = Generation(
+        id=uuid.uuid4(),
+        user_id=test_user.id,
+        task_type="txt2img",
+        prompt="failed progress test",
+        model_name="sd-v1-5",
+        sampler_name="Euler a",
+        steps=25,
+        cfg_scale=7.0,
+        width=512,
+        height=512,
+        status="failed",
+        error_message="Simulated failure"
+    )
+    db.add(gen)
+    db.commit()
+
+    res = client.get(f"/generations/{gen.id}/progress", headers=auth_headers)
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "failed"
+    assert data["progress"] == 0.0
+    assert data["error"] == "Simulated failure"
+
+
+def test_get_progress_processing_fallback(client: TestClient, test_user: User, auth_headers: dict, db: Session):
+    """ทดสอบดึง progress สำหรับงานที่กำลัง processing (คืน progress fallback ได้ไม่พัง 500)"""
+    gen = Generation(
+        id=uuid.uuid4(),
+        user_id=test_user.id,
+        task_type="txt2img",
+        prompt="processing progress test",
+        model_name="sd-v1-5",
+        sampler_name="Euler a",
+        steps=20,
+        cfg_scale=7.0,
+        width=512,
+        height=512,
+        status="processing"
+    )
+    db.add(gen)
+    db.commit()
+
+    res = client.get(f"/generations/{gen.id}/progress", headers=auth_headers)
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "processing"
+    assert "progress" in data
+    assert "queue_position" in data
+
+
+def test_get_progress_unauthorized(client: TestClient, test_user: User, db: Session):
+    """ทดสอบดึง progress โดยไม่ระบุ token (401 Unauthorized)"""
+    gen = Generation(
+        id=uuid.uuid4(),
+        user_id=test_user.id,
+        task_type="txt2img",
+        prompt="unauth test",
+        model_name="sd-v1-5",
+        sampler_name="Euler a",
+        steps=20,
+        cfg_scale=7.0,
+        width=512,
+        height=512,
+        status="processing"
+    )
+    db.add(gen)
+    db.commit()
+
+    res = client.get(f"/generations/{gen.id}/progress")
+    assert res.status_code == 401
+
+
+def test_get_progress_data_isolation(client: TestClient, test_user: User, other_auth_headers: dict, db: Session):
+    """ทดสอบ Data Isolation: User B ไม่สามารถดู progress งานของ User A ได้ (404)"""
+    gen = Generation(
+        id=uuid.uuid4(),
+        user_id=test_user.id,
+        task_type="txt2img",
+        prompt="user a job",
+        model_name="sd-v1-5",
+        sampler_name="Euler a",
+        steps=20,
+        cfg_scale=7.0,
+        width=512,
+        height=512,
+        status="processing"
+    )
+    db.add(gen)
+    db.commit()
+
+    res = client.get(f"/generations/{gen.id}/progress", headers=other_auth_headers)
+    assert res.status_code == 404
