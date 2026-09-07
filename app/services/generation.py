@@ -309,6 +309,7 @@ async def get_generation_progress(
         return {
             "task_id": generation.id,
             "status": "completed",
+            "live": True,
             "progress": 1.0,
             "queue_position": 0,
             "total_queued": 0,
@@ -324,6 +325,7 @@ async def get_generation_progress(
         return {
             "task_id": generation.id,
             "status": "failed",
+            "live": True,
             "progress": 0.0,
             "queue_position": 0,
             "total_queued": 0,
@@ -347,6 +349,7 @@ async def get_generation_progress(
                 if res.status_code == 200:
                     data = res.json()
                     data["task_id"] = generation.id
+                    data["live"] = True
                     if "status" not in data:
                         data["status"] = generation.status
                     if "seed" not in data:
@@ -366,10 +369,11 @@ async def get_generation_progress(
     return {
         "task_id": generation.id,
         "status": generation.status,
-        "progress": 0.0 if generation.status == "pending" else 0.5,
-        "queue_position": 1 if generation.status == "pending" else 0,
-        "total_queued": 1 if generation.status == "pending" else 0,
-        "step": 0,
+        "live": False,
+        "progress": None,
+        "queue_position": None,
+        "total_queued": None,
+        "step": None,
         "total_steps": generation.steps or 20,
         "elapsed": elapsed,
         "seed": generation.seed,

@@ -349,6 +349,7 @@ async def get_mock_task_status(
     return {
         "task_id": task_id,
         "status": "processing",
+        "live": True,
         "queue_position": 1,
         "total_queued": 1,
         "progress": 0.65,

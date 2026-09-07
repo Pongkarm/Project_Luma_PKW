@@ -271,13 +271,14 @@ def test_get_progress_completed(client: TestClient, test_user: User, auth_header
     assert res.status_code == 200
     data = res.json()
     assert data["status"] == "completed"
+    assert data["live"] is True
     assert data["progress"] == 1.0
     assert data["queue_position"] == 0
     assert data["seed"] == 12345678
 
 
 def test_get_progress_failed(client: TestClient, test_user: User, auth_headers: dict, db: Session):
-    """ทดสอบดึง progress สำหรับงานที่ล้มเหลว (status=failed, progress=0.0)"""
+    """ทดสอบดึง progress สำหรับงานที่ล้มเหลว (status=failed, progress=0.0, live=True)"""
     gen = Generation(
         id=uuid.uuid4(),
         user_id=test_user.id,
@@ -299,12 +300,13 @@ def test_get_progress_failed(client: TestClient, test_user: User, auth_headers: 
     assert res.status_code == 200
     data = res.json()
     assert data["status"] == "failed"
+    assert data["live"] is True
     assert data["progress"] == 0.0
     assert data["error"] == "Simulated failure"
 
 
 def test_get_progress_processing_fallback(client: TestClient, test_user: User, auth_headers: dict, db: Session):
-    """ทดสอบดึง progress สำหรับงานที่กำลัง processing (คืน progress fallback ได้ไม่พัง 500)"""
+    """ทดสอบดึง progress สำหรับงานที่กำลัง processing (live=False และคืน None สำหรับ metrics)"""
     gen = Generation(
         id=uuid.uuid4(),
         user_id=test_user.id,
@@ -325,8 +327,11 @@ def test_get_progress_processing_fallback(client: TestClient, test_user: User, a
     assert res.status_code == 200
     data = res.json()
     assert data["status"] == "processing"
-    assert "progress" in data
-    assert "queue_position" in data
+    assert data["live"] is False
+    assert data["progress"] is None
+    assert data["queue_position"] is None
+    assert data["total_queued"] is None
+    assert data["step"] is None
 
 
 def test_get_progress_unauthorized(client: TestClient, test_user: User, db: Session):

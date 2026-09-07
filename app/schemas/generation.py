@@ -172,11 +172,12 @@ class GenerationProgressResponse(BaseModel):
     """Schema รายงานความคืบหน้าของงานและคิวประมวลผล (Proxy จาก Node 3)"""
     task_id: UUID
     status: str
-    queue_position: int | None = 0
-    total_queued: int | None = 0
-    progress: float | None = 0.0
-    step: int | None = 0
-    total_steps: int | None = 0
+    live: bool = Field(default=False, description="บอกว่าข้อมูลมาจาก Node 3 สดๆ หรือสถานะจริงใน DB หรือไม่")
+    queue_position: int | None = None
+    total_queued: int | None = None
+    progress: float | None = None
+    step: int | None = None
+    total_steps: int | None = None
     elapsed: float | None = None
     seed: int | None = None
     error: str | None = None
