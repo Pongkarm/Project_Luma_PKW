@@ -42,9 +42,9 @@ class GenerationBase(BaseModel):
         max_length=100,
         description="ชื่อ Model ที่ใช้"
     )
-    lora_config: Dict[str, Any] | None = Field(
+    lora_config: Any | None = Field(
         default=None,
-        description="การตั้งค่า LoRA"
+        description="การตั้งค่า LoRA (รองรับทั้ง Dict, List หรือ Any)"
     )
     sampler_name: str = Field(
         default="Euler a",

@@ -52,6 +52,30 @@ def _detect_image_extension(image_bytes: bytes) -> str:
     return ".png"
 
 
+def _check_and_apply_timeout(generation: Generation, db: Session, timeout_seconds: int = 300) -> bool:
+    """
+    ตรวจสอบว่างานที่กำลัง pending หรือ processing ค้างนานเกินกำหนด (ค่าเริ่มต้น 5 นาที = 300 วินาที) หรือไม่
+    หากเกิน ให้เปลี่ยนสถานะเป็น failed ทันที ป้องกันงานค้างในระบบตลอดไป
+    """
+    if generation.status in (GenerationStatus.PENDING.value, GenerationStatus.PROCESSING.value):
+        if generation.created_at is not None:
+            now = datetime.now(timezone.utc)
+            created = generation.created_at
+            if created.tzinfo is None:
+                created = created.replace(tzinfo=timezone.utc)
+            delta = (now - created).total_seconds()
+            if delta > timeout_seconds:
+                generation.status = GenerationStatus.FAILED.value
+                generation.error_message = f"Generation timed out after {timeout_seconds // 60} minutes (no callback received from AI node)"
+                generation.duration_seconds = delta
+                generation.completed_at = now
+                db.commit()
+                db.refresh(generation)
+                logger.warning(f"Generation timed out | id={generation.id} | elapsed={delta:.1f}s")
+                return True
+    return False
+
+
 # ────────────────────────────────────────
 # 1. ดึงงานเดียว (GET /generations/{id})
 # ────────────────────────────────────────
@@ -71,7 +95,9 @@ def get_generation_by_id(
         logger.warning(
             f"Access denied or not found | user={user_id} | gen={generation_id}"
         )
+        return None
     
+    _check_and_apply_timeout(generation, db)
     return generation
 
 
@@ -100,6 +126,8 @@ def get_user_generations(
         .limit(page_size)
     )
     items = list(db.execute(items_stmt).scalars().all())
+    for item in items:
+        _check_and_apply_timeout(item, db)
 
     return items, total
 
@@ -182,6 +210,69 @@ def delete_generation(
     db.commit()
     logger.info(f"Deleted generation | id={generation_id} | user={user_id}")
     return True
+
+
+# ────────────────────────────────────────
+# 3c. ยกเลิกงาน (POST /generations/{id}/cancel)
+# ────────────────────────────────────────
+async def cancel_generation(
+    db: Session,
+    user_id: UUID,
+    generation_id: UUID
+) -> Generation:
+    """
+    ยกเลิกงานสร้างภาพที่กำลังรันอยู่ (pending / processing)
+    - ส่งคำขอยกเลิกไปยัง Node AI (DELETE /ai/task/{id})
+    - ปรับสถานะใน DB เป็น failed พร้อมระบุ error_message='Cancelled by user'
+    """
+    stmt = select(Generation).where(
+        Generation.id == generation_id,
+        Generation.user_id == user_id
+    )
+    generation = db.execute(stmt).scalar_one_or_none()
+
+    if generation is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Generation job not found"
+        )
+
+    if generation.status == GenerationStatus.COMPLETED.value:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot cancel a completed generation job"
+        )
+
+    if generation.status == GenerationStatus.FAILED.value:
+        return generation
+
+    # ถ้าอยู่ในโหมด callback ให้ยิงลบงานที่ Node AI (หากรันอยู่)
+    if settings.AI_MODE == "callback" and settings.AI_SERVER_CALLBACK_URL:
+        cancel_url = settings.AI_SERVER_CALLBACK_URL.replace("/ai/generate", f"/ai/task/{generation_id}")
+        headers = {}
+        if settings.AI_CALLBACK_SECRET:
+            headers["X-LUMA-INTERNAL-SECRET"] = settings.AI_CALLBACK_SECRET
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                res = await client.delete(cancel_url, headers=headers)
+                logger.info(f"AI node cancel response: status={res.status_code}")
+        except Exception as e:
+            logger.warning(f"Failed to notify AI node of cancellation: {e}")
+
+    now = datetime.now(timezone.utc)
+    generation.status = GenerationStatus.FAILED.value
+    generation.error_message = "Cancelled by user"
+    generation.completed_at = now
+    if generation.created_at:
+        created = generation.created_at
+        if created.tzinfo is None:
+            created = created.replace(tzinfo=timezone.utc)
+        generation.duration_seconds = (now - created).total_seconds()
+
+    db.commit()
+    db.refresh(generation)
+    logger.info(f"Generation cancelled | user={user_id} | gen={generation_id}")
+    return generation
 
 
 # ────────────────────────────────────────

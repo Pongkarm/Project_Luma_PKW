@@ -153,6 +153,32 @@ def delete_generation(
 
 
 # ─────────────────────────────────────────
+# 3c. POST /generations/{generation_id}/cancel (ยกเลิกงาน)
+# ─────────────────────────────────────────
+@router.post(
+    "/{generation_id}/cancel",
+    response_model=GenerationResponse,
+    summary="Cancel a pending or processing generation job"
+)
+async def cancel_generation(
+    generation_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    ยกเลิกงานสร้างภาพที่กำลังรันอยู่ (pending / processing)
+    - ส่งคำขอยกเลิกไปยัง Node AI (DELETE /ai/task/{id})
+    - ปรับสถานะใน DB เป็น failed พร้อมระบุ error_message='Cancelled by user'
+    """
+    generation = await generation_service.cancel_generation(
+        db=db,
+        user_id=current_user.id,
+        generation_id=generation_id,
+    )
+    return GenerationResponse.model_validate(generation)
+
+
+# ─────────────────────────────────────────
 # 4. GET /generations/{generation_id}/image (ดาวน์โหลดภาพ)
 # ─────────────────────────────────────────
 @router.get("/{generation_id}/image")

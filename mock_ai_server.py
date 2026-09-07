@@ -55,7 +55,7 @@ class DirectGenerateRequest(BaseModel):
     sampler_name: Optional[str] = "Euler a"
     seed: Optional[int] = -1
     model_name: Optional[str] = "counterfeitV30_v30.safetensors"
-    lora_config: Optional[List[Dict[str, Any]]] = None
+    lora_config: Optional[Any] = None
     source_image_path: Optional[str] = None
     image_base64: Optional[str] = None
     mask_base64: Optional[str] = None
@@ -322,6 +322,20 @@ async def edit_callback(
         "status": "accepted",
         "queue_position": 1,
         "message": f"{payload.mode} task queued in Mock AI Server"
+    }
+
+
+@app.delete("/ai/task/{task_id}")
+async def cancel_mock_task(
+    task_id: str,
+    x_luma_internal_secret: Optional[str] = Header(None)
+):
+    """Cancels a mock generation task"""
+    logger.info(f"[Mock AI] Task cancelled: {task_id}")
+    return {
+        "task_id": task_id,
+        "status": "cancelled",
+        "message": "Task successfully cancelled in Mock AI Server"
     }
 
 

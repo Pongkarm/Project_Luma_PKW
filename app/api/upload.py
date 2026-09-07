@@ -40,7 +40,10 @@ async def upload_image(
 
 
 @router.get("/uploads/{filename}", summary="Get uploaded static image")
-def get_uploaded_image(filename: str):
+def get_uploaded_image(
+    filename: str,
+    current_user: User = Depends(get_current_user),
+):
     """
     ดึงไฟล์รูปภาพที่อัปโหลดไว้ พร้อม Header Cache-Control 24 ชั่วโมง
     """
@@ -52,7 +55,10 @@ def get_uploaded_image(filename: str):
 
 
 @router.head("/uploads/{filename}", summary="Check if uploaded file exists")
-def check_uploaded_image_exists(filename: str):
+def check_uploaded_image_exists(
+    filename: str,
+    current_user: User = Depends(get_current_user),
+):
     """
     ตรวจสอบว่ามีไฟล์รูปภาพนี้อยู่บน Server หรือไม่ (คืน 200 OK หรือ 404 Not Found)
     """

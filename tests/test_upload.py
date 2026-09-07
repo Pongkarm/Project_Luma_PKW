@@ -118,12 +118,16 @@ def test_upload_corrupted_image_rejected(client: TestClient, auth_headers: dict)
 
 
 def test_get_uploaded_image_with_cache_headers(client: TestClient, auth_headers: dict):
-    """ทดสอบดึงภาพจาก /uploads/{filename} พร้อมตรวจสอบ Header Cache-Control 24h"""
+    """ทดสอบดึงภาพจาก /uploads/{filename} พร้อมตรวจสอบ Header Cache-Control 24h และ Auth guard"""
     img_bytes = create_test_image_bytes(format="PNG", width=100, height=100)
     upload_res = client.post("/uploads", files={"file": ("cache_test.png", img_bytes, "image/png")}, headers=auth_headers)
     filename = upload_res.json()["filename"]
 
-    get_res = client.get(f"/uploads/{filename}")
+    # ต้องปฏิเสธ 401 เมื่อไม่ได้ Login
+    unauth_res = client.get(f"/uploads/{filename}")
+    assert unauth_res.status_code == 401
+
+    get_res = client.get(f"/uploads/{filename}", headers=auth_headers)
     assert get_res.status_code == 200
     assert "cache-control" in get_res.headers
     assert "max-age=86400" in get_res.headers["cache-control"]
@@ -131,15 +135,19 @@ def test_get_uploaded_image_with_cache_headers(client: TestClient, auth_headers:
 
 
 def test_head_uploaded_image_exists(client: TestClient, auth_headers: dict):
-    """ทดสอบ HEAD /uploads/{filename} ตรวจสอบความมีอยู่ของไฟล์"""
+    """ทดสอบ HEAD /uploads/{filename} ตรวจสอบความมีอยู่ของไฟล์ และ Auth guard"""
     img_bytes = create_test_image_bytes(format="PNG", width=100, height=100)
     upload_res = client.post("/uploads", files={"file": ("head_test.png", img_bytes, "image/png")}, headers=auth_headers)
     filename = upload_res.json()["filename"]
 
-    head_res = client.head(f"/uploads/{filename}")
+    # ต้องปฏิเสธ 401 เมื่อไม่ได้ Login
+    unauth_head = client.head(f"/uploads/{filename}")
+    assert unauth_head.status_code == 401
+
+    head_res = client.head(f"/uploads/{filename}", headers=auth_headers)
     assert head_res.status_code == 200
 
-    head_missing = client.head("/uploads/missing_file_12345.png")
+    head_missing = client.head("/uploads/missing_file_12345.png", headers=auth_headers)
     assert head_missing.status_code == 404
 
 
