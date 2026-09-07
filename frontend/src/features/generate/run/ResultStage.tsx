@@ -4,11 +4,13 @@ import { Alert } from '../../../shared/ui/Alert.tsx';
 import { useAuthedImage } from '../../../shared/hooks/useAuthedImage.ts';
 import { useElapsed } from '../../../shared/hooks/useElapsed.ts';
 import { formatDuration, formatElapsed } from '../../../shared/utils/format.ts';
-import type { Generation } from '../../../contracts/generation.ts';
+import { wasCancelled, type Generation } from '../../../contracts/generation.ts';
 import { useT, useLanguage } from '../../../shared/hooks/useT.ts';
 import { useToasts } from '../../../shared/ui/Toast.tsx';
 import { useState } from 'react';
 import { useDeleteRun } from './useDeleteRun.ts';
+import { useCancelRun } from './useCancelRun.ts';
+import { useGenerationProgress } from './useGenerationProgress.ts';
 import { DeleteRunDialog } from './DeleteRunDialog.tsx';
 import { ImageViewer } from '../../../shared/ui/ImageViewer.tsx';
 
@@ -43,11 +45,13 @@ export function ResultStage({
     setConfirming(false);
     onDeleted();
   });
+  const cancel = useCancelRun();
   const t = useT();
   const language = useLanguage();
   const showToast = useToasts((state) => state.show);
   const running = job.status === 'pending' || job.status === 'processing';
   const elapsed = useElapsed(startedAt, running && !stalled);
+  const progress = useGenerationProgress(job.id, running && !stalled);
   const image = useAuthedImage(job.id, job.status === 'completed');
 
   if (stalled) {
@@ -64,6 +68,20 @@ export function ResultStage({
       </Panel>
     );
   }
+
+  // Stopping a run keeps the record, so this asks for no confirmation — unlike
+  // deleting, nothing is lost and the prompt and settings stay in the draft.
+  const cancelButton = (
+    <Button
+      size="sm"
+      variant="secondary"
+      icon="close"
+      busy={cancel.isPending}
+      onClick={() => cancel.mutate(job.id)}
+    >
+      {t('run.cancelRun')}
+    </Button>
+  );
 
   // The frame the engine is filling, at the aspect ratio actually requested.
   const pendingFrame = (
@@ -83,9 +101,18 @@ export function ResultStage({
         <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--ink-3)', lineHeight: 1.6 }}>
           {t('run.waitingBody')}
         </p>
+        {progress.position !== null && progress.totalQueued !== null ? (
+          <span className="mono" style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}>
+            {t('run.queuePosition', {
+              position: String(progress.position),
+              total: String(progress.totalQueued),
+            })}
+          </span>
+        ) : null}
         <span className="mono" style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}>
           {formatElapsed(elapsed)}
         </span>
+        {cancelButton}
       </Panel>
     );
   }
@@ -99,13 +126,54 @@ export function ResultStage({
         <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--ink-3)', lineHeight: 1.6 }}>
           {t('run.generatingBody')}
         </p>
-        {/* Indeterminate on purpose: neither node reports a percentage. */}
-        <div className="track" style={{ width: 200 }}>
-          <div className="track__indeterminate" />
-        </div>
+        {/*
+          Determinate only when the backend reported a live measurement. It
+          answers this endpoint even when it cannot reach the AI node, and an
+          invented percentage is worse than no bar at all.
+        */}
+        {progress.ratio !== null ? (
+          <div
+            className="track"
+            style={{ width: 200 }}
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(progress.ratio * 100)}
+          >
+            <div className="track__fill" style={{ width: `${progress.ratio * 100}%` }} />
+          </div>
+        ) : (
+          <div className="track" style={{ width: 200 }}>
+            <div className="track__indeterminate" />
+          </div>
+        )}
         <span className="mono" style={{ fontSize: 'var(--fs-xs)', color: 'var(--ink-3)' }}>
-          {t('run.elapsed', { time: formatElapsed(elapsed) })}
+          {progress.step !== null && progress.totalSteps !== null
+            ? t('run.stepOf', {
+                step: String(progress.step),
+                total: String(progress.totalSteps),
+                time: formatElapsed(elapsed),
+              })
+            : t('run.elapsed', { time: formatElapsed(elapsed) })}
         </span>
+        {cancelButton}
+      </Panel>
+    );
+  }
+
+  // A cancelled run is stored as `failed`, so it would otherwise be reported as
+  // an engine error the person should retry — which is not what happened.
+  if (wasCancelled(job)) {
+    return (
+      <Panel>
+        <Icon name="close" size={22} />
+        <h2 style={{ fontSize: 'var(--fs-md)', fontWeight: 600 }}>{t('run.cancelledTitle')}</h2>
+        <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--ink-3)', lineHeight: 1.6 }}>
+          {t('run.cancelledBody')}
+        </p>
+        <Button icon="refresh" onClick={onRetry}>
+          {t('run.tryAgain')}
+        </Button>
       </Panel>
     );
   }

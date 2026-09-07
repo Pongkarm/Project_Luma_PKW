@@ -3,7 +3,7 @@ import { Icon } from '../../../shared/ui/Icon.tsx';
 import { IconButton, Button } from '../../../shared/ui/Button.tsx';
 import { limits } from '../../../config/limits.ts';
 import { formatBytes } from '../../../shared/utils/format.ts';
-import { uploadService } from '../../../services/uploadService.ts';
+import { useUploadedImage } from '../../../shared/hooks/useAuthedImage.ts';
 import type { SourceImage } from '../draftStore.ts';
 import { useImageUpload } from './useImageUpload.ts';
 import { useT } from '../../../shared/hooks/useT.ts';
@@ -24,6 +24,7 @@ export function ImageInput({ label, value, onChange }: Props) {
   const t = useT();
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const preview = useUploadedImage(value?.url ?? null);
 
   async function handleFiles(files: FileList | null) {
     const file = files?.[0];
@@ -67,7 +68,7 @@ export function ImageInput({ label, value, onChange }: Props) {
           }}
         >
           <img
-            src={uploadService.publicUrl(value.url)}
+            src={preview.url ?? undefined}
             alt=""
             width={44}
             height={44}

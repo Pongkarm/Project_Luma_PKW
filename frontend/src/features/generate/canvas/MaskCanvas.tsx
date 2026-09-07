@@ -11,7 +11,8 @@ import { useT } from '../../../shared/hooks/useT.ts';
 
 type Props = {
   editor: MaskEditor;
-  sourceUrl: string;
+  /** Object URL for the source image; null until the authed fetch lands. */
+  sourceUrl: string | null;
   onNaturalSize: (size: { width: number; height: number }) => void;
 };
 
@@ -182,7 +183,7 @@ export function MaskCanvas({ editor, sourceUrl, onNaturalSize }: Props) {
             }}
           >
             <img
-              src={sourceUrl}
+              src={sourceUrl ?? undefined}
               alt={t('mask.alt')}
               draggable={false}
               onLoad={(event) =>

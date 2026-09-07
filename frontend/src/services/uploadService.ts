@@ -1,4 +1,4 @@
-import { apiUrl, requestOk, uploadMultipart, type UploadProgress } from './apiClient.ts';
+import { requestObjectUrl, requestOk, uploadMultipart, type UploadProgress } from './apiClient.ts';
 import type { ImageUploadResponse } from '../contracts/upload.ts';
 import { limits } from '../config/limits.ts';
 import { translate, type Language } from '../config/i18n.ts';
@@ -38,17 +38,19 @@ export const uploadService = {
   },
 
   /**
-   * Absolute URL for an uploaded file.
+   * GET /uploads/{filename} — the bytes of an uploaded image, as an object URL.
    *
-   * Unlike generated output, GET /uploads/{filename} is NOT behind auth, so this
-   * can be used directly as an <img src>. (That it is public at all is worth
-   * raising with the backend owner — any filename is world-readable.)
+   * This endpoint was world-readable and was therefore used as a plain <img src>.
+   * It is behind the bearer token now, so it has to be fetched like any other
+   * authed image; a browser will not attach an Authorization header to an
+   * image request. The caller revokes the URL — useUploadedImage() does that.
    */
-  publicUrl(serverPath: string): string {
-    return apiUrl(serverPath);
+  fetchImage(serverPath: string, signal?: AbortSignal): Promise<{ url: string; revoke: () => void }> {
+    return requestObjectUrl(serverPath, { signal });
   },
 
+  /** HEAD /uploads/{filename} — also behind the token since the same change. */
   exists(serverPath: string): Promise<boolean> {
-    return requestOk(serverPath, { method: 'HEAD', auth: false });
+    return requestOk(serverPath, { method: 'HEAD' });
   },
 };

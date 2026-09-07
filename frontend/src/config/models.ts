@@ -1,12 +1,13 @@
 /**
- * Checkpoints and LoRA adapters.
+ * Checkpoints and LoRA adapters — the fallback list.
  *
- * The AI node exposes GET /ai/models, but the browser must not reach Node 3
- * directly and the backend does not proxy it. Until it does, this list mirrors
- * ai_server/data/lora_registry.json and the checkpoints recorded in HANDOFF.md.
+ * The backend proxies the AI node's catalogue at GET /api/models now, and
+ * useModels() prefers it. This list stays as what the pickers offer when that
+ * call cannot be answered: the AI node being down should degrade the model
+ * picker, not empty it. It mirrors ai_server/data/lora_registry.json.
  *
- * Class C: replace this file with a systemService call the day the backend
- * exposes a models endpoint. Nothing else needs to change.
+ * It also supplies the human descriptions, which the node does not report — it
+ * returns filenames, so an entry here is matched by id to keep its wording.
  */
 export type ModelOption = {
   id: string;
@@ -65,7 +66,7 @@ export const loraOptions: ModelOption[] = [
   },
 ];
 
-/** Sampler names Forge accepts. Not exposed by any API — see the note above. */
+/** Sampler names Forge accepts. Still not exposed by any API — unlike the models. */
 export const samplers = [
   'Euler a',
   'Euler',

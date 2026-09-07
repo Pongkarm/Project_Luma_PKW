@@ -1,18 +1,25 @@
 import { useEffect, useState } from 'react';
 import { generationService } from '../../services/generationService.ts';
+import { uploadService } from '../../services/uploadService.ts';
 
 type State = { url: string | null; loading: boolean; failed: boolean };
 
+/** Which authed endpoint the bytes come from. Both need the bearer token. */
+type Kind = 'generation' | 'upload';
+
 /**
- * GET /generations/{id}/image sits behind the bearer token, so it cannot be an
- * <img src>. This fetches the bytes, hands back an object URL and revokes it on
- * unmount — which is why result images appear a beat after the record does.
+ * Fetch an image that sits behind the bearer token and hand back an object URL.
+ *
+ * Neither of these can be a plain <img src>: they answer 401 without an
+ * Authorization header, and a browser will not attach one to an image request.
+ * So the bytes are fetched, wrapped in an object URL, and revoked on unmount —
+ * which is why an image appears a beat after the record does.
  */
-export function useAuthedImage(generationId: string | null, enabled = true): State {
+function useAuthedObjectUrl(kind: Kind | null, ref: string | null, enabled: boolean): State {
   const [state, setState] = useState<State>({ url: null, loading: false, failed: false });
 
   useEffect(() => {
-    if (!generationId || !enabled) {
+    if (!kind || !ref || !enabled) {
       setState({ url: null, loading: false, failed: false });
       return;
     }
@@ -23,8 +30,12 @@ export function useAuthedImage(generationId: string | null, enabled = true): Sta
 
     setState({ url: null, loading: true, failed: false });
 
-    generationService
-      .fetchImage(generationId, controller.signal)
+    const load =
+      kind === 'generation'
+        ? generationService.fetchImage(ref, controller.signal)
+        : uploadService.fetchImage(ref, controller.signal);
+
+    load
       .then((result) => {
         if (cancelled) {
           result.revoke();
@@ -42,7 +53,23 @@ export function useAuthedImage(generationId: string | null, enabled = true): Sta
       controller.abort();
       revoke?.();
     };
-  }, [generationId, enabled]);
+  }, [kind, ref, enabled]);
 
   return state;
+}
+
+/** The finished output of a run — GET /generations/{id}/image. */
+export function useAuthedImage(generationId: string | null, enabled = true): State {
+  return useAuthedObjectUrl('generation', generationId, enabled);
+}
+
+/**
+ * An image someone uploaded — GET /uploads/{filename}.
+ *
+ * This endpoint used to be world-readable, so it was shown with a plain
+ * <img src>. It is behind the token now, and that <img> answered 401 and drew
+ * a broken image; it has to be fetched the same way a result is.
+ */
+export function useUploadedImage(serverPath: string | null, enabled = true): State {
+  return useAuthedObjectUrl('upload', serverPath, enabled);
 }

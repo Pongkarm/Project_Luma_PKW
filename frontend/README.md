@@ -50,7 +50,7 @@ again from the sidebar. Kept on the device; nothing appears in the interface unt
 is saved.
 
 **History** — paginated runs with status, full parameters, prompt copying, full-size viewing,
-and deletion.
+and deletion. A run that has not finished can be stopped from the stage; the record is kept.
 
 **Account** — profile with editing (username, email, password), theme, language, sign out.
 
@@ -125,14 +125,15 @@ decides how a translation step should work, which would have to live in the AI n
 
 ## Backend endpoints this build expects
 
-All of these are on `origin/backend` as of 31 Aug 2026. `feat/models-proxy` and
-`feat/admin` were merged into it and then deleted, so the branches this file
-used to point at no longer exist.
+All of these are on `origin/backend` as of 7 Sep 2026, and on `origin/beta`,
+where all four node branches were merged.
 
 | Endpoint | Used for |
 |---|---|
 | `GET /api/models` | Real checkpoint and LoRA lists from the AI node |
 | `DELETE /generations/{id}` | Removing an image and its record |
+| `POST /generations/{id}/cancel` | Stopping a run that has not finished |
+| `GET /generations/{id}/progress` | Queue position and live step count, proxied from the AI node |
 | `PATCH /auth/me` | Changing username, email or password |
 
 Each still degrades rather than breaking when absent: the model pickers fall back to the
@@ -205,38 +206,39 @@ Everything below was verified against a running backend, not read from documenta
 - `GET /generations/{id}/image` requires the bearer token, so it cannot be an `<img src>`.
   Images are fetched as blobs and shown from object URLs, which is why results and thumbnails
   appear a beat after the record does.
-- `GET /uploads/{filename}` has **no authentication at all** — any uploaded image is readable
-  by anyone who knows its filename. Worth raising with the backend owner.
-- `lora_config` must be a JSON **object**. The backend types it as `Dict[str, Any]` and rejects
-  an array with 422, though `HANDOFF.md` shows an array. Note that `mock_ai_server.py` types the
-  same field as a **list** and rejects an object — so with the mock AI server no LoRA payload
-  can satisfy both ends. The real AI node accepts either (`Optional[Any]`), so the object shape
-  is correct against the real engine. Choosing a style adapter will fail against the mock.
+- `GET /uploads/{filename}` and its `HEAD` are behind the token as of 7 Sep 2026. They were
+  world-readable, so uploaded images were shown with a plain `<img src>`; that now answers 401,
+  and every one of them — the upload preview, the inpaint canvas, the stage, the history
+  thumbnail — goes through `useUploadedImage()` instead. A browser will not attach an
+  Authorization header to an image request, so there is no shorter way.
+- `lora_config` is typed `Any` at every hop as of 7 Sep 2026. It used to be `Dict` on the
+  backend and `List` on `mock_ai_server.py`, which meant no payload could satisfy both and
+  choosing a style adapter failed against the mock. The UI sends an object either way.
 - The AI node reads only the **first** LoRA it is given, so the picker is single-choice.
 - There is no logout endpoint and no refresh token. Signing out is local; a long session ends
   with a re-entry, not a silent renewal.
-- `/healthz` and `/api/status` both return **500**: `main.py` reads `settings.…` at lines 66 and
-  77–78 without importing it. The rail says "status unavailable" rather than guessing, and
-  `systemService` is written to the documented shape so it starts working the moment that
-  one-line import is added.
-- `requirements.txt` is missing **`passlib`**, which `app/core/security.py` imports — a clean
-  install of the backend fails to start until it is added. (The import is unused; bcrypt is
-  called directly.)
+- `/healthz` and `/api/status` used to return **500** — `main.py` read `settings.…` without
+  importing it — and `requirements.txt` was missing **`passlib`**. Both were fixed upstream on
+  7 Sep 2026. `systemService` still falls back to `GET /` when the detailed endpoints cannot
+  answer, which is what makes a half-configured node report as degraded rather than dead.
 
 **Things the API cannot do yet, and are therefore not drawn**
 
-- No cancel. The AI node implements `DELETE /ai/task/{id}`, the backend exposes nothing that
-  reaches it, so no cancel button exists.
-- No progress. Neither node reports a percentage, a queue position or a step count, so the UI
-  shows elapsed time and an indeterminate indicator — never an invented bar.
+- Progress is drawn only when the engine measured it. `GET /generations/{id}/progress`
+  answers 200 whether or not the AI node was reachable — in direct mode there is no queue
+  to ask at all — and `live` says which happened. When it is false every metric is null and
+  the stage keeps the indeterminate bar it always showed. This was worth insisting on: the
+  first version of the endpoint filled the gap in from the database with a flat `0.5` for
+  anything processing and a queue of one holding this job, with nothing marking them as
+  placeholders, which would have drawn a bar frozen at half for every direct-mode run.
 - No history filters. `GET /generations` takes only `page` and `page_size`.
-- No model list. The AI node has `GET /ai/models`, but the browser must not call Node 3.
-  `src/config/models.ts` mirrors the registry until the backend proxies it — replace that one
-  file when it does.
-- The seed actually used is never returned, so "reuse this seed" is only possible for a seed
-  the person typed themselves.
-- Nothing times a job out server-side: a lost callback leaves a row at `processing` forever.
-  The client stops polling after five minutes and says so plainly.
+- The seed actually used is returned in callback mode and persisted, but not in direct mode,
+  where a random seed stays null. The run detail still says "seed sent" rather than "seed
+  used" because only one of the two modes can honestly claim the latter.
+- Cancelling has no status of its own: the row becomes `failed` with `error_message`
+  exactly `Cancelled by user`. `wasCancelled()` in `contracts/` is the single place that
+  knows this, so the stage can say "you stopped this run" instead of reporting an engine
+  error the person should retry.
 
 ### Parameter limits
 

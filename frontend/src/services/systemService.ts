@@ -14,12 +14,12 @@ export type EngineStatus =
 /**
  * What the app can honestly say about the backend.
  *
- * GET /healthz and GET /api/status both raise on the server today — main.py
- * reads `settings` without importing it — so they are attempted, and their
- * failure is reported as "unavailable" rather than as the backend being down.
- * GET / is a plain literal and does answer, which is enough to tell the two
- * apart. When the import is fixed this function starts returning real detail
- * with no change anywhere else.
+ * /healthz and /api/status used to raise — main.py read `settings` without
+ * importing it — and this was written to survive that: GET / is a plain
+ * literal and answers regardless, which tells "backend down" apart from
+ * "backend cannot describe itself". Both endpoints work now, so the detailed
+ * answer is the normal one, but the fallback is kept: it costs one request and
+ * it is what makes a half-configured node report as degraded rather than dead.
  */
 export const systemService = {
   async engineStatus(): Promise<EngineStatus> {

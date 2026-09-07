@@ -544,6 +544,10 @@
   inset: 0 auto 0 0;
   background: var(--running);
   border-radius: 2px;
+
+  /* Steps arrive about once a second; without this the bar ticks rather than
+     moves. Reduced motion strips the duration globally, as it should. */
+  transition: width var(--dur-slow) var(--ease-out);
 }
 
 /* Honest indeterminate motion: it says "working", not "42% done". */

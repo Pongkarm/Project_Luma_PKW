@@ -1,9 +1,9 @@
 /**
  * Polling policy.
  *
- * Neither node reports progress, a queue position or a step count — the only
- * signal is the `status` field on GET /generations/{id}. So the app polls, and
- * shows elapsed time rather than inventing a percentage.
+ * Two things are watched. `status` on GET /generations/{id} decides when a run
+ * is over; GET /generations/{id}/progress carries the queue position and step
+ * count, and is only worth asking for while a run is actually unfinished.
  */
 export const polling = {
   /** While a job is fresh. */
@@ -17,4 +17,10 @@ export const polling = {
    * instead of spinning until the tab is closed.
    */
   giveUpAfterMs: 5 * 60_000,
+  /**
+   * Progress is asked for more often than status: a step counter that updates
+   * every two seconds reads as a stuck bar. It costs one proxied request to the
+   * AI node, which is answered from memory, and it stops with the run.
+   */
+  progressMs: 1200,
 } as const;

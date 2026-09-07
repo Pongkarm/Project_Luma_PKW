@@ -21,9 +21,11 @@ export type JobView = {
 /**
  * Watch one job until it reaches a terminal state.
  *
- * The API exposes no progress, no queue position and no step counter, so this
- * polls `status` and nothing more: fast at first, slower after a minute, and
- * stopped once the job finishes or the give-up threshold passes.
+ * This polls `status` and nothing more: fast at first, slower after a minute,
+ * and stopped once the job finishes or the give-up threshold passes. Queue
+ * position and the step counter are a separate query — see
+ * useGenerationProgress — because losing them must not change any decision
+ * this one makes.
  */
 export function useGenerationJob(id: string | null, startedAt: number | null): JobView {
   const queryClient = useQueryClient();

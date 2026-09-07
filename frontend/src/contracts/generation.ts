@@ -11,6 +11,23 @@ export function isTerminal(status: GenerationStatus): boolean {
 }
 
 /**
+ * Cancelling does not get its own status.
+ *
+ * POST /generations/{id}/cancel marks the row `failed` and writes this exact
+ * string into error_message, so it is the only thing that tells a cancellation
+ * apart from a run the engine could not finish. If the backend ever gains a
+ * real `cancelled` status, this is the one place that has to change.
+ */
+export const CANCELLED_MESSAGE = 'Cancelled by user';
+
+export function wasCancelled(run: {
+  status: GenerationStatus;
+  error_message: string | null;
+}): boolean {
+  return run.status === 'failed' && run.error_message === CANCELLED_MESSAGE;
+}
+
+/**
  * POST /generations — request body.
  * Mirrors app/schemas/generation.py :: GenerationBase. Every field the backend
  * accepts is here; nothing the backend does not accept is.
@@ -74,3 +91,59 @@ export type GenerationListParams = {
   /** 1-100; the API rejects anything larger. */
   page_size?: number;
 };
+
+/**
+ * GET /generations/{id}/progress — the backend proxying the AI node.
+ *
+ * Mirrors app/schemas/generation.py :: GenerationProgressResponse. Every field
+ * is optional on the wire, so every field is optional here.
+ */
+export type GenerationProgress = {
+  task_id: string;
+  status: GenerationStatus | string;
+  /**
+   * Whether the numbers below were observed or are simply absent.
+   *
+   * False when the backend could not reach the AI node, or is running in direct
+   * mode where there is no queue to ask. It answers 200 either way; this is the
+   * field that says which happened, and every metric is null when it is false.
+   */
+  live: boolean;
+  /** 1-based place in the AI node's queue; 0 once the job is running. */
+  queue_position: number | null;
+  total_queued: number | null;
+  /** 0.0–1.0. */
+  progress: number | null;
+  step: number | null;
+  total_steps: number | null;
+  elapsed: number | null;
+  seed: number | null;
+  error: string | null;
+  message?: string | null;
+};
+
+/**
+ * Whether there is a measurement to draw.
+ *
+ * The backend used to fill this response in from the database when the AI node
+ * could not be reached — a flat 0.5 for anything processing — with nothing
+ * marking it as a placeholder. It now sets `live: false` and nulls every metric
+ * instead, so this is a plain read rather than the inference it used to be.
+ */
+export function hasRealProgress(p: GenerationProgress | null | undefined): boolean {
+  return Boolean(p?.live) && p?.progress != null;
+}
+
+/**
+ * How many jobs are ahead of this one, or null when that is not worth saying.
+ *
+ * A queue of one holding this job is true and tells nobody anything, so a
+ * position is only reported once something is genuinely waiting behind it.
+ */
+export function queueAhead(p: GenerationProgress | null | undefined): number | null {
+  if (!p?.live) return null;
+  const total = p.total_queued ?? 0;
+  const position = p.queue_position ?? 0;
+  if (total <= 1 || position <= 0) return null;
+  return position;
+}

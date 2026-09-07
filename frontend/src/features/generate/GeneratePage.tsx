@@ -5,6 +5,7 @@ import { IconButton } from '../../shared/ui/Button.tsx';
 import { Alert } from '../../shared/ui/Alert.tsx';
 import { StatusChip } from '../../shared/ui/StatusChip.tsx';
 import { uploadService } from '../../services/uploadService.ts';
+import { useUploadedImage } from '../../shared/hooks/useAuthedImage.ts';
 import { generationService } from '../../services/generationService.ts';
 import { queryKeys } from '../../services/queryKeys.ts';
 import { isApiError } from '../../contracts/errors.ts';
@@ -41,6 +42,8 @@ export function GeneratePage() {
   const [measured, setMeasured] = useState<{ url: string; width: number; height: number } | null>(null);
 
   const source = draft.source;
+  // /uploads is behind the token now, so the source image is fetched, not linked.
+  const sourcePreview = useUploadedImage(source?.url ?? null);
 
   // The upload response already carries the dimensions, so the canvas can be
   // sized before the image paints; the <img>'s own measurement supersedes it
@@ -135,7 +138,7 @@ export function GeneratePage() {
         {showMaskCanvas ? (
           <MaskCanvas
             editor={editor}
-            sourceUrl={uploadService.publicUrl(source!.url)}
+            sourceUrl={sourcePreview.url}
             onNaturalSize={(size) => setMeasured({ url: source!.url, ...size })}
           />
         ) : (
@@ -170,7 +173,7 @@ export function GeneratePage() {
                 />
               ) : source ? (
                 <SourcePreview
-                  url={uploadService.publicUrl(source.url)}
+                  url={sourcePreview.url}
                   caption={`${source.width} × ${source.height}`}
                 />
               ) : (
@@ -219,12 +222,12 @@ function EmptyStage() {
   );
 }
 
-function SourcePreview({ url, caption }: { url: string; caption: string }) {
+function SourcePreview({ url, caption }: { url: string | null; caption: string }) {
   const t = useT();
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-10)', alignItems: 'center' }}>
       <img
-        src={url}
+        src={url ?? undefined}
         alt={t('stage.startFrom')}
         style={{
           display: 'block',

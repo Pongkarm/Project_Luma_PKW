@@ -1,10 +1,9 @@
 import { Button } from '../../shared/ui/Button.tsx';
 import { Icon } from '../../shared/ui/Icon.tsx';
 import { StatusChip } from '../../shared/ui/StatusChip.tsx';
-import { useAuthedImage } from '../../shared/hooks/useAuthedImage.ts';
+import { useAuthedImage, useUploadedImage } from '../../shared/hooks/useAuthedImage.ts';
 import { formatDateTime, formatDuration } from '../../shared/utils/format.ts';
-import { uploadService } from '../../services/uploadService.ts';
-import type { Generation } from '../../contracts/generation.ts';
+import { wasCancelled, type Generation } from '../../contracts/generation.ts';
 import { useT, useLanguage } from '../../shared/hooks/useT.ts';
 import { useState } from 'react';
 import { useDeleteRun } from '../generate/run/useDeleteRun.ts';
@@ -40,6 +39,9 @@ export function RunDetail({
     onDeleted();
   });
   const image = useAuthedImage(run.id, run.status === 'completed');
+  // The source image lives behind the token too, so it is fetched rather than linked.
+  const sourceFilename = run.source_image_path?.split(/[\\/]/).pop() ?? null;
+  const sourceImage = useUploadedImage(sourceFilename ? `/uploads/${sourceFilename}` : null);
   const t = useT();
   const language = useLanguage();
 
@@ -113,12 +115,20 @@ export function RunDetail({
 
         {run.status === 'failed' && run.error_message ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-8)' }}>
-            <span className="eyebrow">{t('history.whyFailed')}</span>
+            {/* A cancellation is stored as a failure; calling it one would be wrong. */}
+            <span className="eyebrow">
+              {wasCancelled(run) ? t('run.cancelledTitle') : t('history.whyFailed')}
+            </span>
             <p
               className="mono"
-              style={{ fontSize: 'var(--fs-xs)', lineHeight: 1.55, color: 'var(--fail)', wordBreak: 'break-word' }}
+              style={{
+                fontSize: 'var(--fs-xs)',
+                lineHeight: 1.55,
+                color: wasCancelled(run) ? 'var(--ink-3)' : 'var(--fail)',
+                wordBreak: 'break-word',
+              }}
             >
-              {run.error_message}
+              {wasCancelled(run) ? t('run.cancelledBody') : run.error_message}
             </p>
           </div>
         ) : null}
@@ -139,7 +149,7 @@ export function RunDetail({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-8)' }}>
             <span className="eyebrow">{t('history.startedFrom')}</span>
             <img
-              src={uploadService.publicUrl(`/uploads/${run.source_image_path.split(/[\\/]/).pop()}`)}
+              src={sourceImage.url ?? undefined}
               alt={t('history.startedFromAlt')}
               style={{
                 width: 96,
