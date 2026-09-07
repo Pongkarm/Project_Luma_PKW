@@ -20,6 +20,39 @@ def is_forge_online() -> bool:
     except Exception:
         return False
 
+def get_forge_progress() -> dict:
+    """Returns real-time progress and sampling step from Forge GPU if running."""
+    if not is_forge_online():
+        return {"progress": 0.0, "step": 0, "total_steps": 0}
+    try:
+        resp = requests.get(f"{FORGE_API_URL}/sdapi/v1/progress?skip_current_image=true", timeout=0.5)
+        if resp.status_code == 200:
+            d = resp.json()
+            state = d.get("state", {})
+            return {
+                "progress": round(float(d.get("progress", 0.0)), 2),
+                "eta_relative": round(float(d.get("eta_relative", 0.0)), 1),
+                "step": int(state.get("sampling_step", 0)),
+                "total_steps": int(state.get("sampling_steps", 0))
+            }
+    except Exception:
+        pass
+    return {"progress": 0.0, "step": 0, "total_steps": 0}
+
+def _extract_seed_from_forge_resp(data: dict, fallback_seed: int) -> int:
+    try:
+        info_str = data.get("info")
+        if info_str:
+            info_obj = json.loads(info_str) if isinstance(info_str, str) else info_str
+            if "seed" in info_obj and info_obj["seed"] is not None and int(info_obj["seed"]) >= 0:
+                return int(info_obj["seed"])
+            all_seeds = info_obj.get("all_seeds", [])
+            if all_seeds and len(all_seeds) > 0 and int(all_seeds[0]) >= 0:
+                return int(all_seeds[0])
+    except Exception as e:
+        print(f"[FORGE SEED PARSE WARN] {e}")
+    return fallback_seed
+
 def interrupt_forge_generation() -> bool:
     """Sends an immediate interrupt signal to Forge GPU inference loop."""
     try:
@@ -112,14 +145,15 @@ def run_txt2img(
                 # Convert raw PNG from Forge into high-efficiency WebP
                 pil_img = decode_base64_to_image(images[0])
                 webp_b64 = encode_image_to_base64(pil_img, format="WEBP")
-                print(f"[FORGE SUCCESS] Image generated on RTX 3070 and converted to WebP.")
-                return webp_b64
+                actual_seed = _extract_seed_from_forge_resp(data, payload["seed"])
+                print(f"[FORGE SUCCESS] Image generated on RTX 3070 (seed={actual_seed}) and converted to WebP.")
+                return webp_b64, actual_seed
         else:
             print(f"[FORGE HTTP WARN] Status {resp.status_code}: {resp.text[:100]}")
     except Exception as exc:
         print(f"[FORGE INFERENCE FAILED] {exc}")
     
-    return None
+    return None, None
 
 def run_img2img(
     image_base64: str,
@@ -133,7 +167,7 @@ def run_img2img(
     sampler_name: Optional[str] = "DPM++ 2M Karras",
     seed: Optional[int] = None,
     checkpoint: Optional[str] = None
-) -> Optional[str]:
+) -> tuple[Optional[str], Optional[int]]:
     """
     Executes img2img generation via Forge API (No Mask, full image transformation).
     """
@@ -175,14 +209,15 @@ def run_img2img(
             if images:
                 pil_img = decode_base64_to_image(images[0])
                 webp_b64 = encode_image_to_base64(pil_img, format="WEBP")
-                print(f"[FORGE SUCCESS] img2img generated on RTX 3070 and converted to WebP.")
-                return webp_b64
+                actual_seed = _extract_seed_from_forge_resp(data, payload["seed"])
+                print(f"[FORGE SUCCESS] img2img generated on RTX 3070 (seed={actual_seed}) and converted to WebP.")
+                return webp_b64, actual_seed
         else:
             print(f"[FORGE HTTP WARN] Status {resp.status_code}: {resp.text[:100]}")
     except Exception as exc:
         print(f"[FORGE IMG2IMG FAILED] {exc}")
     
-    return None
+    return None, None
 
 def run_inpaint(
     image_base64: str,
@@ -197,7 +232,7 @@ def run_inpaint(
     sampler_name: Optional[str] = "DPM++ 2M Karras",
     seed: Optional[int] = None,
     checkpoint: Optional[str] = None
-) -> Optional[str]:
+) -> tuple[Optional[str], Optional[int]]:
     """
     Executes Inpainting via Forge API with VRAM safety resolution clamping.
     """
@@ -241,11 +276,12 @@ def run_inpaint(
             if images:
                 pil_img = decode_base64_to_image(images[0])
                 webp_b64 = encode_image_to_base64(pil_img, format="WEBP")
-                print(f"[FORGE SUCCESS] Inpaint generated on RTX 3070 and converted to WebP.")
-                return webp_b64
+                actual_seed = _extract_seed_from_forge_resp(data, payload["seed"])
+                print(f"[FORGE SUCCESS] Inpaint generated on RTX 3070 (seed={actual_seed}) and converted to WebP.")
+                return webp_b64, actual_seed
         else:
             print(f"[FORGE HTTP WARN] Status {resp.status_code}: {resp.text[:100]}")
     except Exception as exc:
         print(f"[FORGE INPAINT FAILED] {exc}")
     
-    return None
+    return None, None

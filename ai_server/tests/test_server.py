@@ -125,5 +125,26 @@ class TestAIServer(unittest.TestCase):
         self.assertEqual(res.status_code, 202)
         print("[PASS] Edit inpaint accepted (HTTP 202)")
 
+    def test_08_queue_metrics_and_seed(self):
+        """Test GET /ai/task/:id exposes queue_position, total_queued, and seed"""
+        task_id = "test-task-seed-metrics"
+        payload = {
+            "task_id": task_id,
+            "prompt": "a peaceful lake in mountains",
+            "seed": 777888,
+            "callback_url": "none"
+        }
+        headers = {"X-LUMA-INTERNAL-SECRET": AIConfig.INTERNAL_SECRET}
+        res = self.client.post("/ai/generate", json=payload, headers=headers)
+        self.assertEqual(res.status_code, 202)
+
+        status_resp = self.client.get(f"/ai/task/{task_id}", headers=headers)
+        self.assertEqual(status_resp.status_code, 200)
+        data = status_resp.json()
+        self.assertIn("queue_position", data)
+        self.assertIn("total_queued", data)
+        self.assertIn("progress", data)
+        print(f"[PASS] Task Queue Metrics Audited: position={data['queue_position']}, total={data['total_queued']}, status={data['status']}")
+
 if __name__ == "__main__":
     unittest.main()

@@ -5,7 +5,7 @@ from typing import Callable, Any, Dict, Optional
 from ai_server.config import AIConfig
 from ai_server.utils.callbacks import send_callback_with_retry
 from ai_server.utils.gpu_monitor import clear_vram_cache
-from ai_server.services.forge_client import interrupt_forge_generation
+from ai_server.services.forge_client import interrupt_forge_generation, get_forge_progress
 
 class AITaskQueue:
     """
@@ -60,7 +60,38 @@ class AITaskQueue:
         return self._queue.qsize()
 
     def get_task_status(self, task_id: str) -> Optional[dict]:
-        return self._task_states.get(task_id)
+        state_info = self._task_states.get(task_id)
+        if not state_info:
+            return None
+
+        status = state_info.get("status")
+        result = dict(state_info)
+        result["total_queued"] = self._queue.qsize() if self._queue else 0
+
+        if status == "queued" and self._queue:
+            # Calculate position in queue (1-indexed)
+            pos = 1
+            for t_data, _ in list(self._queue._queue):
+                if t_data.get("task_id") == task_id:
+                    result["queue_position"] = pos
+                    break
+                pos += 1
+            if "queue_position" not in result:
+                result["queue_position"] = 1
+        elif status == "processing":
+            result["queue_position"] = 0
+            if "started_at" in state_info:
+                result["elapsed"] = round(time.time() - state_info["started_at"], 2)
+            # Inject live Forge GPU progress if active
+            forge_prog = get_forge_progress()
+            result["progress"] = forge_prog.get("progress", 0.0)
+            result["step"] = forge_prog.get("step", 0)
+            result["total_steps"] = forge_prog.get("total_steps", 0)
+        elif status == "completed":
+            result["queue_position"] = 0
+            result["progress"] = 1.0
+
+        return result
 
     async def cancel_task(self, task_id: str) -> tuple[int, str]:
         """
@@ -142,15 +173,22 @@ class AITaskQueue:
                     task_coro = asyncio.to_thread(handler, task_data)
                     self._current_task_future = asyncio.ensure_future(task_coro)
 
-                    result_b64 = await asyncio.wait_for(
+                    result = await asyncio.wait_for(
                         self._current_task_future,
                         timeout=AIConfig.TASK_TIMEOUT_SECONDS
                     )
                     
+                    if isinstance(result, tuple):
+                        result_b64, actual_seed = result
+                    else:
+                        result_b64 = result
+                        actual_seed = task_data.get("seed")
+
                     elapsed = time.time() - start_time
                     state_info["status"] = "completed"
                     state_info["elapsed"] = elapsed
-                    print(f"[QUEUE] <<< Task {task_id} completed in {elapsed:.2f}s")
+                    state_info["seed"] = actual_seed
+                    print(f"[QUEUE] <<< Task {task_id} completed in {elapsed:.2f}s (seed={actual_seed})")
 
                     # Dispatch result callback
                     await send_callback_with_retry(
@@ -158,6 +196,7 @@ class AITaskQueue:
                         status="completed",
                         image_base64=result_b64,
                         generation_time=elapsed,
+                        seed=actual_seed,
                         callback_url=callback_url
                     )
 

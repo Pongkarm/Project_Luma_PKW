@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 from PIL import Image, ImageDraw, ImageFont
 
 import uuid
+import random
 from ai_server.config import AIConfig
 from ai_server.utils.gpu_monitor import get_gpu_status, clear_vram_cache
 from ai_server.utils.cache_manager import cleanup_stale_cache
@@ -151,10 +152,11 @@ def extract_primary_lora(data: dict) -> Optional[str]:
     return None
 
 # --- Inference Handlers ---
-def handle_txt2img_inference(data: dict) -> str:
+def handle_txt2img_inference(data: dict) -> tuple[str, int]:
     """
     Generates image with LoRA trigger word injection (Single Source of Truth).
     Connects to live Forge GPU Engine if available, or generates high-fidelity preview if offline.
+    Returns (webp_base64, actual_seed).
     """
     raw_prompt = data.get("prompt", "")
     lora_id = extract_primary_lora(data)
@@ -167,7 +169,7 @@ def handle_txt2img_inference(data: dict) -> str:
     # 1. Try Live Forge GPU Inference
     if is_forge_online():
         print("[ENGINE] WebUI Forge Engine is ONLINE on port 7861. Running on GPU...")
-        forge_res = run_txt2img(
+        forge_res, actual_seed = run_txt2img(
             prompt=enriched_prompt,
             negative_prompt=data.get("negative_prompt") if data.get("negative_prompt") else AIConfig.DEFAULT_NEGATIVE_PROMPT,
             steps=data.get("steps", AIConfig.DEFAULT_STEPS),
@@ -179,7 +181,7 @@ def handle_txt2img_inference(data: dict) -> str:
             checkpoint=model_name
         )
         if forge_res:
-            return forge_res
+            return forge_res, actual_seed
 
     # 2. High-Fidelity Fallback Preview (for Standalone Dev & Safety)
     if not AIConfig.ALLOW_FALLBACK_RENDER:
@@ -189,6 +191,9 @@ def handle_txt2img_inference(data: dict) -> str:
     w = min(data.get("width", AIConfig.DEFAULT_WIDTH), AIConfig.MAX_IMAGE_WIDTH)
     h = min(data.get("height", AIConfig.DEFAULT_HEIGHT), AIConfig.MAX_IMAGE_HEIGHT)
 
+    raw_seed = data.get("seed")
+    actual_seed = int(raw_seed) if raw_seed is not None and int(raw_seed) >= 0 else random.randint(100000000, 999999999)
+
     img = Image.new("RGB", (w, h), color=(18, 22, 30))
     draw = ImageDraw.Draw(img)
     draw.rectangle([(16, 16), (w - 16, h - 16)], outline=(255, 100, 100), width=3)
@@ -196,13 +201,15 @@ def handle_txt2img_inference(data: dict) -> str:
     draw.text((36, 75), f"Prompt: {enriched_prompt[:65]}...", fill=(180, 210, 255))
     draw.text((36, 115), f"Model: {model_name} | LoRA: {lora_id or 'None'}", fill=(130, 160, 200))
     draw.text((36, 145), f"Resolution: {w}x{h} | Steps: {data.get('steps', 25)}", fill=(100, 130, 170))
+    draw.text((36, 175), f"Seed: {actual_seed} | Sampler: {data.get('sampler_name', AIConfig.DEFAULT_SAMPLER)}", fill=(100, 130, 170))
 
-    return encode_image_to_base64(img, format="WEBP")
+    return encode_image_to_base64(img, format="WEBP"), actual_seed
 
-def handle_edit_inference(data: dict) -> str:
+def handle_edit_inference(data: dict) -> tuple[str, int]:
     """
     Handles img2img and inpainting with mask tensor, LoRA auto-injection,
     checkpoint resolution, resolution safety, and Forge/fallback execution.
+    Returns (webp_base64, actual_seed).
     """
     raw_prompt = data.get("prompt", "")
     orig_b64 = data.get("image_base64")
@@ -219,7 +226,7 @@ def handle_edit_inference(data: dict) -> str:
     if is_forge_online():
         print(f"[ENGINE] WebUI Forge Engine is ONLINE on port 7861. Running {mode} on GPU...")
         if mode == "inpaint" and mask_b64:
-            inpaint_res = run_inpaint(
+            inpaint_res, actual_seed = run_inpaint(
                 image_base64=orig_b64,
                 mask_base64=mask_b64,
                 prompt=enriched_prompt,
@@ -232,9 +239,9 @@ def handle_edit_inference(data: dict) -> str:
                 checkpoint=model_name
             )
             if inpaint_res:
-                return inpaint_res
+                return inpaint_res, actual_seed
         else:  # img2img mode (no mask)
-            img2img_res = run_img2img(
+            img2img_res, actual_seed = run_img2img(
                 image_base64=orig_b64,
                 prompt=enriched_prompt,
                 negative_prompt=data.get("negative_prompt") if data.get("negative_prompt") else AIConfig.DEFAULT_NEGATIVE_PROMPT,
@@ -248,7 +255,7 @@ def handle_edit_inference(data: dict) -> str:
                 checkpoint=model_name
             )
             if img2img_res:
-                return img2img_res
+                return img2img_res, actual_seed
 
     # 2. Fallback Preview (for Standalone Dev & Safety)
     if not AIConfig.ALLOW_FALLBACK_RENDER:
@@ -258,15 +265,18 @@ def handle_edit_inference(data: dict) -> str:
     orig_img = decode_base64_to_image(orig_b64)
     orig_img = enforce_max_resolution(orig_img, max_dim=AIConfig.MAX_IMAGE_WIDTH)
     w, h = orig_img.size
+
+    raw_seed = data.get("seed")
+    actual_seed = int(raw_seed) if raw_seed is not None and int(raw_seed) >= 0 else random.randint(100000000, 999999999)
     
     # Overlay fallback banner
     draw = ImageDraw.Draw(orig_img)
     banner_h = 44
     draw.rectangle([(0, h - banner_h), (w, h)], fill=(10, 15, 25))
     draw.text((16, h - 34), f"⚠️ PREVIEW ONLY — Forge GPU offline [{mode}]", fill=(255, 100, 100))
-    draw.text((16, h - 18), f"Prompt: {enriched_prompt[:40]}... | Model: {model_name[:20]}", fill=(180, 200, 220))
+    draw.text((16, h - 18), f"Prompt: {enriched_prompt[:35]}... | Seed: {actual_seed}", fill=(180, 200, 220))
     
-    return encode_image_to_base64(orig_img, format="WEBP")
+    return encode_image_to_base64(orig_img, format="WEBP"), actual_seed
 
 # Alias for backwards compatibility
 handle_inpaint_inference = handle_edit_inference
@@ -518,7 +528,13 @@ async def get_ai_task_status(
     return {
         "task_id": task_id,
         "status": info.get("status"),
-        "elapsed": info.get("elapsed", 0.0)
+        "elapsed": info.get("elapsed", 0.0),
+        "queue_position": info.get("queue_position"),
+        "total_queued": info.get("total_queued"),
+        "progress": info.get("progress"),
+        "step": info.get("step"),
+        "total_steps": info.get("total_steps"),
+        "seed": info.get("seed")
     }
 
 if __name__ == "__main__":

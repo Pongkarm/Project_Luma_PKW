@@ -10,6 +10,7 @@ async def send_callback_with_retry(
     image_base64: str = None,
     error_message: str = None,
     generation_time: float = 0.0,
+    seed: int = None,
     callback_url: str = AIConfig.BACKEND_CALLBACK_URL
 ) -> bool:
     """
@@ -23,6 +24,8 @@ async def send_callback_with_retry(
         "error": error_message,
         "generation_time": round(generation_time, 2)
     }
+    if seed is not None:
+        payload["seed"] = seed
 
     headers = {
         "Content-Type": "application/json",
