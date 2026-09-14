@@ -1,154 +1,103 @@
-# 📋 LUMA PROJECT MASTER HANDOFF DOCUMENT
-**Document Version:** 1.0.0  
-**Timestamp:** 2026-08-18T23:01:00+07:00  
-**Project Workspace:** `D:\My_server\University\3rd year\Term_1\Image_processing\Project_Luma`
+# 📋 LUMA PROJECT MASTER HANDOFF DOCUMENT — AI NODE (PC3)
+**Document Version:** 2.0.0  
+**Updated At:** 2026-09-14  
+**Project Workspace:** `D:\My_server\University\3rd year\Term_1\Image_processing\Project_Luma_git\Project_Luma_PKW`  
+**Current Branch:** `ai-node` (Clean, Synced with `origin/ai-node`)  
 
 ---
 
-## 👤 1. Executive Summary & Student Profile
+## 👤 1. Executive Summary & Engineer Profile
 * **Student Name:** Apisak Kongphakdee (อภิสักก์ คงภักดี)
 * **Student ID:** `6710301009` (3rd Year, Computer Engineering / IT @ Chitralada Technology Institute - CDTI)
 * **Course:** Image Processing (310-2307)
-* **Instructor:** Krisada Phromsuthirak (อ.กฤษฎา / อ.อู๊ด)
-* **Role Assigned:** **AI Engineer (คนที่ 3)** บนโหนด PC3 (`192.168.1.30:7860`)
+* **Role Assigned:** **AI Engineer (คนที่ 3)** บนโหนด PC3 (`0.0.0.0:7860`)
 * **Project Name:** **LUMA** (**L**earning-based **U**niversal **M**edia **A**rtist)
-* **Academic Mentor / AI Tutor:** Iris (ไอริส / พี่ไอ) จากระบบ CDTI AI Classroom
+* **GPU Hardware:** NVIDIA GeForce RTX 3070 Laptop GPU (8GB VRAM)
 
 ---
 
-## 🌐 2. Master System Architecture & Distributed Network Topology
+## 🌐 2. Master System Architecture & Multi-Node Network Topology
 
-```
-                                      ┌───────────────────────────────────────────────┐
-                                      │              CLIENT BROWSER (User)            │
-                                      └───────────────────────┬───────────────────────┘
-                                                              │ HTTP (Port 80)
-                                                              ▼
-                                      ┌───────────────────────────────────────────────┐
-                                      │             PC1: 192.168.1.10 (Gateway)       │
-                                      │  • Nginx Reverse Proxy (proxy_read_timeout 300s)│
-                                      │  • Frontend WebApp (Bootstrap 5, HTML/JS/CSS) │
-                                      └───────────┬───────────────────────┬───────────┘
-                                                  │                       │
-                       /api/ (Proxy to Flask)     │                       │ /ai/ (Health/Docs)
-                                                  ▼                       ▼
-┌─────────────────────────────────────────────────────────┐  ┌─────────────────────────────────────────────────────────┐
-│              PC2: 192.168.1.20 (Backend Node)           │  │              PC3: 192.168.1.30 (AI Inference Node)      │
-│  • Flask REST API (Port 5000)                           │  │  • FastAPI AI Gateway (Port 7860)                      │
-│  • SQLite Database with WAL Mode (tasks.db)             │  │  • GPU: NVIDIA GeForce RTX 3070 Laptop (8GB VRAM)      │
-│  • JWT Authentication (2h Expiry)                       │  │  • FIFO Task Queue + 120s Timeout Watchdog             │
-│  • File Storage (uploads/ with HTTP 24h Cache Header)   │  │  • LoRA Registry (Single Source of Truth)              │
-│  • AI Client -> Sends Job: POST /ai/generate            │  │  • WebP Optimizer (Cuts Payload ~80%)                  │
-│  • Callback Receiver: POST /api/callback                │◄─┼── • Async Callback + 3x Exponential Backoff            │
-└─────────────────────────────────────────────────────────┘  └───────────────────────────┬─────────────────────────────┘
-                                                                                         │ Internal HTTP (:7861)
-                                                                                         ▼
-                                                             ┌─────────────────────────────────────────────────────────┐
-                                                             │     Stable Diffusion WebUI Forge Engine (Port 7861)    │
-                                                             │  • Checkpoints: Counterfeit v3.0, Nova Anime XL, Pony   │
-                                                             │  • LoRAs: Frieren, Himmel, Niji Mix, Tachi-e, Geekpower │
-                                                             │  • Low-VRAM Optimizations & Block Caching               │
-                                                             └─────────────────────────────────────────────────────────┘
+```text
+[Node 1: Frontend (Winter - PC1)] 
+         │  (HTTP REST / React + Tailwind UI)
+         ▼
+[Node 2: Backend Core (Pongkarm - PC2 / macOS :8000)]
+         │  (FastAPI + PostgreSQL + JWT + Security Validation)
+         ▼
+[Node 3: AI Inference Node (Kong - PC3 / Windows :7860)]
+         │  (FastAPI Wrapper + FIFO Queue + Fallback Renderer)
+         ▼  (Internal Loopback :7861)
+[WebUI Forge Engine (Port 7861 / RTX 3070 8GB)]
 ```
 
 ---
 
-## 🗄️ 3. Final Reviewed Database Schema (ฉบับ Final โดยพี่ไอ)
+## 🚀 3. Phase 5 Engineering Accomplishments (Latest Milestones)
 
-### ตาราง `users`
-* `id` (UUID, PK), `username` (VARCHAR(50), Unique), `email` (VARCHAR(255), Unique), `password_hash` (VARCHAR(255), bcrypt), `is_active` (BOOLEAN, default True), `created_at` (TIMESTAMPTZ), `updated_at` (TIMESTAMPTZ), `last_login_at` (TIMESTAMPTZ, Nullable)
+### A. Real Seed Extraction & Webhook Callback Persistence
+* ดึงค่า **Actual Generation Seed** จาก Stable Diffusion WebUI Forge (`info.seed` หรือ `all_seeds[0]`) ในไฟล์ `ai_server/services/forge_client.py`
+* ส่งค่า `"seed": <int>` แนบไปกับ Webhook Callback JSON (`POST /api/callback`)
+* Backend บันทึกลงตาราง `generations.seed` เปิดให้ปุ่ม **"Reuse Seed"** บนหน้าเว็บ Frontend ใช้งานได้จริง
 
-### ตาราง `generations`
-* `id` (UUID, PK), `user_id` (UUID, FK $\rightarrow$ `users.id`), `task_type` (`txt2img` / `img2img` / `inpaint`), `prompt` (TEXT), `negative_prompt` (TEXT), `model_name` (VARCHAR(100)), `lora_config` (JSON/JSONB ⭐ เช่น `[{"id":"frieren","weight":0.85}]`), `sampler_name` (VARCHAR(50)), `steps` (20-50), `cfg_scale` (1.0-20.0), `seed` (BIGINT), `width`/`height` (INTEGER), `source_image_path` (VARCHAR(500)), `denoising_strength` (FLOAT), `output_path` (VARCHAR(500)), `status` (`pending`/`processing`/`completed`/`failed`/`cancelled`), `error_message` (TEXT), `duration_seconds` (FLOAT), `created_at`/`completed_at` (TIMESTAMPTZ)
+### B. Live Queue Position & GPU Denoising Progress Telemetry
+* อัปเดต `GET /ai/task/{task_id}` ใน `ai_server/server.py` และ `queue_manager.py`:
+  - สถานะ `queued`: คำนวณลำดับคิว `queue_position` (1-indexed) และ `total_queued`
+  - สถานะ `processing`: โพลล์สถานะ denoising step จาก Forge API (`/sdapi/v1/progress`): `progress` (0.0–1.0), `step`, และ `total_steps`
+  - สถานะ `completed`: ส่ง `progress: 1.0` และแนบ `seed`
+* Backend ทำหน้าที่ Reverse Proxy (`GET /generations/{id}/progress`) ส่งต่อข้อมูล Live Telemetry สู่ Frontend แบบ Real-time
 
----
-
-## 🧠 4. Senior Architectural Decisions from Iris (พี่ไอ)
-
-| ระบบ / กลไก | การตัดสินใจทางสถาปัตยกรรม (Architectural Decision) | เหตุผลและผลลัพธ์ (Rationale & Impact) |
-|---|---|---|
-| **Data Contract** | JSON Payload แนบ **Base64 WebP** (Quality 92) | ลดขนาดภาพเหลือ 200–400 KB ประหยัด Bandwidth ของวง LAN มากกว่า PNG ถึง ~80% |
-| **LoRA Trigger Words** | **AI Server เป็นคนฉีด Trigger Words เอง** ผ่าน `lora_registry.json` | ยึดหลัก Single Source of Truth; Frontend ส่งแค่ LoRA ID ไม่ต้อง Hardcode คำเฉพาะ |
-| **GPU Concurrency** | **FIFO Task Queue** (`asyncio.Queue` + 120s Timeout) | จัดคิวประมวลผล GPU ทีละ 1 งาน ป้องกันการเกิด Out-of-Memory (OOM) บน RTX 3070 8GB |
-| **Callback Resilience** | **Asynchronous Callback** ผ่าน `httpx` พร้อม Exponential Retry 3 ครั้ง | ป้องกันภาพสูญหายกรณี Network กระตุก พร้อมบันทึกสำรองใน `ai_server/storage/cached/` |
-| **Task Cancellation** | รองรับ **Soft Cancel** (ลบในคิว) และ **Hard Cancel** (สั่ง Forge `/sdapi/v1/interrupt`) | ไม่ให้ GPU เสียเวลาคำนวณงานที่ผู้ใช้กดยกเลิกหรือปิดเบราว์เซอร์หนี |
-| **SQLite Concurrency (PC2)** | เปิดใช้งาน **SQLite WAL Mode** (`PRAGMA journal_mode=WAL;`) | ป้องกัน Database Lock เมื่อ Frontend Polling ถี่ๆ ขณะที่ AI Server ยิง Callback เขียนข้อมูล |
-| **Canvas Inpainting (PC1)** | สูตรแปลงพิกัด Responsive: `(clientX - rect.left) * (canvas.width / rect.width)` | ป้องกัน Mask เพี้ยนจากการย่อ-ขยายหน้าจอบนอุปกรณ์มือถือและจอคอมพิวเตอร์ |
-| **Nginx Reverse Proxy (PC1)** | `client_max_body_size 50M;` และ `proxy_read_timeout 300s;` สำหรับ `/api/generate` | ป้องกันปัญหา 504 Gateway Timeout ระหว่างที่ AI กำลัง Denoise ภาพ |
+### C. Launcher Script Hardening & CLI Escaping Fix
+* แก้ไขบั๊กใน `start_ai_server.bat` ที่ขยายสตริง `%~dp0` ติด trailing backslash เข้าไป escape quote (`"`) ส่งผลให้ argument flags หลุด
+* ปรับให้รันผ่านโมดูลมาตรฐาน `python -m ai_server.run` เพื่อรับประกันการ Bind พอร์ต `0.0.0.0:7860` จาก `AIConfig` ทุกครั้ง
 
 ---
 
-## 📁 4. Project Directory & Deliverables Breakdown
-
-### 🎨 `frontend/` (คนที่ 1: UX/UI Frontend Developer)
-* [README.md](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/frontend/README.md): สเปกงาน, 4-Layer Loading Pattern, Data Contract
-* [js/api.js](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/frontend/js/api.js): Fetch Wrapper + Polling Task Status (3s)
-* [js/edit.js](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/frontend/js/edit.js): Canvas Inpainting Tool พร้อมสูตรแปลงพิกัด Responsive
-
-### ⚙️ `backend/` (คนที่ 2: Flask Backend Developer)
-* [README.md](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/backend/README.md): API Specifications, State Machine, Callback Schema
-* [config.py](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/backend/config.py): ตั้งค่า SQLite, JWT 2 ชั่วโมง, และ Internal Secret
-* [models/\_\_init\_\_.py](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/backend/models/__init__.py): SQLAlchemy Setup พร้อม Listener เปิด SQLite WAL Mode อัตโนมัติ
-
-### 🤖 `ai_server/` (คนที่ 3: AI Engineer - หน้าที่ของคุณ)
-* [server.py](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/ai_server/server.py): FastAPI Application หลัก (Endpoints: `/`, `/ai/health`, `/ai/models`, `/ai/generate`, `/ai/edit`, `/ai/task/{id}`)
-* [config.py](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/ai_server/config.py): พารามิเตอร์ VRAM, Max 768px, Stability Matrix Model Paths
-* [run.py](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/ai_server/run.py): Standalone Entry Point พร้อม Auto `sys.path` Resolution
-* [data/lora_registry.json](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/ai_server/data/lora_registry.json): คลังจับคู่ LoRA กับ Trigger Words และ Weights
-* [services/queue_manager.py](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/ai_server/services/queue_manager.py): FIFO Queue + Timeout Watchdog + Soft/Hard Task Cancellation
-* [services/prompt_builder.py](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/ai_server/services/prompt_builder.py): ระบบฉีด LoRA Trigger Words อัตโนมัติ
-* [services/forge_client.py](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/ai_server/services/forge_client.py): Bridge เชื่อมต่อกับ WebUI Forge API (Port 7861) พร้อม Fallback Renderer
-* [utils/gpu_monitor.py](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/ai_server/utils/gpu_monitor.py): Real-time GPU & VRAM Memory Metrics + `clear_vram_cache()`
-* [utils/image_utils.py](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/ai_server/utils/image_utils.py): Base64 ↔ PIL Converter + WebP Compression
-* [utils/callbacks.py](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/ai_server/utils/callbacks.py): Asynchronous HTTP Callback พร้อม Retry 3 ครั้ง
-* [utils/cache_manager.py](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/ai_server/utils/cache_manager.py): Automatic Cache Eviction Policy (Auto-purge > 7 days & max 500MB)
-* [tests/test_server.py](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/ai_server/tests/test_server.py): Unit Test Suite ครบ 5 หมวด
-* [tests/test_edge_cases.py](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/ai_server/tests/test_edge_cases.py): Senior Audit Test Suite (Empty prompt, >500 chars, auth failure, cancel 404, VRAM metrics)
-* [tests/test_multi_node_e2e.py](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/ai_server/tests/test_multi_node_e2e.py): Full Multi-Node Integration Test (Backend :8000 + AI Server :7860 End-to-End Testbench)
-* [tests/demo_generation.py](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/ai_server/tests/demo_generation.py): สคริปต์ทดสอบ End-to-End Generation & WebP Verification
-* [start_forge_api.bat](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/ai_server/start_forge_api.bat): ตัวรัน WebUI Forge ในโหมด Headless API (:7861)
-* [start_ai_server.bat](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/start_ai_server.bat): ตัวรันเซิร์ฟเวอร์ AI FastAPI (:7860) แบบ 1-Click
-
-### 🚀 `devops/` (คนที่ 4: QA / DevOps & Nginx)
-* [README.md](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/devops/README.md): Network Matrix, Firewall Rules, 3-Layer Demo Kit, Emergency Runbook
-* [nginx/nginx.conf](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/devops/nginx/nginx.conf): Nginx Reverse Proxy Config ปรับแต่ง Timeout 300s, Gzip (Text only), Caching 24h
-* [tests/locustfile.py](file:///d:/My_server/University/3rd%20year/Term_1/Image_processing/Project_Luma/devops/tests/locustfile.py): สคริปต์ Load Testing จำลองสัดส่วนผู้ใช้ 70:20:10
+## 🧪 4. Test Suite & Validation (100% Green)
+* **Test Suite Command:**
+  ```powershell
+  $env:PYTHONUTF8=1; python -u -m unittest -v ai_server.tests.test_edge_cases ai_server.tests.test_server
+  ```
+* **ผลลัพธ์:** **16/16 Tests ผ่านทั้งหมด (Ran 16 tests in ~4.8s - OK)**
+* **ขอบเขตการทดสอบ:**
+  - Healthcheck & GPU VRAM Detection
+  - Model Catalogue Scanning (Stability Matrix Checkpoints & LoRAs)
+  - LoRA Trigger Injection (Single Source of Truth)
+  - Queue Enqueue, Priority, and Seed Metric Verification
+  - Soft Cancel (ในคิว) และ Hard Cancel (GPU Interrupt)
+  - Parameter Bounds Validation (Prompt Length, Steps 1-50, CFG 1.0-20.0, Dim 256-768px)
+  - Security Authentication (`X-LUMA-INTERNAL-SECRET`)
 
 ---
 
-## 💻 5. Hardware & Environment Specifications
-* **GPU:** NVIDIA GeForce RTX 3070 Laptop GPU (8GB GDDR6 VRAM, 140W TGP)
-* **Python Executable:** `D:\StabilityMatrix-win-x64\Data\Packages\Stable Diffusion WebUI Forge - Neo\venv\Scripts\python.exe`
-* **PyTorch Version:** `2.11.0+cu130` (CUDA Enabled: True)
-* **Shared Stability Matrix Storage:** `D:\StabilityMatrix-win-x64\Data\Models\`
-  * **Checkpoints:** `counterfeitV30_v30.safetensors`, `novaAnimeXL_ilV190.safetensors`, `prefectPonyXL_v6.safetensors`
-  * **LoRAs:** `SousouNoFrieren_Frieren_IlluXL.safetensors`, `Char-Frieren-IL-V1.safetensors`, `himmel_sousou_no_frieren_ilxl.safetensors`, `niji_and_midj_mix217.safetensors`, `tachi-e.safetensors`, `[Artstyle] SomethingWeird_Geekpower [PDXL].safetensors`
+## 📁 5. Directory Structure of Node 3 (`ai-node`)
 
----
-
-## 🚦 6. Current State & Next Steps for the Next Agent
-
-### ✅ Current State (ความคืบหน้าปัจจุบัน):
-1. **Phase 1 (Architecture & Setup):** 100% Completed
-2. **Phase 2 (Core AI Inference Server):** 100% Completed
-3. **Phase 3 (Real GPU Pipeline & LoRA Engine):** 100% Completed & Verified (ทดสอบรัน `demo_generation.py` ผ่านฉลุย ได้ภาพ WebP ขนาด ~8.8 KB)
-4. **Server Status:** รันสดอยู่ที่ `http://0.0.0.0:7860` (Dashboard & Swagger UI พร้อมใช้งาน)
-
-### 🟡 Immediate Next Actions (สิ่งที่ Agent ถัดไปต้องทำต่อ):
-1. **Phase 4: Multi-Node LAN Integration**:
-   * นำ IP `192.168.1.30:7860` ไปเชื่อมต่อกับ Flask Backend บน PC2 (`192.168.1.20:5000`)
-   * ทดสอบยิง `POST /api/generate` จาก Backend มายัง AI Server และรับ Callback กลับไปยัง `/api/callback`
-2. **Phase 5: Load & Stress Testing**:
-   * ร่วมมือกับ DevOps รัน `locustfile.py` เพื่อทดสอบ Load 10 $\rightarrow$ 50 $\rightarrow$ 100 Concurrent Users และตรวจสอบ VRAM Leak
-3. **Phase 6: Demo Kit & Report**:
-   * จัดเตรียมภาพ Preset สำเร็จรูป 10–20 ภาพไว้ใน Gallery ล่วงหน้า
-   * เรียบเรียงรายงานวิชาการตามข้อกำหนด (เรียงรหัสนักศึกษาจากน้อยไปมาก, ฟอนต์ Sarabun, ป้องกัน Page Break ตาราง/โค้ด)
-
----
-
-## 🛠️ 7. Suggested Skills for the Next Agent
-Agent ที่เข้ามารับช่วงต่อ ควรเปิดใช้งาน Skills ดังต่อไปนี้เพื่อความรวดเร็วและแม่นยำ:
-* **`agent-async` & `async-human-code`**: สำหรับการเขียน/ตรวจสอบ Asynchronous Code (FastAPI, HTTPX, Task Queue, Non-blocking I/O)
-* **`debug-mantra`**: สำหรับขั้นตอนการ Debug Network & Multi-node Communication เมื่อเจอปัญหา Connection Drop
-* **`kien-thai`**: สำหรับการเขียน/ตรวจทานข้อความภาษาไทย รายงานวิชาการ และ Documentation ให้สละสลวย เป็นธรรมชาติ และถูกต้องตามหลักการเขียนของไทย
-* **`scrutinize`**: สำหรับการรีวิวความปลอดภัยและ Code Quality ก่อนส่งมอบงานไฟนอล
+```text
+Project_Luma_PKW/
+├── ai_server/
+│   ├── data/
+│   │   └── lora_registry.json      # Single Source of Truth LoRA configs
+│   ├── services/
+│   │   ├── forge_client.py         # Forge API bridge with seed extractor & fallback
+│   │   ├── prompt_builder.py       # LoRA trigger word auto-injector
+│   │   └── queue_manager.py        # FIFO queue with live progress & watchdog
+│   ├── storage/                    # Local image cache
+│   ├── tests/
+│   │   ├── test_edge_cases.py      # Boundary & security tests
+│   │   └── test_server.py          # Functional API tests
+│   ├── utils/
+│   │   ├── callbacks.py            # Async webhook callback with retry
+│   │   ├── gpu_monitor.py          # PyTorch CUDA VRAM telemetry
+│   │   └── image_utils.py          # WebP compression & base64 handling
+│   ├── .env.example                # Configuration template
+│   ├── config.py                   # Centralized safety limits & environment variables
+│   ├── README.md                   # AI Node technical specifications
+│   ├── run.py                      # Standalone entry point
+│   ├── server.py                   # FastAPI application router & endpoints
+│   └── start_forge_api.bat         # WebUI Forge headless API launcher (:7861)
+├── start_ai_server.bat             # Production 1-click launcher (:7860)
+├── TROUBLESHOOTING.md              # Incident logs & root cause resolutions
+├── MERGE_PLAN.md                   # Multi-node merge sequence to main
+├── HANDOFF-ai-node.md              # Master engineering handoff document
+└── README.md                       # Project overview & architecture
+```
