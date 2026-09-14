@@ -10,5 +10,5 @@ echo ========================================================
 set PYTHON_EXEC=D:\StabilityMatrix-win-x64\Data\Packages\Stable Diffusion WebUI Forge - Neo\venv\Scripts\python.exe
 set PYTHONPATH=%~dp0
 
-"%PYTHON_EXEC%" -m uvicorn ai_server.server:app --app-dir "%~dp0" --host 0.0.0.0 --port 7860 --reload
+"%PYTHON_EXEC%" -m ai_server.run
 pause
