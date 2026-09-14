@@ -403,9 +403,16 @@
   min-height: 0;
 }
 
+/*
+ * min-height: 0 lets the column shrink below its content. Without it, once the
+ * workspace stacks on a phone, a finished image or a long history grid made
+ * .main as tall as its contents: the controls went below the tab bar and the
+ * whole page scrolled instead of the stage or the grid.
+ */
 .main {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
@@ -450,8 +457,12 @@
   mask-image: radial-gradient(ellipse 70% 70% at 50% 45%, #000, transparent 78%);
 }
 
+/* Auto margins centre like align-items does, but when the content is taller
+   than the stage they collapse to the top, so the top of the image can still
+   be scrolled to rather than being cut off above the scroll origin. */
 .stage > * {
   position: relative;
+  margin: auto;
 }
 
 /* ── the result, framed ──────────────────────────────────────────────── */
@@ -767,6 +778,16 @@
   .btn--lg,
   .btn--block {
     min-height: 44px;
+  }
+
+  /* iOS Safari zooms the page when a focused field is under 16px, and does not
+     zoom back out. The auth screens already did this; the prompt, seed, slider
+     numbers and admin search did not. */
+  .input,
+  .textarea,
+  .select,
+  .num {
+    font-size: var(--fs-xl);
   }
 }
 
