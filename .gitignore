@@ -36,3 +36,9 @@ outputs/*
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Nginx runtime files
+nginx/logs/*
+!nginx/logs/.gitkeep
+nginx/temp/*
+!nginx/temp/.gitkeep
