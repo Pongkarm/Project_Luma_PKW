@@ -4,6 +4,7 @@ import './shared/styles/tokens.css';
 import './shared/styles/base.css';
 import './shared/styles/ui.css';
 import './shared/styles/layout.css';
+import './shared/styles/studio.css';
 import { App } from './app/App.tsx';
 
 const container = document.getElementById('root');

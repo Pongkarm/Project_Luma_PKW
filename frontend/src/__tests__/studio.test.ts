@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { maskToPaint } from '../features/generate/canvas/maskImage.ts';
-import { MAX_VERSIONS, currentVersion, parentOf, useStudio } from '../features/studio/studioStore.ts';
+import { MAX_VERSIONS, currentVersion, parentOf, useStudio, type StudioVersion } from '../features/studio/studioStore.ts';
+import { versionDetail, versionLabel } from '../features/studio/toolMeta.ts';
+import { translate } from '../config/i18n.ts';
 
 const PAINT = [224, 164, 88] as const;
 
@@ -118,5 +120,30 @@ describe('studio store', () => {
     const before = useStudio.getState().currentId;
     studio.select('nope');
     expect(useStudio.getState().currentId).toBe(before);
+  });
+});
+
+describe('version names', () => {
+  const th = (key: Parameters<typeof translate>[1]) => translate('th', key);
+  const version = (over: Partial<StudioVersion>) => ({ tool: null, detail: null, ...over }) as StudioVersion;
+
+  it('numbers edits by their place, so two sketches can be told apart', () => {
+    const original = version({});
+    const first = version({ tool: 'sketch' });
+    const second = version({ tool: 'sketch' });
+    const all = [original, first, second];
+    expect(versionLabel(all, original, th)).toBe(translate('th', 'studio.original'));
+    expect(versionLabel(all, second, th)).toBe(`2. ${translate('th', 'studio.toolSketch')}`);
+  });
+
+  // The API spells the colour in English; a Thai screen must not show "red".
+  it('translates the colour a splash kept', () => {
+    expect(versionDetail(version({ tool: 'color-splash', detail: 'red' }), th)).toBe(translate('th', 'studio.red'));
+    expect(versionDetail(version({ tool: 'color-splash', detail: 'green' }), th)).toBe(translate('th', 'studio.green'));
+  });
+
+  it('shows a sketch kernel as the number it is, and nothing when there is no setting', () => {
+    expect(versionDetail(version({ tool: 'sketch', detail: '21' }), th)).toBe('21');
+    expect(versionDetail(version({ tool: 'pose' }), th)).toBeNull();
   });
 });

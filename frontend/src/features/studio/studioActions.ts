@@ -1,6 +1,11 @@
+/**
+ * Moving pictures between the studio and the rest of the app.
+ *
+ *   useOpenInStudio   a finished run  → the studio page
+ *   useSendToGenerate a studio version → the Generate page (img2img or inpaint)
+ */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { generationService } from '../../services/generationService.ts';
 import { uploadService } from '../../services/uploadService.ts';
 import { isApiError } from '../../contracts/errors.ts';
 import { useT } from '../../shared/hooks/useT.ts';
@@ -9,24 +14,11 @@ import { toSourceImage, useDraft } from '../generate/draftStore.ts';
 import { useRun } from '../generate/run/runStore.ts';
 import { useMaskHandoff } from '../generate/maskHandoff.ts';
 import { useStudio, type StudioVersion } from './studioStore.ts';
+import { openRunInStudio } from './studioImage.ts';
 
-export const resultLabel = (runId: string) => `Result ${runId.slice(0, 8)}`;
-
-/** Pixel size of an image blob. Rejects anything the browser cannot decode. */
-export async function measureImage(blob: Blob): Promise<{ width: number; height: number }> {
-  const bitmap = await createImageBitmap(blob);
-  const size = { width: bitmap.width, height: bitmap.height };
-  bitmap.close();
-  return size;
-}
-
-/**
- * Open a finished run in the studio — from the result stage or from History.
- * The bytes are fetched once here; every tool after that works from memory.
- */
+/** Open a finished run in the studio — from the quick-edit bar or from History. */
 export function useOpenInStudio() {
   const navigate = useNavigate();
-  const open = useStudio((state) => state.open);
   const showToast = useToasts((state) => state.show);
   const t = useT();
   const [busy, setBusy] = useState(false);
@@ -39,8 +31,7 @@ export function useOpenInStudio() {
     }
     setBusy(true);
     try {
-      const blob = await generationService.fetchImageBlob(id);
-      open(blob, await measureImage(blob), resultLabel(id), id);
+      await openRunInStudio(id);
       navigate('/studio');
     } catch (error) {
       showToast(isApiError(error) ? error.message : t('studio.openFailed'));
@@ -68,6 +59,7 @@ export function useSendToGenerate() {
   const t = useT();
   const [busy, setBusy] = useState<'source' | 'mask' | null>(null);
 
+  /** Generation reads its source from /uploads, so the version goes there first. */
   async function upload(version: StudioVersion) {
     const name = `studio-${version.tool ?? 'original'}-${version.id}.png`;
     const uploaded = await uploadService.uploadImage(version.blob, name);
@@ -76,6 +68,7 @@ export function useSendToGenerate() {
     setActiveRun(null);
   }
 
+  /** Start the next img2img run from this version. */
   async function asSource(version: StudioVersion) {
     setBusy('source');
     try {
@@ -91,6 +84,9 @@ export function useSendToGenerate() {
   }
 
   /**
+   * Open Inpaint on `source` with `mask` already painted. `invert` repaints
+   * what the mask left black — the background, for a cut-out.
+   *
    * `source` is the image the mask was cut from, not the transparent cut-out:
    * inpainting needs the full picture to repaint part of it.
    */

@@ -1,7 +1,7 @@
 import { Icon } from '../../shared/ui/Icon.tsx';
 import { useT } from '../../shared/hooks/useT.ts';
 import { useStudio } from './studioStore.ts';
-import { toolMeta, versionLabel } from './toolMeta.ts';
+import { toolMeta, versionDetail, versionLabel } from './toolMeta.ts';
 
 /**
  * Every version made in this session, oldest first. Picking one makes it the
@@ -20,6 +20,7 @@ export function VersionStrip() {
       <div className="vstrip__row">
         {versions.map((version) => {
           const name = versionLabel(versions, version, t);
+          const detail = versionDetail(version, t);
           return (
             <button
               key={version.id}
@@ -27,8 +28,9 @@ export function VersionStrip() {
               className="vstrip__item"
               aria-current={version.id === currentId}
               onClick={() => select(version.id)}
-              title={version.detail ? `${name} · ${version.detail}` : name}
+              title={detail ? `${name} · ${detail}` : name}
             >
+              {/* The thumb itself is inert; the whole item is the button. */}
               <span className={`thumb${version.tool === 'remove-bg' ? ' checker' : ''}`}>
                 <img src={version.url} alt="" />
               </span>

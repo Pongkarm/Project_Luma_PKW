@@ -47,7 +47,5 @@ export type RemoveBgResponse = ToolResponseBase<'remove-bg', { method: string; i
   mask_image_url: string;
 };
 
-export type ToolResponse = PoseResponse | SketchResponse | ColorSplashResponse | RemoveBgResponse;
-
 /** Where every tool output is served from. The only prefix the app will fetch. */
 export const TOOL_RESULTS_PREFIX = '/api/tools/results/';

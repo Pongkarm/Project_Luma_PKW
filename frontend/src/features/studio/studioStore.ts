@@ -20,7 +20,8 @@ export type StudioVersion = {
   landmarks: PoseLandmark[] | null;
 };
 
-export type NewVersion = {
+/** What a tool run hands to add(); the store fills in the id and object URLs. */
+type NewVersion = {
   tool: ToolName;
   blob: Blob;
   width: number;
@@ -49,8 +50,13 @@ type StudioState = {
    */
   originRunId: string | null;
 
-  /** Start over from a new image. Every previous version is released. */
-  open: (blob: Blob, size: { width: number; height: number }, label: string, originRunId?: string | null) => void;
+  /** Start over from a new image, releasing every previous version. Returns the original. */
+  open: (
+    blob: Blob,
+    size: { width: number; height: number },
+    label: string,
+    originRunId?: string | null,
+  ) => StudioVersion;
   /** Append a tool's output and make it current. Returns its id. */
   add: (version: NewVersion) => string;
   select: (id: string) => void;
@@ -94,6 +100,7 @@ export const useStudio = create<StudioState>()((set, get) => ({
       landmarks: null,
     };
     set({ versions: [original], currentId: original.id, sourceLabel: label, originRunId });
+    return original;
   },
 
   add(input) {

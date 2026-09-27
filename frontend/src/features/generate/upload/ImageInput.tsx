@@ -1,6 +1,7 @@
-import { useRef, useState, type DragEvent } from 'react';
+import { useRef } from 'react';
 import { Icon } from '../../../shared/ui/Icon.tsx';
 import { IconButton, Button } from '../../../shared/ui/Button.tsx';
+import { DropZone } from '../../../shared/ui/DropZone.tsx';
 import { limits } from '../../../config/limits.ts';
 import { formatBytes } from '../../../shared/utils/format.ts';
 import { useUploadedImage } from '../../../shared/hooks/useAuthedImage.ts';
@@ -22,23 +23,15 @@ type Props = {
 export function ImageInput({ label, value, onChange }: Props) {
   const { state, upload, reset } = useImageUpload();
   const t = useT();
-  const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const preview = useUploadedImage(value?.url ?? null);
 
-  async function handleFiles(files: FileList | null) {
-    const file = files?.[0];
-    if (!file) return;
+  async function handleFile(file: File) {
     const source = await upload(file);
     if (source) onChange(source);
   }
 
-  function onDrop(event: DragEvent<HTMLDivElement>) {
-    event.preventDefault();
-    setDragging(false);
-    void handleFiles(event.dataTransfer.files);
-  }
-
+  // The replace and try-again buttons open this; the empty state has its own.
   const hiddenInput = (
     <input
       ref={inputRef}
@@ -46,7 +39,8 @@ export function ImageInput({ label, value, onChange }: Props) {
       accept={limits.upload.accept}
       className="visually-hidden"
       onChange={(event) => {
-        void handleFiles(event.target.files);
+        const file = event.target.files?.[0];
+        if (file) void handleFile(file);
         event.target.value = '';
       }}
     />
@@ -152,31 +146,7 @@ export function ImageInput({ label, value, onChange }: Props) {
   return (
     <div className="field">
       <span className="label">{label}</span>
-      <div
-        className={['drop', dragging ? 'drop--over' : ''].filter(Boolean).join(' ')}
-        role="button"
-        tabIndex={0}
-        onClick={() => inputRef.current?.click()}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            inputRef.current?.click();
-          }
-        }}
-        onDragOver={(event) => {
-          event.preventDefault();
-          setDragging(true);
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={onDrop}
-      >
-        <Icon name="upload" size={22} />
-        <span style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--ink)' }}>
-          {t('upload.drop')}
-        </span>
-        <span className="field__hint">{t('upload.constraints')}</span>
-      </div>
-      {hiddenInput}
+      <DropZone label={t('upload.drop')} hint={t('upload.constraints')} onFile={(file) => void handleFile(file)} />
     </div>
   );
 }

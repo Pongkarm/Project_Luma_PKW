@@ -16,6 +16,7 @@ import { ImageViewer } from '../../../shared/ui/ImageViewer.tsx';
 import { useSendToGenerate } from '../../studio/studioActions.ts';
 import { useQuickEdit } from '../../studio/useQuickEdit.ts';
 import { QuickEditBar } from '../../studio/QuickEditBar.tsx';
+import { ToolBusy } from '../../studio/ToolBusy.tsx';
 import { toolMeta } from '../../studio/toolMeta.ts';
 
 type Props = {
@@ -57,6 +58,7 @@ export function ResultStage({
   const elapsed = useElapsed(startedAt, running && !stalled);
   const progress = useGenerationProgress(job.id, running && !stalled);
   const image = useAuthedImage(job.id, job.status === 'completed');
+  // The quick-edit bar's state; `quick.edited` replaces the image once a tool has run.
   const quick = useQuickEdit(job.id);
   const send = useSendToGenerate();
 
@@ -230,12 +232,7 @@ export function ResultStage({
   return (
     <div className="result">
       <div
-        className={[
-          'result__media',
-          shownUrl ? 'result__media--zoom' : '',
-        ]
-          .filter(Boolean)
-          .join(' ')}
+        className={`result__media${shownUrl ? ' result__media--zoom' : ''}`}
         style={{ position: 'relative' }}
         onClick={() => shownUrl && setViewing(true)}
         title={shownUrl ? t('run.viewFull') : undefined}
@@ -253,12 +250,7 @@ export function ResultStage({
         ) : (
           <Icon name="image" size={22} />
         )}
-        {quick.pendingTool ? (
-          <div className="studio-busy" role="status">
-            <Icon name="refresh" size={20} className="spin" />
-            <span>{t('studio.applying', { tool: t(toolMeta[quick.pendingTool].label) })}</span>
-          </div>
-        ) : null}
+        <ToolBusy tool={quick.pendingTool} />
       </div>
 
       <div className="result__bar">
@@ -279,6 +271,7 @@ export function ResultStage({
             <Icon name="download" size={14} />
             {t('run.saveImage')}
           </a>
+          {/* An edited picture is not on the server yet, so it goes up first. */}
           <Button
             size="sm"
             busy={edited ? send.busy === 'source' : useAsSourceBusy}
@@ -298,6 +291,7 @@ export function ResultStage({
         </div>
       </div>
 
+      {/* Offered once the run's own image has loaded: that is what the first tool runs on. */}
       {image.url ? <QuickEditBar runId={job.id} quick={quick} /> : null}
 
       {viewing && shownUrl ? (
