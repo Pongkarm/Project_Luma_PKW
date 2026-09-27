@@ -14,6 +14,7 @@ import { AppShell } from '../features/layout/AppShell.tsx';
 import { SignInPage } from '../features/auth/SignInPage.tsx';
 import { RegisterPage } from '../features/auth/RegisterPage.tsx';
 import { GeneratePage } from '../features/generate/GeneratePage.tsx';
+import { StudioPage } from '../features/studio/StudioPage.tsx';
 import { HistoryPage } from '../features/history/HistoryPage.tsx';
 import { AccountPage } from '../features/account/AccountPage.tsx';
 import { RequireAnonymous, RequireAuth } from './guards.tsx';
@@ -78,6 +79,7 @@ export function App() {
               }
             >
               <Route path="/generate" element={<GeneratePage />} />
+              <Route path="/studio" element={<StudioPage />} />
               <Route path="/history" element={<HistoryPage />} />
               <Route path="/history/:id" element={<HistoryPage />} />
               <Route path="/account" element={<AccountPage />} />

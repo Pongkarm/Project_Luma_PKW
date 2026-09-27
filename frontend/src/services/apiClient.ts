@@ -211,11 +211,17 @@ export function uploadMultipart<T>(
   path: string,
   file: Blob,
   fileName: string,
-  handlers: { onProgress?: (progress: UploadProgress) => void; signal?: AbortSignal } = {},
+  handlers: {
+    onProgress?: (progress: UploadProgress) => void;
+    signal?: AbortSignal;
+    /** Extra form fields sent beside the file, e.g. a tool's parameters. */
+    fields?: Record<string, string>;
+  } = {},
 ): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const form = new FormData();
     form.append('file', file, fileName);
+    for (const [key, value] of Object.entries(handlers.fields ?? {})) form.append(key, value);
 
     const xhr = new XMLHttpRequest();
     xhr.open('POST', apiUrl(path));

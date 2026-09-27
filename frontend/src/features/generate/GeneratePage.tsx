@@ -18,6 +18,7 @@ import { RunStrip } from './run/RunStrip.tsx';
 import { useGenerationJob } from './run/useGenerationJob.ts';
 import { useRun } from './run/runStore.ts';
 import { toSourceImage, useDraft } from './draftStore.ts';
+import { useMaskHandoff } from './maskHandoff.ts';
 import { useT } from '../../shared/hooks/useT.ts';
 import { usePageTitle } from '../../shared/hooks/usePageTitle.ts';
 import type { TKey } from '../../config/i18n.ts';
@@ -125,6 +126,15 @@ export function GeneratePage() {
 
   const showMaskCanvas =
     !job && draft.mode === 'inpaint' && Boolean(source) && canPaintMask;
+
+  // A mask sent from the studio waits until the canvas it belongs on exists.
+  const pendingMask = useMaskHandoff((state) => state.pending);
+  const { loadMask } = editor;
+  useEffect(() => {
+    if (!pendingMask || !showMaskCanvas || naturalSize.width === 0) return;
+    const handed = useMaskHandoff.getState().take();
+    if (handed) void loadMask(handed.mask, handed.invert);
+  }, [pendingMask, showMaskCanvas, naturalSize.width, loadMask]);
 
   const submitHint = useMemo(() => {
     if (draft.mode === 'txt2img') return `${draft.width} × ${draft.height} · ${draft.steps} steps`;

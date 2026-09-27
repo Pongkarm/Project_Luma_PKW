@@ -58,7 +58,30 @@ export const limits = {
     mimeTypes: ['image/png', 'image/jpeg', 'image/webp'] as const,
     accept: 'image/png,image/jpeg,image/webp',
   },
+  sketchBlur: {
+    /**
+     * backend: POST /api/tools/sketch `blur_ksize`, default 21, odd only — the
+     * spec names 15, 21 and 31. It states no bounds, so the UI keeps to the
+     * range it describes until the backend publishes one.
+     */
+    min: 15,
+    max: 31,
+    step: 2,
+    default: 21,
+  },
 } as const;
+
+/**
+ * Snap to the odd kernel size a Gaussian blur needs, inside the sketch range.
+ * An even size makes OpenCV raise, which the person would only see as a 500.
+ */
+export function snapKernel(value: number): number {
+  const { min, max, default: fallback } = limits.sketchBlur;
+  if (!Number.isFinite(value)) return fallback;
+  const clamped = Math.min(max, Math.max(min, Math.round(value)));
+  // min and max are both odd, so stepping up from an even value stays inside.
+  return clamped % 2 === 1 ? clamped : clamped + 1;
+}
 
 /**
  * Aspect-ratio presets. Each resolves to the largest size the engine accepts

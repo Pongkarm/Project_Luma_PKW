@@ -10,6 +10,7 @@ import { useDeleteRun } from '../generate/run/useDeleteRun.ts';
 import { DeleteRunDialog } from '../generate/run/DeleteRunDialog.tsx';
 import { ImageViewer } from '../../shared/ui/ImageViewer.tsx';
 import { useToasts } from '../../shared/ui/Toast.tsx';
+import { useOpenInStudio } from '../studio/studioActions.ts';
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
@@ -39,6 +40,7 @@ export function RunDetail({
     onDeleted();
   });
   const image = useAuthedImage(run.id, run.status === 'completed');
+  const studio = useOpenInStudio();
   // The source image lives behind the token too, so it is fetched rather than linked.
   const sourceFilename = run.source_image_path?.split(/[\\/]/).pop() ?? null;
   const sourceImage = useUploadedImage(sourceFilename ? `/uploads/${sourceFilename}` : null);
@@ -176,6 +178,11 @@ export function RunDetail({
             <Icon name="download" size={14} />
             {t('run.saveImage')}
           </a>
+        ) : null}
+        {run.status === 'completed' ? (
+          <Button block icon="wand" busy={studio.busy} onClick={() => void studio.openGeneration(run.id)}>
+            {t('studio.editInStudio')}
+          </Button>
         ) : null}
         <Button block onClick={onReuseSettings}>
           {t('history.reuse')}

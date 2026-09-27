@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { maskToPaint } from './maskImage.ts';
 
 export type MaskTool = 'brush' | 'eraser';
 
 type Point = { x: number; y: number };
-type Stroke = { tool: MaskTool; size: number; points: Point[] };
+/**
+ * `seed` is a whole mask loaded from elsewhere — the studio's background
+ * removal — kept as a stroke so undo, clear and export treat it like painting.
+ */
+type Stroke = { tool: MaskTool; size: number; points: Point[]; seed?: HTMLCanvasElement };
 
 export type MaskEditor = ReturnType<typeof useMaskEditor>;
 
@@ -15,7 +20,8 @@ export type MaskEditor = ReturnType<typeof useMaskEditor>;
  * mask from this canvas's alpha channel — would come out mid-grey instead of
  * white, which the engine reads as a partial mask rather than "replace this".
  */
-const PAINT = 'rgb(224, 164, 88)';
+const PAINT_RGB = [224, 164, 88] as const;
+const PAINT = `rgb(${PAINT_RGB.join(', ')})`;
 /** How translucent the mask looks on screen, so the image stays visible under it. */
 export const MASK_DISPLAY_OPACITY = 0.55;
 
@@ -51,6 +57,12 @@ export function useMaskEditor(naturalWidth: number, naturalHeight: number) {
   const context = useCallback(() => canvasRef.current?.getContext('2d') ?? null, []);
 
   const drawStroke = useCallback((ctx: CanvasRenderingContext2D, stroke: Stroke) => {
+    if (stroke.seed) {
+      // Stretched to the canvas: the mask is made at the source's size, but a
+      // mismatch should misalign a little rather than paint a corner.
+      ctx.drawImage(stroke.seed, 0, 0, ctx.canvas.width, ctx.canvas.height);
+      return;
+    }
     ctx.save();
     ctx.globalCompositeOperation = stroke.tool === 'eraser' ? 'destination-out' : 'source-over';
     ctx.strokeStyle = PAINT;
@@ -193,6 +205,37 @@ export function useMaskEditor(naturalWidth: number, naturalHeight: number) {
   }, [measureCoverage, renderAll, syncCounts]);
 
   /**
+   * Replace whatever is painted with a mask image — white repainted, black kept,
+   * or the other way round with `invert`. Undo takes it back off; any painting
+   * from before is not restored, since a loaded mask is a fresh start.
+   */
+  const loadMask = useCallback(
+    async (mask: Blob, invert: boolean) => {
+      const bitmap = await createImageBitmap(mask);
+      const seed = document.createElement('canvas');
+      seed.width = bitmap.width;
+      seed.height = bitmap.height;
+      const ctx = seed.getContext('2d');
+      if (!ctx) {
+        bitmap.close();
+        return;
+      }
+      ctx.drawImage(bitmap, 0, 0);
+      bitmap.close();
+      const pixels = ctx.getImageData(0, 0, seed.width, seed.height);
+      maskToPaint(pixels.data, invert, PAINT_RGB);
+      ctx.putImageData(pixels, 0, 0);
+
+      redoStack.current = [];
+      strokes.current = [{ tool: 'brush', size: 0, points: [], seed }];
+      renderAll();
+      syncCounts();
+      measureCoverage();
+    },
+    [measureCoverage, renderAll, syncCounts],
+  );
+
+  /**
    * Export the mask the way the pipeline expects it: white where the image
    * should be repainted, black where it should be left alone, at the source
    * image's exact size.
@@ -252,6 +295,7 @@ export function useMaskEditor(naturalWidth: number, naturalHeight: number) {
     undo,
     redo,
     clear,
+    loadMask,
     exportMask,
     previewMask,
     coverage,

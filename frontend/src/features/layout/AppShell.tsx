@@ -27,11 +27,12 @@ export function AppShell() {
 
   const items: NavItem[] = [
     { to: '/generate', label: t('nav.generate'), icon: 'generate' },
+    { to: '/studio', label: t('nav.studio'), icon: 'wand' },
     { to: '/history', label: t('nav.history'), icon: 'clock', count: user?.total_generations },
     { to: '/account', label: t('nav.account'), icon: 'user', minor: true },
   ];
 
-  const [primary, ...rest] = items;
+  const [primary, studio, ...rest] = items;
 
   function renderLink(item: NavItem, primaryStyle = false) {
     return (
@@ -111,7 +112,10 @@ export function AppShell() {
 
       <div className="app__body">
         <nav className="rail" aria-label={t('nav.sections')} data-collapsed={railCollapsed}>
-          <div className="rail__section">{renderLink(primary, true)}</div>
+          <div className="rail__section">
+            {renderLink(primary, true)}
+            {renderLink(studio)}
+          </div>
 
           <div className="rail__section">
             <span className="rail__sectionLabel">{t('nav.library')}</span>

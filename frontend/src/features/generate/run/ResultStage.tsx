@@ -13,6 +13,10 @@ import { useCancelRun } from './useCancelRun.ts';
 import { useGenerationProgress } from './useGenerationProgress.ts';
 import { DeleteRunDialog } from './DeleteRunDialog.tsx';
 import { ImageViewer } from '../../../shared/ui/ImageViewer.tsx';
+import { useSendToGenerate } from '../../studio/studioActions.ts';
+import { useQuickEdit } from '../../studio/useQuickEdit.ts';
+import { QuickEditBar } from '../../studio/QuickEditBar.tsx';
+import { toolMeta } from '../../studio/toolMeta.ts';
 
 type Props = {
   job: Generation;
@@ -53,6 +57,8 @@ export function ResultStage({
   const elapsed = useElapsed(startedAt, running && !stalled);
   const progress = useGenerationProgress(job.id, running && !stalled);
   const image = useAuthedImage(job.id, job.status === 'completed');
+  const quick = useQuickEdit(job.id);
+  const send = useSendToGenerate();
 
   if (stalled) {
     return (
@@ -215,15 +221,31 @@ export function ResultStage({
     );
   }
 
+  // A quick edit replaces the picture in place, as the spec's QuickEditBar
+  // does; saving, reusing and the full view all follow what is showing.
+  const { edited } = quick;
+  const shownUrl = edited?.url ?? image.url;
+  const editedName = edited?.tool ? t(toolMeta[edited.tool].label) : null;
+
   return (
     <div className="result">
       <div
-        className={`result__media${image.url ? ' result__media--zoom' : ''}`}
-        onClick={() => image.url && setViewing(true)}
-        title={image.url ? t('run.viewFull') : undefined}
+        className={[
+          'result__media',
+          shownUrl ? 'result__media--zoom' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        style={{ position: 'relative' }}
+        onClick={() => shownUrl && setViewing(true)}
+        title={shownUrl ? t('run.viewFull') : undefined}
       >
-        {image.url ? (
-          <img className="img-in" src={image.url} alt={job.prompt} />
+        {shownUrl ? (
+          <img
+            className={`img-in${edited?.tool === 'remove-bg' ? ' checker' : ''}`}
+            src={shownUrl}
+            alt={job.prompt}
+          />
         ) : image.failed ? (
           <div style={{ padding: 'var(--sp-32)' }}>
             <Alert tone="error">{t('run.imageFailed')}</Alert>
@@ -231,26 +253,37 @@ export function ResultStage({
         ) : (
           <Icon name="image" size={22} />
         )}
+        {quick.pendingTool ? (
+          <div className="studio-busy" role="status">
+            <Icon name="refresh" size={20} className="spin" />
+            <span>{t('studio.applying', { tool: t(toolMeta[quick.pendingTool].label) })}</span>
+          </div>
+        ) : null}
       </div>
 
       <div className="result__bar">
         <span className="result__meta">
           {job.width} × {job.height} · {job.steps} steps · cfg {job.cfg_scale} ·{' '}
           {formatDuration(job.duration_seconds, language)}
+          {editedName ? ` · ${editedName}` : ''}
         </span>
         <div style={{ display: 'flex', gap: 'var(--sp-8)' }}>
           <a
             className="btn btn--sm btn--secondary"
-            href={image.url ?? undefined}
-            download={`luma-${job.id}.png`}
-            aria-disabled={!image.url}
-            onClick={() => image.url && showToast(t('run.savedImage'))}
-            style={!image.url ? { pointerEvents: 'none', opacity: 0.5 } : undefined}
+            href={shownUrl ?? undefined}
+            download={edited ? `luma-${job.id}-${edited.tool}.png` : `luma-${job.id}.png`}
+            aria-disabled={!shownUrl}
+            onClick={() => shownUrl && showToast(t('run.savedImage'))}
+            style={!shownUrl ? { pointerEvents: 'none', opacity: 0.5 } : undefined}
           >
             <Icon name="download" size={14} />
             {t('run.saveImage')}
           </a>
-          <Button size="sm" busy={useAsSourceBusy} onClick={onUseAsSource}>
+          <Button
+            size="sm"
+            busy={edited ? send.busy === 'source' : useAsSourceBusy}
+            onClick={() => (edited ? void send.asSource(edited) : onUseAsSource())}
+          >
             {t('run.startFromThis')}
           </Button>
           <Button
@@ -265,11 +298,13 @@ export function ResultStage({
         </div>
       </div>
 
-      {viewing && image.url ? (
+      {image.url ? <QuickEditBar runId={job.id} quick={quick} /> : null}
+
+      {viewing && shownUrl ? (
         <ImageViewer
-          url={image.url}
+          url={shownUrl}
           alt={job.prompt}
-          meta={`${job.width} × ${job.height}`}
+          meta={`${job.width} × ${job.height}${editedName ? ` · ${editedName}` : ''}`}
           onClose={() => setViewing(false)}
         />
       ) : null}
