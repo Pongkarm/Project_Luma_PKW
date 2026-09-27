@@ -1,22 +1,43 @@
+"""
+=============================================================================
+LUMA Distributed AI Inference Node — FastAPI Server & Application Routing
+=============================================================================
+ไฟล์นี้เป็นศูนย์กลางหลักของ Node 3 (AI Inference Engine บน PC3):
+1. ทำหน้าที่เป็น REST API Gateway ให้กับ Backend Core (Node 2)
+2. มีระบบ Security Gatekeeper ตรวจสอบ Header 'X-LUMA-INTERNAL-SECRET' ทุก Request
+3. Data Contract Validation ด้วย Pydantic ป้องกันข้อมูลผิดรูปหรือเกินขอบเขต
+4. ควบคุมวงจรชีวิตของระบบ (Lifespan): จัดการ Task Queue Worker, VRAM Cache, และการปิดระบบ
+5. Endpoints หลัก:
+   - GET /: หน้าจอ HTML Dashboard แสดงสถานะโหนด, สถิติ VRAM และลิงก์เอกสาร
+   - GET /ai/health: รายงานสถิติ GPU, ปริมาณคิว และสถานะความพร้อมของระบบ
+   - GET /ai/models: สแกนโมเดล Checkpoints และ LoRAs จาก Stability Matrix อัตโนมัติ
+   - POST /ai/generate: รับงาน Text-to-Image เข้าสู่ FIFO Queue (ตอบกลับ 202 ทันที)
+   - POST /ai/edit: รับงาน Image-to-Image / Inpainting เข้าสู่ FIFO Queue
+   - GET /ai/task/{task_id}: โพลล์สถานะ Step และ Progress แบบ Real-time
+   - DELETE /ai/task/{task_id}: ยกเลิกงานสร้างภาพ (ทั้งแบบ Soft Cancel และ Hard Cancel)
+=============================================================================
+"""
+
 import os
 import sys
+import uuid
+import random
+from contextlib import asynccontextmanager
+from typing import Optional, Union, List, Any
 
-# Ensure root directory is always in sys.path
+# ตรวจสอบว่า Project Root อยู่ใน sys.path เสมอเพื่อป้องกัน Import Error
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 import uvicorn
-from contextlib import asynccontextmanager
-from typing import Optional
 from fastapi import FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel, Field
 from PIL import Image, ImageDraw, ImageFont
 
-import uuid
-import random
+# โมดูลภายในระบบ AI Node
 from ai_server.config import AIConfig
 from ai_server.utils.gpu_monitor import get_gpu_status, clear_vram_cache
 from ai_server.utils.cache_manager import cleanup_stale_cache
@@ -27,23 +48,45 @@ from ai_server.utils.image_utils import (
 )
 from ai_server.services.queue_manager import task_queue
 from ai_server.services.prompt_builder import build_prompt_with_lora, LORA_REGISTRY
+from ai_server.services.forge_client import (
+    is_forge_online, 
+    run_txt2img, 
+    run_img2img,
+    run_inpaint,
+    set_forge_model
+)
 
-# --- Lifespan Context ---
+
+# =============================================================================
+# 1. วงจรชีวิตของเซิร์ฟเวอร์ (Application Lifespan Context Manager)
+# =============================================================================
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """
+    ควบคุมขั้นตอนการสตาร์ตและปิดเซิร์ฟเวอร์อย่างปลอดภัย (Graceful Lifecycle):
+    - Startup: พิมพ์แบนเนอร์, เคลียร์ไฟล์ Cache ค้างเก่า, สตาร์ต Background Task Queue Worker
+    - Shutdown: หยุดการทำงานของ Worker และสั่งล้างหน่วยความจำ VRAM บน GPU
+    """
     print("==================================================")
     print("🚀 LUMA AI Server Starting up on Port 7860...")
     print(f"📡 Node Binding: {AIConfig.HOST}:{AIConfig.PORT}")
     print(f"🔗 Callback Target: {AIConfig.BACKEND_CALLBACK_URL}")
     print(f"🎨 LoRA Registry: Loaded {len(LORA_REGISTRY)} styles")
     print("==================================================")
+    
+    # ทำความสะอาดแคชรูปภาพเก่าที่ตกค้างจากการรันครั้งก่อน
     cleanup_stale_cache()
+    # สตาร์ตลูปประมวลผลคิวในพื้นหลัง
     task_queue.start_worker()
-    yield
+    
+    yield  # เซิร์ฟเวอร์ทำงานต่อเนื่องระหว่างจุดนี้
+    
     print("🛑 LUMA AI Server Shutting down...")
     task_queue.stop_worker()
     clear_vram_cache()
 
+
+# สร้าง FastAPI Instance พร้อมคำอธิบาย API
 app = FastAPI(
     title="LUMA AI Engine API",
     description="Production-Hardened Distributed Generative AI Node with Input Sanitization, LoRA Injection, and VRAM Safeguards",
@@ -51,7 +94,9 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS Middleware
+# -----------------------------------------------------------------------------
+# CORS Middleware: อนุญาตให้ Frontend สามารถยิง API มาทดสอบได้โดยตรง
+# -----------------------------------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -60,23 +105,57 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from typing import Optional, Union, List, Any
 
-# --- Pydantic Schemas with Strict Input Constraints (Compatible with Backend) ---
+# =============================================================================
+# 2. Pydantic Request Schemas (สัญญาเชื่อมต่อข้อมูลระดับเครือข่าย)
+# =============================================================================
 class GenerateRequest(BaseModel):
-    task_id: str
-    prompt: str = Field(..., min_length=AIConfig.MIN_PROMPT_LENGTH, max_length=AIConfig.MAX_PROMPT_LENGTH, description="Prompt text (max 2000 chars)")
-    negative_prompt: Optional[str] = Field("blurry, low quality, distorted, bad anatomy", max_length=AIConfig.MAX_NEGATIVE_PROMPT_LENGTH)
+    """
+    โครงสร้างข้อมูลสำหรับ Request การสร้างภาพแบบ Text-to-Image (txt2img):
+    มีการตรวจสอบขอบเขตข้อมูลอย่างเข้มงวด (Data Validation) ตามสเปกความปลอดภัย
+    """
+    task_id: str = Field(..., description="รหัสงาน UUID ที่สร้างโดย Backend")
+    prompt: str = Field(
+        ..., 
+        min_length=AIConfig.MIN_PROMPT_LENGTH, 
+        max_length=AIConfig.MAX_PROMPT_LENGTH, 
+        description="ข้อความอธิบายภาพ (สูงสุด 2,000 ตัวอักษร)"
+    )
+    negative_prompt: Optional[str] = Field(
+        "blurry, low quality, distorted, bad anatomy", 
+        max_length=AIConfig.MAX_NEGATIVE_PROMPT_LENGTH,
+        description="ข้อความระบุสิ่งที่ไม่ต้องการให้ปรากฏในภาพ"
+    )
     model: Optional[str] = None
     model_name: Optional[str] = AIConfig.DEFAULT_MODEL
     lora: Optional[str] = None
-    lora_config: Optional[Any] = None  # Can be list, dict, or string from backend
+    lora_config: Optional[Any] = None  # รองรับได้ทั้ง String, Dict หรือ List ที่ส่งมาจาก Backend
     sampler_name: Optional[str] = AIConfig.DEFAULT_SAMPLER
-    steps: Optional[int] = Field(AIConfig.DEFAULT_STEPS, ge=AIConfig.MIN_STEPS, le=AIConfig.MAX_STEPS, description="Denoising steps (1-50)")
-    cfg_scale: Optional[float] = Field(AIConfig.DEFAULT_CFG, ge=AIConfig.MIN_CFG, le=AIConfig.MAX_CFG, description="CFG scale (1.0-20.0)")
+    steps: Optional[int] = Field(
+        AIConfig.DEFAULT_STEPS, 
+        ge=AIConfig.MIN_STEPS, 
+        le=AIConfig.MAX_STEPS, 
+        description="จำนวนรอบ Sampling (1-50 Steps)"
+    )
+    cfg_scale: Optional[float] = Field(
+        AIConfig.DEFAULT_CFG, 
+        ge=AIConfig.MIN_CFG, 
+        le=AIConfig.MAX_CFG, 
+        description="ความเข้มงวดตาม Prompt (1.0-20.0)"
+    )
     seed: Optional[int] = None
-    width: Optional[int] = Field(AIConfig.DEFAULT_WIDTH, ge=AIConfig.MIN_IMAGE_WIDTH, le=AIConfig.MAX_IMAGE_WIDTH, description="Image width (256-768, divisible by 8)")
-    height: Optional[int] = Field(AIConfig.DEFAULT_HEIGHT, ge=AIConfig.MIN_IMAGE_HEIGHT, le=AIConfig.MAX_IMAGE_HEIGHT, description="Image height (256-768, divisible by 8)")
+    width: Optional[int] = Field(
+        AIConfig.DEFAULT_WIDTH, 
+        ge=AIConfig.MIN_IMAGE_WIDTH, 
+        le=AIConfig.MAX_IMAGE_WIDTH, 
+        description="ความกว้างของภาพ (256-768px, หารด้วย 8 ลงตัว)"
+    )
+    height: Optional[int] = Field(
+        AIConfig.DEFAULT_HEIGHT, 
+        ge=AIConfig.MIN_IMAGE_HEIGHT, 
+        le=AIConfig.MAX_IMAGE_HEIGHT, 
+        description="ความสูงของภาพ (256-768px, หารด้วย 8 ลงตัว)"
+    )
     task_type: Optional[str] = "txt2img"
     source_image_path: Optional[str] = None
     image_base64: Optional[str] = None
@@ -85,13 +164,26 @@ class GenerateRequest(BaseModel):
     callback_url: Optional[str] = AIConfig.BACKEND_CALLBACK_URL
     correlation_id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4())[:8])
 
+
 class EditRequest(BaseModel):
-    task_id: str
-    prompt: str = Field(..., min_length=AIConfig.MIN_PROMPT_LENGTH, max_length=AIConfig.MAX_PROMPT_LENGTH, description="Prompt text (max 2000 chars)")
-    negative_prompt: Optional[str] = Field("blurry, low quality, distorted, bad anatomy", max_length=AIConfig.MAX_NEGATIVE_PROMPT_LENGTH)
-    image_base64: str
-    mask_base64: Optional[str] = None
-    mode: Optional[str] = "inpaint"  # inpaint | img2img
+    """
+    โครงสร้างข้อมูลสำหรับ Request การตัดต่อภาพ (Image-to-Image / Inpaint):
+    รับภาพต้นฉบับ (image_base64) และภาพ Mask ขาว-ดำ (mask_base64)
+    """
+    task_id: str = Field(..., description="รหัสงาน UUID จาก Backend")
+    prompt: str = Field(
+        ..., 
+        min_length=AIConfig.MIN_PROMPT_LENGTH, 
+        max_length=AIConfig.MAX_PROMPT_LENGTH, 
+        description="คำสั่งตัดต่อภาพ"
+    )
+    negative_prompt: Optional[str] = Field(
+        "blurry, low quality, distorted, bad anatomy", 
+        max_length=AIConfig.MAX_NEGATIVE_PROMPT_LENGTH
+    )
+    image_base64: str = Field(..., description="ภาพต้นฉบับในรูปแบบ Base64 Data URL")
+    mask_base64: Optional[str] = Field(None, description="ภาพ Mask ขาว-ดำ สำหรับโหมด Inpainting")
+    mode: Optional[str] = "inpaint"  # ตัวเลือกระหว่าง "inpaint" หรือ "img2img"
     model: Optional[str] = None
     model_name: Optional[str] = AIConfig.DEFAULT_MODEL
     lora: Optional[str] = None
@@ -106,24 +198,29 @@ class EditRequest(BaseModel):
     callback_url: Optional[str] = AIConfig.BACKEND_CALLBACK_URL
     correlation_id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4())[:8])
 
-# --- Security Verification Helper ---
+
+# =============================================================================
+# 3. Security Verification Helper (ด่านตรวจความปลอดภัย)
+# =============================================================================
 def verify_internal_secret(token: Optional[str]):
+    """
+    ตรวจสอบความปลอดภัยของ Request ผ่าน HTTP Header:
+    - ต้องมี Header: 'X-LUMA-INTERNAL-SECRET'
+    - ค่า Token ต้องตรงกับ AIConfig.INTERNAL_SECRET 100%
+    - หากไม่ผ่าน จะโยน Exception HTTP 403 Forbidden ทันที
+    """
     if not token or token != AIConfig.INTERNAL_SECRET:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
             detail="Invalid or missing X-LUMA-INTERNAL-SECRET header"
         )
 
-from ai_server.services.forge_client import (
-    is_forge_online, 
-    run_txt2img, 
-    run_img2img,
-    run_inpaint,
-    set_forge_model
-)
 
 def extract_primary_lora(data: dict) -> Optional[str]:
-    """Extracts LoRA ID from either 'lora', 'lora_config' (list, dict, or string)."""
+    """
+    ฟังก์ชันอัจฉริยะในการแยกชื่อโมเดล LoRA จากรูปแบบที่หลากหลาย
+    รองรับทั้งสตริงธรรมดา, Dict (เช่น {'id': '...'}) หรือ List ที่ Backend อาจส่งมา
+    """
     if data.get("lora"):
         return data.get("lora")
     
@@ -141,7 +238,6 @@ def extract_primary_lora(data: dict) -> Optional[str]:
             return lora_cfg.get("id")
         if "name" in lora_cfg:
             return lora_cfg.get("name")
-        # Check if dict is a key-value mapping like {"SousouNoFrieren_Frieren_IlluXL.safetensors": 0.85}
         for k in lora_cfg.keys():
             if k in LORA_REGISTRY or k.endswith(".safetensors"):
                 return k
@@ -151,22 +247,29 @@ def extract_primary_lora(data: dict) -> Optional[str]:
         return lora_cfg
     return None
 
-# --- Inference Handlers ---
+
+# =============================================================================
+# 4. Inference Handlers (ฟังก์ชันประมวลผลงานภาพ)
+# =============================================================================
 def handle_txt2img_inference(data: dict) -> tuple[str, int]:
     """
-    Generates image with LoRA trigger word injection (Single Source of Truth).
-    Connects to live Forge GPU Engine if available, or generates high-fidelity preview if offline.
-    Returns (webp_base64, actual_seed).
+    ประมวลผล Text-to-Image พร้อมระบบ Fallback Safety:
+    1. ทำการแทรก LoRA Trigger Word อัตโนมัติ (Single Source of Truth)
+    2. หาก Forge Online (:7861): ประมวลผลบนการ์ดจอ RTX 3070 จริง
+    3. หาก Forge Offline: วาดภาพพรีวิวพร้อม Metadata เพื่อรักษาเสถียรภาพระบบ
+    
+    Returns:
+        tuple[str, int]: (WebP Base64 Data URL, Actual Seed)
     """
     raw_prompt = data.get("prompt", "")
     lora_id = extract_primary_lora(data)
     model_name = data.get("model_name") or data.get("model") or AIConfig.DEFAULT_MODEL
     
-    # Auto-inject LoRA trigger word and syntax
+    # แทรก LoRA Syntax และ Trigger Word ลงใน Prompt
     enriched_prompt, lora_tag = build_prompt_with_lora(raw_prompt, lora_id)
     print(f"[PROMPT ENRICHED] Raw: '{raw_prompt}' -> Enriched: '{enriched_prompt}' (LoRA: {lora_id})")
 
-    # 1. Try Live Forge GPU Inference
+    # 1. รันบน GPU จริงผ่าน Forge API
     if is_forge_online():
         print("[ENGINE] WebUI Forge Engine is ONLINE on port 7861. Running on GPU...")
         forge_res, actual_seed = run_txt2img(
@@ -183,7 +286,7 @@ def handle_txt2img_inference(data: dict) -> tuple[str, int]:
         if forge_res:
             return forge_res, actual_seed
 
-    # 2. High-Fidelity Fallback Preview (for Standalone Dev & Safety)
+    # 2. กรณี Forge Offline: สลับใช้ High-Fidelity Fallback Preview
     if not AIConfig.ALLOW_FALLBACK_RENDER:
         raise RuntimeError("WebUI Forge GPU engine is offline and fallback rendering is disabled.")
 
@@ -194,6 +297,7 @@ def handle_txt2img_inference(data: dict) -> tuple[str, int]:
     raw_seed = data.get("seed")
     actual_seed = int(raw_seed) if raw_seed is not None and int(raw_seed) >= 0 else random.randint(100000000, 999999999)
 
+    # วาดการ์ดพรีวิวด้วย Pillow
     img = Image.new("RGB", (w, h), color=(18, 22, 30))
     draw = ImageDraw.Draw(img)
     draw.rectangle([(16, 16), (w - 16, h - 16)], outline=(255, 100, 100), width=3)
@@ -205,11 +309,11 @@ def handle_txt2img_inference(data: dict) -> tuple[str, int]:
 
     return encode_image_to_base64(img, format="WEBP"), actual_seed
 
+
 def handle_edit_inference(data: dict) -> tuple[str, int]:
     """
-    Handles img2img and inpainting with mask tensor, LoRA auto-injection,
-    checkpoint resolution, resolution safety, and Forge/fallback execution.
-    Returns (webp_base64, actual_seed).
+    ประมวลผล Image Editing (Img2Img หรือ Inpaint):
+    รองรับการตัดต่อภาพทั้งแบบมี Mask และไม่มี Mask พร้อมระบบ Fallback
     """
     raw_prompt = data.get("prompt", "")
     orig_b64 = data.get("image_base64")
@@ -218,11 +322,10 @@ def handle_edit_inference(data: dict) -> tuple[str, int]:
     model_name = data.get("model_name") or data.get("model") or AIConfig.DEFAULT_MODEL
     mode = (data.get("mode") or ("inpaint" if mask_b64 else "img2img")).lower()
 
-    # Auto-inject LoRA trigger word and syntax
     enriched_prompt, lora_tag = build_prompt_with_lora(raw_prompt, lora_id)
     print(f"[EDIT PROMPT ENRICHED] Mode: '{mode}' | Raw: '{raw_prompt}' -> Enriched: '{enriched_prompt}' (LoRA: {lora_id})")
 
-    # 1. Try Live Forge GPU Inference
+    # 1. รันบน GPU จริง
     if is_forge_online():
         print(f"[ENGINE] WebUI Forge Engine is ONLINE on port 7861. Running {mode} on GPU...")
         if mode == "inpaint" and mask_b64:
@@ -240,7 +343,7 @@ def handle_edit_inference(data: dict) -> tuple[str, int]:
             )
             if inpaint_res:
                 return inpaint_res, actual_seed
-        else:  # img2img mode (no mask)
+        else:
             img2img_res, actual_seed = run_img2img(
                 image_base64=orig_b64,
                 prompt=enriched_prompt,
@@ -257,7 +360,7 @@ def handle_edit_inference(data: dict) -> tuple[str, int]:
             if img2img_res:
                 return img2img_res, actual_seed
 
-    # 2. Fallback Preview (for Standalone Dev & Safety)
+    # 2. Fallback Preview สำหรับการทดสอบ
     if not AIConfig.ALLOW_FALLBACK_RENDER:
         raise RuntimeError(f"WebUI Forge GPU engine is offline and fallback rendering is disabled for {mode}.")
 
@@ -269,7 +372,7 @@ def handle_edit_inference(data: dict) -> tuple[str, int]:
     raw_seed = data.get("seed")
     actual_seed = int(raw_seed) if raw_seed is not None and int(raw_seed) >= 0 else random.randint(100000000, 999999999)
     
-    # Overlay fallback banner
+    # วาดแถบ Banner คาดทับด้านล่างของภาพต้นฉบับ
     draw = ImageDraw.Draw(orig_img)
     banner_h = 44
     draw.rectangle([(0, h - banner_h), (w, h)], fill=(10, 15, 25))
@@ -278,13 +381,16 @@ def handle_edit_inference(data: dict) -> tuple[str, int]:
     
     return encode_image_to_base64(orig_img, format="WEBP"), actual_seed
 
-# Alias for backwards compatibility
+
 handle_inpaint_inference = handle_edit_inference
 
-# --- REST Endpoints ---
+
+# =============================================================================
+# 5. REST API Endpoints
+# =============================================================================
 @app.get("/", response_class=HTMLResponse)
 async def root_dashboard():
-    """Returns a visual status dashboard for LUMA AI Node."""
+    """หน้าจอแดชบอร์ดหลักแสดงสถิติและสถานะของโหนด AI ในแบบ HTML"""
     gpu = get_gpu_status()
     device_name = gpu.get("device", "NVIDIA GPU")
     vram_free = gpu.get("vram_free_gb", 0.0)
@@ -420,9 +526,13 @@ async def root_dashboard():
     """
     return html_content
 
+
 @app.get("/ai/health")
 async def health_check():
-    """Returns GPU metrics, VRAM usage, and queue status."""
+    """
+    Endpoint ตรวจสุขภาพระบบ (Healthcheck):
+    รายงานสถานะ GPU, จำนวนคิว และ Task ID ที่กำลังประมวลผลอยู่
+    """
     gpu = get_gpu_status()
     return {
         "status": "online",
@@ -433,13 +543,17 @@ async def health_check():
         "gpu": gpu
     }
 
+
 @app.get("/ai/models")
 async def list_available_models():
-    """Dynamically scans and lists loaded Checkpoint models and LoRA adapters from Stability Matrix."""
+    """
+    สแกนไดเรกทอรีของ Stability Matrix และส่งคืนรายการโมเดล Checkpoints และ LoRAs ทั้งหมด
+    ช่วยให้ Frontend ดึงรายชื่อโมเดลไปแสดงใน Dropdown ได้โดยตรง
+    """
     checkpoints = []
     loras = []
 
-    # Scan Checkpoints
+    # สแกน Checkpoint Models (.safetensors, .ckpt)
     if os.path.exists(AIConfig.CHECKPOINTS_DIR):
         for f in os.listdir(AIConfig.CHECKPOINTS_DIR):
             if f.endswith((".safetensors", ".ckpt")):
@@ -449,7 +563,7 @@ async def list_available_models():
                     "path": os.path.join(AIConfig.CHECKPOINTS_DIR, f)
                 })
 
-    # Scan LoRAs
+    # สแกน LoRA Adapters (.safetensors)
     if os.path.exists(AIConfig.LORA_DIR):
         for f in os.listdir(AIConfig.LORA_DIR):
             if f.endswith(".safetensors"):
@@ -466,12 +580,18 @@ async def list_available_models():
         "total_loras": len(loras)
     }
 
+
 @app.post("/ai/generate", status_code=status.HTTP_202_ACCEPTED)
 async def generate_image(
     req: GenerateRequest,
     x_luma_internal_secret: Optional[str] = Header(None)
 ):
-    """Enqueues a txt2img generation request and returns immediate acceptance."""
+    """
+    รับคำสั่ง Text-to-Image จาก Backend:
+    1. ตรวจสอบความปลอดภัยด้วย Header X-LUMA-INTERNAL-SECRET
+    2. นำงานเข้าคิว FIFO
+    3. ตอบกลับ HTTP 202 Accepted ทันทีพร้อมแจ้งตำแหน่งคิว เพื่อไม่ให้เกิดการบล็อกการทำงาน
+    """
     verify_internal_secret(x_luma_internal_secret)
     q_pos = await task_queue.enqueue(req.model_dump(), handle_txt2img_inference)
     return {
@@ -481,12 +601,16 @@ async def generate_image(
         "message": "Task successfully queued for GPU inference"
     }
 
+
 @app.post("/ai/edit", status_code=status.HTTP_202_ACCEPTED)
 async def edit_image(
     req: EditRequest,
     x_luma_internal_secret: Optional[str] = Header(None)
 ):
-    """Enqueues an img2img / inpaint editing request."""
+    """
+    รับคำสั่ง Image Editing (Img2Img / Inpaint) จาก Backend
+    ตอบกลับ HTTP 202 Accepted พร้อมตำแหน่งคิว
+    """
     verify_internal_secret(x_luma_internal_secret)
     q_pos = await task_queue.enqueue(req.model_dump(), handle_inpaint_inference)
     return {
@@ -496,14 +620,16 @@ async def edit_image(
         "message": "Edit task successfully queued for GPU inference"
     }
 
+
 @app.delete("/ai/task/{task_id}")
 async def cancel_ai_task(
     task_id: str,
     x_luma_internal_secret: Optional[str] = Header(None)
 ):
     """
-    Cancels a generation task (Soft Cancel if in Queue, Hard Cancel if on GPU).
-    Returns 200 OK or 409 Conflict if already completed.
+    ยกเลิกงานเจนภาพ (รองรับทั้ง Soft Cancel ในคิว และ Hard Cancel บน GPU):
+    - คืนค่า 200 OK หากยกเลิกสำเร็จ
+    - คืนค่า 409 Conflict หากงานเจนเสร็จสิ้นไปแล้ว
     """
     verify_internal_secret(x_luma_internal_secret)
     status_code, message = await task_queue.cancel_task(task_id)
@@ -515,12 +641,17 @@ async def cancel_ai_task(
         "message": message
     }
 
+
 @app.get("/ai/task/{task_id}")
 async def get_ai_task_status(
     task_id: str,
     x_luma_internal_secret: Optional[str] = Header(None)
 ):
-    """Returns real-time in-memory status of an AI Task."""
+    """
+    โพลล์ดูสถานะของงานแบบ Real-time:
+    - รายงานเปอร์เซ็นต์ Denoising Progress, ลำดับ Step, และค่า Seed จริง
+    - ช่วยให้ Frontend นำไปเรนเดอร์ Progress Bar ที่แม่นยำ
+    """
     verify_internal_secret(x_luma_internal_secret)
     info = task_queue.get_task_status(task_id)
     if not info:
@@ -536,6 +667,7 @@ async def get_ai_task_status(
         "total_steps": info.get("total_steps"),
         "seed": info.get("seed")
     }
+
 
 if __name__ == "__main__":
     uvicorn.run("ai_server.server:app", host=AIConfig.HOST, port=AIConfig.PORT, reload=True)
