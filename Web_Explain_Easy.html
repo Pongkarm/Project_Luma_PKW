@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LUMA Backend Request Lifecycle Explorer — การเดินทางของโค้ดแบบเข้าใจง่าย</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Sarabun', 'Plus Jakarta Sans', 'sans-serif'],
+            mono: ['Fira Code', 'monospace']
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#312e81',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Sarabun', 'Plus Jakarta Sans', sans-serif;
+    }
+    code, pre {
+      font-family: 'Fira Code', monospace;
+    }
+    .glass-card {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .step-active {
+      border-color: #6366f1;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(79, 70, 229, 0.1));
+      box-shadow: 0 0 20px -3px rgba(99, 102, 241, 0.4);
+    }
+    .pulse-glow {
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.6);
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen selection:bg-indigo-500 selection:text-white">
+
+  <!-- Background Ambient Glow -->
+  <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+    <div class="absolute -top-40 -left-40 w-96 h-96 bg-indigo-600/20 rounded-full blur-[128px]"></div>
+    <div class="absolute top-1/2 -right-40 w-96 h-96 bg-purple-600/15 rounded-full blur-[128px]"></div>
+    <div class="absolute -bottom-40 left-1/3 w-96 h-96 bg-cyan-600/15 rounded-full blur-[128px]"></div>
+  </div>
+
+  <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Header Section -->
+    <header class="mb-10 text-center sm:text-left flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-800 pb-8 gap-4">
+      <div>
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 mb-3">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          LUMA Distributed AI Platform Architecture
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white flex items-center gap-3">
+          <span>🚀 Request Lifecycle Execution Trace</span>
+        </h1>
+        <p class="mt-2 text-slate-400 text-sm sm:text-base max-w-3xl">
+          เปิดกล่องดำการทำงานของระบบ <strong>LUMA Backend</strong> ติดตามการเดินทางของข้อมูลตั้งแต่ผู้ใช้กดปุ่มหน้าเว็บ จนถึงการรันโมเดล AI และได้รูปภาพผลลัพธ์แบบเจาะลึกทุกบรรทัด
+        </p>
+      </div>
+
+      <!-- Mode Toggle -->
+      <div class="flex items-center gap-3 bg-slate-900/90 border border-slate-800 p-2 rounded-xl self-center md:self-auto shadow-lg">
+        <span class="text-xs font-medium text-slate-400 pl-2">โหมดระบบ:</span>
+        <button id="btnModeCallback" onclick="setMode('callback')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-indigo-600 text-white shadow-md">
+          🔄 Callback (Production)
+        </button>
+        <button id="btnModeDirect" onclick="setMode('direct')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 text-slate-400 hover:text-white">
+          ⚡ Direct (Dev)
+        </button>
+      </div>
+    </header>
+
+    <!-- Visual Interactive Pipeline Overview -->
+    <section class="mb-10">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <span>🗺️ แผนที่การเดินทางภาพรวม (คลิกเลือกสเต็ปที่สนใจ)</span>
+        </h2>
+        <span class="text-xs text-indigo-400" id="stepCounterText">ขั้นตอนที่ 1 จาก 7</span>
+      </div>
+
+      <!-- Stepper Pills -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+        
+        <!-- Step 1 Button -->
+        <button onclick="goToStep(1)" id="stepTab1" class="step-tab glass-card p-3 rounded-xl text-left transition-all duration-200 hover:border-indigo-500/50 group relative">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-300 group-hover:border-indigo-400 group-hover:text-indigo-400">1</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">Gateway</span>
+          </div>
+          <div class="text-xs font-bold text-white truncate">ประตูหน้า & CORS</div>
+          <div class="text-[11px] text-slate-400 truncate">main.py</div>
+        </button>
+
+        <!-- Step 2 Button -->
+        <button onclick="goToStep(2)" id="stepTab2" class="step-tab glass-card p-3 rounded-xl text-left transition-all duration-200 hover:border-indigo-500/50 group relative">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-300 group-hover:border-indigo-400 group-hover:text-indigo-400">2</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">Security</span>
+          </div>
+          <div class="text-xs font-bold text-white truncate">ด่านตรวจ JWT & สิทธิ์</div>
+          <div class="text-[11px] text-slate-400 truncate">security.py</div>
+        </button>
+
+        <!-- Step 3 Button -->
+        <button onclick="goToStep(3)" id="stepTab3" class="step-tab glass-card p-3 rounded-xl text-left transition-all duration-200 hover:border-indigo-500/50 group relative">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-300 group-hover:border-indigo-400 group-hover:text-indigo-400">3</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 font-mono">Schema</span>
+          </div>
+          <div class="text-xs font-bold text-white truncate">กรองข้อมูล & Bounds</div>
+          <div class="text-[11px] text-slate-400 truncate">schemas/generation.py</div>
+        </button>
+
+        <!-- Step 4 Button -->
+        <button onclick="goToStep(4)" id="stepTab4" class="step-tab glass-card p-3 rounded-xl text-left transition-all duration-200 hover:border-indigo-500/50 group relative">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-300 group-hover:border-indigo-400 group-hover:text-indigo-400">4</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">DB 201</span>
+          </div>
+          <div class="text-xs font-bold text-white truncate">ลง DB & คืน 201</div>
+          <div class="text-[11px] text-slate-400 truncate">api/generation.py</div>
+        </button>
+
+        <!-- Step 5 Button -->
+        <button onclick="goToStep(5)" id="stepTab5" class="step-tab glass-card p-3 rounded-xl text-left transition-all duration-200 hover:border-indigo-500/50 group relative">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-300 group-hover:border-indigo-400 group-hover:text-indigo-400">5</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-pink-500/10 text-pink-400 border border-pink-500/20 font-mono">Dispatch</span>
+          </div>
+          <div class="text-xs font-bold text-white truncate">ส่งงานเข้า AI Node</div>
+          <div class="text-[11px] text-slate-400 truncate">services/generation.py</div>
+        </button>
+
+        <!-- Step 6 Button -->
+        <button onclick="goToStep(6)" id="stepTab6" class="step-tab glass-card p-3 rounded-xl text-left transition-all duration-200 hover:border-indigo-500/50 group relative">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-300 group-hover:border-indigo-400 group-hover:text-indigo-400">6</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 font-mono">Webhook</span>
+          </div>
+          <div class="text-xs font-bold text-white truncate">รับ Callback & เซฟภาพ</div>
+          <div class="text-[11px] text-slate-400 truncate">api/callback.py</div>
+        </button>
+
+        <!-- Step 7 Button -->
+        <button onclick="goToStep(7)" id="stepTab7" class="step-tab glass-card p-3 rounded-xl text-left transition-all duration-200 hover:border-indigo-500/50 group relative">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-300 group-hover:border-indigo-400 group-hover:text-indigo-400">7</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono">Delivery</span>
+          </div>
+          <div class="text-xs font-bold text-white truncate">Polling & เสิร์ฟภาพ</div>
+          <div class="text-[11px] text-slate-400 truncate">GET /{id}/image</div>
+        </button>
+
+      </div>
+    </section>
+
+    <!-- Main Content Box (Active Step Inspector) -->
+    <main class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-12">
+
+      <!-- Left Column: Core Description & Functions (7 Cols) -->
+      <div class="lg:col-span-7 space-y-6">
+
+        <!-- Step Header Card -->
+        <div class="glass-card rounded-2xl p-6 border border-slate-800 shadow-2xl relative overflow-hidden">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div class="flex items-center gap-3">
+              <span id="stepIconBadge" class="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-xl">
+                🌐
+              </span>
+              <div>
+                <span id="stepTag" class="text-xs font-bold uppercase tracking-wider text-indigo-400 font-mono">STEP 1 • FRONT DOOR GATEWAY</span>
+                <h3 id="stepTitle" class="text-xl sm:text-2xl font-bold text-white">ประตูหน้าบ้านและการผ่าน Middleware</h3>
+              </div>
+            </div>
+            <div id="stepDbStatus" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700">
+              <span class="w-2 h-2 rounded-full bg-slate-500"></span>
+              สถานะ DB: <span>ยังไม่บันทึก</span>
+            </div>
+          </div>
+
+          <p id="stepDescription" class="text-slate-300 text-sm sm:text-base leading-relaxed mb-6">
+            เมื่อผู้ใช้กดปุ่ม "Generate" บนหน้าเว็บ เบราว์เซอร์จะยิง HTTP POST ไปที่ <code class="text-indigo-300">/generations</code> พร้อมแนบ Token ใน Header โดยคำขอจะวิ่งผ่าน CORSMiddleware เพื่อตรวจสอบสิทธิ์การข้ามโดเมนก่อนเข้าสู่ระบบ
+          </p>
+
+          <!-- Key Functions Section -->
+          <div class="bg-slate-900/80 rounded-xl p-4 border border-slate-800/80 mb-6">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+              <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+              <span>ฟังก์ชันและคลาสที่ถูกเรียกใช้งาน (Functions & Classes)</span>
+            </h4>
+            <div id="functionList" class="space-y-2.5 text-xs sm:text-sm">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Code Snippet Box -->
+          <div>
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+              <span class="font-mono flex items-center gap-1.5 text-indigo-300">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span id="codeFilePath">main.py</span>
+              </span>
+              <span class="text-slate-500 text-[11px]">Implementation Sample</span>
+            </div>
+            <pre class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs sm:text-sm overflow-x-auto text-emerald-400 font-mono leading-relaxed shadow-inner"><code id="codeSnippet"># Code will load here</code></pre>
+          </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex items-center justify-between pt-2">
+          <button id="btnPrev" onclick="prevStep()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 font-medium text-sm transition-all duration-200">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            ย้อนกลับ
+          </button>
+          
+          <button id="btnNext" onclick="nextStep()" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm shadow-lg shadow-indigo-600/30 transition-all duration-200">
+            ถัดไป
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Data Contract & Security Deep Dive (5 Cols) -->
+      <div class="lg:col-span-5 space-y-6">
+
+        <!-- HTTP & Data Contract Inspector Card -->
+        <div class="glass-card rounded-2xl p-6 border border-slate-800 shadow-xl">
+          <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+            <h4 class="text-sm font-bold text-white flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+              <span>Data Contract & Payload Inspector</span>
+            </h4>
+            <span id="httpBadge" class="px-2.5 py-1 rounded text-[11px] font-mono font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
+              POST /generations
+            </span>
+          </div>
+
+          <!-- Tabs for Payload: Request vs Response -->
+          <div class="space-y-4">
+            <div>
+              <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center justify-between">
+                <span>Inbound Headers / Parameters</span>
+                <span class="text-[10px] text-slate-500">Client ➔ Server</span>
+              </div>
+              <pre class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-[11px] text-cyan-300 font-mono overflow-x-auto leading-relaxed"><code id="inboundPayload">// Inbound payload</code></pre>
+            </div>
+
+            <div>
+              <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center justify-between">
+                <span>Outbound Response / DB State</span>
+                <span class="text-[10px] text-slate-500">Server ➔ Next Hop</span>
+              </div>
+              <pre class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-[11px] text-amber-300 font-mono overflow-x-auto leading-relaxed"><code id="outboundPayload">// Outbound payload</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security & Architecture Highlight Card -->
+        <div class="glass-card rounded-2xl p-6 border border-slate-800 shadow-xl bg-gradient-to-br from-slate-900/90 to-slate-950/90">
+          <div class="flex items-center gap-2 mb-3 text-amber-400 text-sm font-bold">
+            <span class="text-base" id="securityIcon">🛡️</span>
+            <span id="securityTitle">Engineering & Security Guard</span>
+          </div>
+          <p id="securityBody" class="text-xs sm:text-sm text-slate-300 leading-relaxed mb-4">
+            คำอธิบายเทคนิคและสถาปัตยกรรมความปลอดภัยในขั้นตอนนี้
+          </p>
+          <div id="securityPill" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-mono font-semibold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+            Feature: CORS Preflight Protection
+          </div>
+        </div>
+
+        <!-- Quick Architecture Summary Card -->
+        <div class="bg-slate-900/60 rounded-2xl p-5 border border-slate-800/80 text-xs text-slate-400 space-y-2.5">
+          <div class="font-bold text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+            <span>⚡ ทำไมถึงออกแบบ Asynchronous Decoupled?</span>
+          </div>
+          <p class="leading-relaxed">
+            เพราะโมเดล AI (Stable Diffusion) ใช้เวลาคำนวณ GPU 1–15 วินาที หากรอใน Web Request ตรงๆ จะทำให้ HTTP Connection ค้าง (Blocking) และเซิร์ฟเวอร์รับงานต่อไม่ได้ LUMA จึงแยกเป็น <strong>Queue + Background Task + Webhook Callback</strong>
+          </p>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- 4 Core Security Pillars Section -->
+    <section class="mb-14">
+      <div class="text-center max-w-2xl mx-auto mb-8">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1">Defense-In-Depth Architecture</h2>
+        <h3 class="text-2xl font-bold text-white">4 ปราการความปลอดภัยและเสถียรภาพของ LUMA Backend</h3>
+        <p class="text-slate-400 text-xs sm:text-sm mt-2">ออกแบบตามมาตรฐานความปลอดภัยระดับสูง ป้องกันข้อมูลรั่วไหลและไฟล์เสียหาย 100%</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        
+        <!-- Pillar 1 -->
+        <div class="glass-card p-5 rounded-2xl border border-slate-800 hover:border-indigo-500/40 transition-all">
+          <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-xl mb-4 text-blue-400">
+            ⚡
+          </div>
+          <h4 class="text-base font-bold text-white mb-1.5">Atomic File Write</h4>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            เขียนไฟล์ลง <code class="text-indigo-300">.tmp</code> ก่อน แล้วจึงใช้คำสั่งระบบ <code class="text-indigo-300">replace()</code> สลับชื่อไฟล์เป็น <code class="text-indigo-300">.png</code> ป้องกันกรณีไฟดับหรือผู้ใช้เปิดดูระหว่างไฟล์กำลังเขียน
+          </p>
+          <span class="text-[10px] font-mono text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">Zero Partial Read</span>
+        </div>
+
+        <!-- Pillar 2 -->
+        <div class="glass-card p-5 rounded-2xl border border-slate-800 hover:border-emerald-500/40 transition-all">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-xl mb-4 text-emerald-400">
+            🔄
+          </div>
+          <h4 class="text-base font-bold text-white mb-1.5">Idempotency Guard</h4>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            เมื่อ AI Node ยิง Webhook ซ้ำ (Retry) ระบบจะตรวจว่าสถานะเป็น <code class="text-emerald-300">completed</code> แล้วหรือไม่ ถ้าใช่จะตอบ 200 OK (<code class="text-emerald-300">duplicate: true</code>) ไม่เขียนทับซ้ำ
+          </p>
+          <span class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Safe Retry</span>
+        </div>
+
+        <!-- Pillar 3 -->
+        <div class="glass-card p-5 rounded-2xl border border-slate-800 hover:border-purple-500/40 transition-all">
+          <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-xl mb-4 text-purple-400">
+            🔍
+          </div>
+          <h4 class="text-base font-bold text-white mb-1.5">Magic Bytes Check</h4>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            ตรวจอ่าน Signature ไบนารี 12 ไบต์แรกของไฟล์ภาพจริง (PNG: <code class="text-purple-300">\x89PNG</code>, JPEG: <code class="text-purple-300">\xff\xd8\xff</code>) ป้องกันแฮกเกอร์ฝัง Webshell ในรูป
+          </p>
+          <span class="text-[10px] font-mono text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">Anti-Spoofing</span>
+        </div>
+
+        <!-- Pillar 4 -->
+        <div class="glass-card p-5 rounded-2xl border border-slate-800 hover:border-pink-500/40 transition-all">
+          <div class="w-10 h-10 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-xl mb-4 text-pink-400">
+            🔒
+          </div>
+          <h4 class="text-base font-bold text-white mb-1.5">Data Isolation & 404</h4>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            ทุกการเรียกดูงานหรือดาวน์โหลดรูป จะบังคับตรวจ <code class="text-pink-300">user_id == current_user.id</code> หากไม่ใช่เจ้าของจะคืน <code class="text-pink-300">404 Not Found</code> เสมอ ไม่ให้รู้ว่ามีงานนี้อยู่
+          </p>
+          <span class="text-[10px] font-mono text-pink-400 bg-pink-500/10 px-2 py-0.5 rounded border border-pink-500/20">Zero Leak</span>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 pt-6 pb-12 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div>
+        LUMA Backend Architectural Specification Guide &copy; 2026
+      </div>
+      <div class="flex items-center gap-4 text-slate-400">
+        <span>FastAPI</span>
+        <span>•</span>
+        <span>SQLAlchemy 2.0</span>
+        <span>•</span>
+        <span>Pydantic v2</span>
+        <span>•</span>
+        <span>ComfyUI / Mock AI</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- JavaScript: Stepper & Mode Switcher Data Logic -->
+  <script>
+    let currentStep = 1;
+    let currentMode = 'callback'; // 'callback' | 'direct'
+
+    const stepData = {
+      1: {
+        tag: "STEP 1 • FRONT DOOR GATEWAY",
+        icon: "🌐",
+        title: "ประตูหน้าบ้านและการผ่าน Middleware",
+        dbStatus: "ยังไม่บันทึก (รอตรวจสิทธิ์)",
+        dbBadgeColor: "bg-slate-500",
+        description: "เมื่อผู้ใช้กดปุ่ม 'Generate' บนหน้าเว็บ เบราว์เซอร์จะส่งคำขอ HTTP POST /generations พร้อมแนบพารามิเตอร์รูปภาพและ Access Token (JWT) ใน Authorization Header โดยคำขอจะวิ่งเข้า main.py ผ่าน CORSMiddleware เพื่อตรวจสอบสิทธิ์การข้ามโดเมนก่อนเข้าสู่ Routing Table",
+        functions: [
+          {
+            name: "CORSMiddleware",
+            file: "main.py (บรรทัด 72-78)",
+            desc: "ตรวจสอบ Origin ของหน้าบ้าน (เช่น http://localhost:5173, http://localhost:3000) ว่าอนุญาตหรือไม่ พร้อมอนุญาต Headers และ Methods ทั้งหมด"
+          },
+          {
+            name: "app.include_router(generation.router)",
+            file: "main.py (บรรทัด 82)",
+            desc: "กระจายคำขอที่มี URL ขึ้นต้นด้วย /generations ไปยังโมดูล app/api/generation.py"
+          },
+          {
+            name: "unhandled_exception_handler",
+            file: "main.py (บรรทัด 94-104)",
+            desc: "ดักจับ Error ระดับ 500 แล้วประกอบ CORS Header ด้วยตนเอง ป้องกันเบราว์เซอร์ตัดการเชื่อมต่อจนมองไม่เห็น Error จริง"
+          }
+        ],
+        codePath: "Project/main.py",
+        codeSnippet: `app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://localhost:8080", "*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(generation.router)`,
+        httpBadge: "POST /generations",
+        inbound: `POST /generations HTTP/1.1
+Host: localhost:8000
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Origin: http://localhost:5173
+Content-Type: application/json
+
+{
+  "prompt": "Cyberpunk cat astronaut, 8k",
+  "steps": 25,
+  "width": 512,
+  "height": 512
+}`,
+        outbound: `// CORS Middleware Passed
+// Next Hop: Dependency Injection Pipeline
+Origin verified: http://localhost:5173 -> ALLOWED
+Forwarding to: app/api/generation.py`,
+        secIcon: "🌐",
+        secTitle: "CORS Header Preservation",
+        secBody: "FastAPI มีบั๊กคลาสสิกที่เมื่อระบบเกิดข้อผิดพลาด 500 Unhandled Exception ตัว Middleware อาจถูกข้าม ทำให้ Header CORS หายไป เบราว์เซอร์จะเตือนว่าเป็นบั๊ก CORS แทนที่จะเห็น 500 LUMA จึงเขียน Custom Exception Handler ดักจับและเติม Header CORS ด้วยตนเองเสมอ",
+        secPill: "Feature: 500 CORS Preservation"
+      },
+
+      2: {
+        tag: "STEP 2 • AUTHENTICATION & ACCESS CONTROL",
+        icon: "🛡️",
+        title: "ด่านตรวจสิทธิ์ยืนยันตัวตน (JWT Authentication)",
+        dbStatus: "ค้นหาผู้ใช้ใน DB (User active)",
+        dbBadgeColor: "bg-blue-500",
+        description: "ก่อนที่ Request จะแตะต้อง Business Logic ระบบจะเรียกใช้งาน Dependency Injection get_current_user เพื่อถอดรหัส Token และดึงข้อมูลผู้ใช้จากฐานข้อมูล หาก Token ไม่ถูกต้องหรือผู้ใช้ถูกระงับสิทธิ์ จะส่ง HTTP 401 Unauthorized กลับทันที",
+        functions: [
+          {
+            name: "oauth2_scheme(request)",
+            file: "app/core/security.py (บรรทัด 639)",
+            desc: "สกัดข้อความ Token ออกจาก Header 'Authorization: Bearer <token>' อัตโนมัติ"
+          },
+          {
+            name: "decode_token(token)",
+            file: "app/core/security.py (บรรทัด 677-684)",
+            desc: "ใช้ SECRET_KEY และอัลกอริทึม HS256 ตรวจสอบความถูกต้องและวันหมดอายุ (exp) ของ JWT"
+          },
+          {
+            name: "get_current_user(token, db)",
+            file: "app/core/security.py (บรรทัด 687-705)",
+            desc: "ดึง user_id จาก Payload แล้วยิงคำสั่ง SQL ตรวจสอบว่าผู้ใช้มีตัวตนจริงและมีสถานะ is_active == True"
+          }
+        ],
+        codePath: "Project/app/core/security.py",
+        codeSnippet: `def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
+    payload = decode_token(token)
+    if payload is None:
+        raise HTTPException(status_code=401, detail="Could not validate credentials")
+    
+    user_id = payload.get("sub")
+    user = db.query(User).filter(User.id == UUID(user_id)).first()
+    if user is None or not user.is_active:
+        raise HTTPException(status_code=401, detail="User not found or inactive")
+    return user`,
+        httpBadge: "AUTH GUARD: get_current_user",
+        inbound: `JWT Payload:
+{
+  "sub": "4a71f008-8f55-46aa-83a3-b4676887be8d",
+  "email": "user@example.com",
+  "exp": 1790184000
+}`,
+        outbound: `// Database Query:
+SELECT * FROM users 
+WHERE id = '4a71f008-8f55-46aa-83a3-b4676887be8d' 
+LIMIT 1;
+
+Result: User(id=..., is_active=True)
+Injecting: current_user`,
+        secIcon: "🛡️",
+        secTitle: "Real-time DB Active Verification",
+        secBody: "LUMA ไม่เพียงแค่ถอดรหัส JWT ในหน่วยความจำ แต่ยังสั่ง Query เช็กกับฐานข้อมูลจริงทุก Request เพื่อให้สามารถระงับการใช้งานบัญชี (Instant Ban/Revocation) ได้ทันทีโดยไม่ต้องรอให้ Token หมดอายุ 30 นาที",
+        secPill: "Feature: Instant Revocation Guard"
+      },
+
+      3: {
+        tag: "STEP 3 • INPUT VALIDATION & BOUNDARY GUARDS",
+        icon: "📋",
+        title: "ด่านตรวจความถูกต้องของข้อมูล (Pydantic v2)",
+        dbStatus: "ยังไม่บันทึก (ตรวจข้อมูล)",
+        dbBadgeColor: "bg-slate-500",
+        description: "ข้อมูล JSON Body ถูกแปลงและตรวจสอบผ่าน Pydantic Schema GenerationCreate เพื่อจำกัดขนาดข้อความ ความกว้าง ความสูง และจำนวน Steps ป้องกันไม่ให้พารามิเตอร์แปลกปลอมทำให้ GPU เกิดข้อผิดพลาด OOM (Out Of Memory)",
+        functions: [
+          {
+            name: "GenerationCreate(GenerationBase)",
+            file: "app/schemas/generation.py (บรรทัด 22-98)",
+            desc: "กำหนดเงื่อนไข: prompt 1–2,000 ตัวอักษร, steps 1–150, width/height 64–2,048 พิกเซล"
+          },
+          {
+            name: "FastAPI Body Validation Handler",
+            file: "FastAPI Internal Core",
+            desc: "หากข้อมูลไม่ผ่านเงื่อนไข (เช่น ส่ง width=10000) ระบบจะดีดออกทันทีด้วย HTTP 422 Unprocessable Entity โดยไม่ให้ผ่านเข้า Service"
+          }
+        ],
+        codePath: "Project/app/schemas/generation.py",
+        codeSnippet: `class GenerationBase(BaseModel):
+    task_type: GenerationTaskType = Field(default=GenerationTaskType.TXT2IMG)
+    prompt: str = Field(..., min_length=1, max_length=2000)
+    steps: int = Field(default=20, ge=1, le=150)
+    cfg_scale: float = Field(default=7.0, ge=0.0, le=30.0)
+    width: int = Field(default=512, ge=64, le=2048)
+    height: int = Field(default=512, ge=64, le=2048)
+    seed: int | None = Field(default=None)`,
+        httpBadge: "SCHEMA VALIDATION: GenerationCreate",
+        inbound: `POST Body Data:
+{
+  "prompt": "Cyberpunk cat astronaut, 8k",
+  "steps": 25,
+  "cfg_scale": 7.5,
+  "width": 512,
+  "height": 512
+}`,
+        outbound: `// Pydantic Validation Passed:
+All bounds satisfied:
+- prompt length: 29 chars (<= 2000)
+- steps: 25 (1 <= steps <= 150)
+- width/height: 512 (64 <= dim <= 2048)
+Proceeding to Router Handler`,
+        secIcon: "🛡️",
+        secTitle: "GPU OOM / DoS Boundary Protection",
+        secBody: "การคำนวณของโมเดล Diffusion ใช้หน่วยความจำ VRAM เป็นกำลังสองของขนาดภาพ หากผู้ใช้ส่งขนาดภาพ 8000x8000 เข้ามา การ์ดจอจะแครชทันที การตั้งขอบเขต ge=64, le=2048 บน Schema เป็นการตัดตอนการโจมตี Denial of Service ตั้งแต่ก่อนเข้าถึงระบบ",
+        secPill: "Feature: Strict Hardware Boundary"
+      },
+
+      4: {
+        tag: "STEP 4 • ROUTER, DB INSERTION & NON-BLOCKING 201",
+        icon: "🚪",
+        title: "บันทึกงานลงฐานข้อมูล และส่ง HTTP 201 กลับทันที",
+        dbStatus: "บันทึกสถานะ 'pending'",
+        dbBadgeColor: "bg-amber-500",
+        description: "เมื่อข้อมูลถูกต้อง Request จะเข้าสู่ Router เพื่อสร้างแถวข้อมูลใหม่ในฐานข้อมูลด้วยสถานะ 'pending' สุ่ม UUIDv4 จากนั้นสั่งเพิ่มงานเข้า BackgroundTasks และคืน HTTP 201 Created ให้ผู้ใช้ทันที เพื่อไม่ให้หน้าเว็บค้างรอ",
+        functions: [
+          {
+            name: "create_generation()",
+            file: "app/api/generation.py (บรรทัด 1718-1728)",
+            desc: "Router Handler รับ Parameters, สั่งสร้างงาน, แอด Background Task และส่ง Response"
+          },
+          {
+            name: "create_generation_job(db, user_id, data)",
+            file: "app/services/generation.py (บรรทัด 2020-2057)",
+            desc: "แปลง Path รูปภาพ (img2img/inpaint), สร้างโมเดล Generation, สั่ง db.add(), db.commit(), db.refresh()"
+          },
+          {
+            name: "background_tasks.add_task(process_generation_task)",
+            file: "app/api/generation.py (บรรทัด 1720)",
+            desc: "ส่งมอบงานให้ ASGI Background Worker รันแบบอะซิงโครนัสเพื่อติดต่อ AI Node ในภายหลัง"
+          }
+        ],
+        codePath: "Project/app/api/generation.py",
+        codeSnippet: `@router.post("", response_model=GenerationResponse, status_code=201)
+def create_generation(
+    data: GenerationCreate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # 1. บันทึกลงตาราง generations (status: pending)
+    new_job = generation_service.create_generation_job(db=db, user_id=current_user.id, data=data)
+    
+    # 2. ปล่อยให้ Background Task ส่งงานต่อให้ AI Server
+    background_tasks.add_task(generation_service.process_generation_task, generation_id=new_job.id)
+    
+    # 3. ตอบกลับ 201 Created ทันที (Non-blocking)
+    return GenerationResponse.model_validate(new_job)`,
+        httpBadge: "HTTP 201 CREATED (Immediate Response)",
+        inbound: `DB Insertion Payload:
+INSERT INTO generations (
+  id, user_id, status, prompt, steps, width, height, created_at
+) VALUES (
+  'b7e289c1-4d1a-47fa...', '4a71f008...', 'pending', 
+  'Cyberpunk cat astronaut', 25, 512, 512, '2026-09-23 14:00:00'
+);`,
+        outbound: `HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "id": "b7e289c1-4d1a-47fa-842c-f60fa69db432",
+  "status": "pending",
+  "prompt": "Cyberpunk cat astronaut, 8k",
+  "steps": 25,
+  "created_at": "2026-09-23T14:00:00Z",
+  "image_url": null
+}`,
+        secIcon: "⚡",
+        secTitle: "Non-blocking Asynchronous Dispatch",
+        secBody: "หัวใจสำคัญของสถาปัตยกรรมนี้คือการไม่ให้ Client รอจนกว่า GPU จะวาดรูปเสร็จ เพราะอาจใช้เวลาหลายสิบวินาที การคืน 201 Created พร้อม UUID ภายใน 15ms ช่วยให้ระบบรองรับ Concurrent Requests ได้มหาศาลโดยไม่มี Connection Timeout",
+        secPill: "Feature: Non-blocking Fast Response"
+      },
+
+      5: {
+        tag: "STEP 5 • AI WORKER DISPATCH & GPU INFERENCE",
+        icon: "🤖",
+        title: "ส่งงานไปให้ AI Worker ประมวลผลบน GPU",
+        dbStatus: "อัปเดตเป็น 'processing'",
+        dbBadgeColor: "bg-indigo-500",
+        description: "Background Task เริ่มทำงาน: เปิด Database Session ใหม่ อัปเดตสถานะงานเป็น 'processing' จากนั้นส่งคำขอผ่าน HTTP POST ไปยัง AI Worker (พอร์ต 8001) พร้อมระบุ URL สำหรับยิง Webhook Callback กลับ",
+        functions: [
+          {
+            name: "process_generation_task(generation_id)",
+            file: "app/services/generation.py (บรรทัด 2062-2075)",
+            desc: "อัปเดตสถานะเป็น 'processing' และตัดสินใจเลือกโหมด (Direct Mode หรือ Callback Mode)"
+          },
+          {
+            name: "httpx.post(settings.AI_SERVER_CALLBACK_URL)",
+            file: "app/services/generation.py",
+            desc: "ส่ง Payload ไปยัง AI Worker พร้อมแนบ Header ความลับ X-LUMA-INTERNAL-SECRET"
+          },
+          {
+            name: "generate_callback() [AI Worker]",
+            file: "mock_ai_server.py (บรรทัด 272-296)",
+            desc: "AI Server ตรวจ Header, ตอบ 202 Accepted ทันที และส่งต่อให้ GPU Worker คิวรันโมเดล"
+          }
+        ],
+        codePath: "Project/app/services/generation.py",
+        codeSnippet: `# โหมด Callback (Production)
+generation.status = GenerationStatus.PROCESSING.value
+db.commit()
+
+payload = {
+    "task_id": str(generation.id),
+    "prompt": generation.prompt,
+    "width": generation.width,
+    "height": generation.height,
+    "steps": generation.steps,
+    "callback_url": settings.BACKEND_CALLBACK_URL  # http://localhost:8000/api/callback
+}
+headers = {"X-LUMA-INTERNAL-SECRET": settings.AI_CALLBACK_SECRET}
+
+# ยิงบอก AI Worker ให้เริ่มคำนวณ GPU
+res = httpx.post("http://localhost:8001/ai/generate", json=payload, headers=headers, timeout=30.0)`,
+        httpBadge: "POST http://localhost:8001/ai/generate",
+        inbound: `Dispatch to AI Worker (Port 8001):
+Headers:
+  X-LUMA-INTERNAL-SECRET: **********
+Body:
+{
+  "task_id": "b7e289c1-4d1a-47fa-842c-f60fa69db432",
+  "prompt": "Cyberpunk cat astronaut, 8k",
+  "width": 512, "height": 512, "steps": 25,
+  "callback_url": "http://localhost:8000/api/callback"
+}`,
+        outbound: `HTTP/1.1 202 Accepted (From AI Worker)
+{
+  "task_id": "b7e289c1-4d1a-47fa-842c-f60fa69db432",
+  "status": "accepted",
+  "queue_position": 1,
+  "message": "txt2img task queued in Mock AI Server"
+}`,
+        secIcon: "🔒",
+        secTitle: "Internal Secret Authentication",
+        secBody: "การเชื่อมต่อระหว่าง Backend Core และ AI GPU Cluster มีการใช้ Shared Secret Header (X-LUMA-INTERNAL-SECRET) กำกับเสมอ เพื่อป้องกันไม่ให้บุคคลภายนอกสามารถแอบยิงคำสั่งเข้า GPU Node โดยตรง",
+        secPill: "Feature: Node-to-Node Shared Secret"
+      },
+
+      6: {
+        tag: "STEP 6 • WEBHOOK CALLBACK & ATOMIC DISK WRITE",
+        icon: "🔄",
+        title: "รับผลลัพธ์ผ่าน Webhook Callback & บันทึกภาพลงดิสก์",
+        dbStatus: "อัปเดตเป็น 'completed'",
+        dbBadgeColor: "bg-emerald-500",
+        description: "เมื่อ GPU ประมวลผลเสร็จสิ้น AI Server จะยิง HTTP POST กลับมาที่ /callback หรือ /api/callback ของ Backend พร้อมข้อมูลภาพ Base64 ระบบจะตรวจ Secret, เช็ก Idempotency, ถอดรหัสภาพ และเขียนไฟล์ลงดิสก์แบบ Atomic Write ก่อนปรับสถานะ DB เป็น 'completed'",
+        functions: [
+          {
+            name: "verify_callback_secret(header)",
+            file: "app/api/callback.py (บรรทัด 16-31)",
+            desc: "ตรวจสอบว่า X-LUMA-INTERNAL-SECRET ตรงกับค่าใน .env หรือไม่ หากไม่ตรง ปฏิเสธด้วย 403 Forbidden"
+          },
+          {
+            name: "process_ai_callback(db, payload)",
+            file: "app/services/generation.py (บรรทัด 1813-1835)",
+            desc: "เช็กงานซ้ำ (Idempotency), บันทึกไฟล์ภาพแบบ Atomic Swap (.tmp -> .png), อัปเดต DB เป็น completed"
+          },
+          {
+            name: "temp_path.replace(file_path)",
+            file: "app/services/generation.py (บรรทัด 1832)",
+            desc: "คำสั่ง OS-level Atomic Operation เพื่อสลับไฟล์ชั่วคราวเป็นชื่อจริง ป้องกันไฟล์เสียหาย"
+          }
+        ],
+        codePath: "Project/app/api/callback.py",
+        codeSnippet: `@router.post("/api/callback")
+@router.post("/callback")
+def ai_callback(
+    payload: AICallbackPayload,
+    response: Response,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_callback_secret),
+):
+    # ป้องกันงานซ้ำ + ถอด Base64 + บันทึก Atomic Write (.tmp -> .png) + อัปเดต DB
+    status_code, callback_res = generation_service.process_ai_callback(db=db, payload=payload)
+    response.status_code = status_code
+    return callback_res`,
+        httpBadge: "POST /api/callback (From AI Worker)",
+        inbound: `Incoming Webhook Payload:
+Headers:
+  X-LUMA-INTERNAL-SECRET: **********
+Body:
+{
+  "task_id": "b7e289c1-4d1a-47fa-842c-f60fa69db432",
+  "status": "completed",
+  "image_base64": "iVBORw0KGgoAAAANSUhEUgAA...",
+  "generation_time": 1.2
+}`,
+        outbound: `// 1. Write file to: outputs/{user_id}/{gen_id}.tmp
+// 2. Atomic Swap: temp.replace(final_path)
+// 3. Database Update:
+UPDATE generations SET
+  status = 'completed',
+  output_path = 'outputs/4a71f008.../b7e289c1....png',
+  completed_at = '2026-09-23 14:00:02',
+  duration_seconds = 1.2
+WHERE id = 'b7e289c1...';`,
+        secIcon: "🛡️",
+        secTitle: "Atomic Swap & Idempotent Guard",
+        secBody: "การเขียนไฟล์ภาพลงไฟล์ .tmp ก่อนแล้วใช้ OS Atomic Swap สลับชื่อไฟล์ ช่วยตัดปัญหา Race Condition เมื่อ Frontend เปิดดูภาพในเสี้ยววินาทีเดียวกัน นอกจากนี้ยังมี Idempotency Guard หาก AI ยิง Webhook ซ้ำ ระบบจะตอบ 200 OK (duplicate: true) โดยไม่เขียนไฟล์ทับ",
+        secPill: "Feature: Atomic Swap & Idempotency"
+      },
+
+      7: {
+        tag: "STEP 7 • POLLING, STATUS & IMAGE DELIVERY",
+        icon: "🖼️",
+        title: "การดึงผลลัพธ์และเสิร์ฟไฟล์ภาพให้ผู้ใช้",
+        dbStatus: "งานสมบูรณ์ ('completed')",
+        dbBadgeColor: "bg-emerald-500",
+        description: "ฝั่งหน้าบ้านทำการ Polling สถานะงานเรื่อยๆ ผ่าน GET /generations/{id} เมื่อสถานะเปลี่ยนเป็น 'completed' Pydantic จะคำนวณลิงก์ image_url ให้อัตโนมัติ หน้าบ้านจึงส่งคำขอ GET /generations/{id}/image เพื่อดึงไฟล์ภาพจริงมาแสดงผลบนหน้าจอ",
+        functions: [
+          {
+            name: "get_generation_by_id(db, user_id, id)",
+            file: "app/services/generation.py (บรรทัด 1738-1744)",
+            desc: "ตรวจสิทธิ์ Data Isolation (user_id == current_user.id) และตรวจ Auto-timeout 5 นาที หากไม่พบ คืน 404"
+          },
+          {
+            name: "@computed_field image_url",
+            file: "app/schemas/generation.py",
+            desc: "หากงานสถานะ 'completed' จะประกอบ URL '/generations/{id}/image' ส่งให้หน้าบ้านอัตโนมัติ"
+          },
+          {
+            name: "get_generation_image()",
+            file: "app/api/generation.py (บรรทัด 1782-1789)",
+            desc: "ตรวจสอบ Magic Bytes ของไฟล์จริงเพื่อตั้งค่า Content-Type แล้วส่งภาพกลับเป็น FileResponse"
+          }
+        ],
+        codePath: "Project/app/api/generation.py",
+        codeSnippet: `@router.get("/{generation_id}/image")
+def get_generation_image(
+    generation_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # ตรวจความเป็นเจ้าของงาน (Data Isolation)
+    generation = generation_service.get_generation_by_id(db, current_user.id, generation_id)
+    file_path = Path(generation.output_path)
+    
+    # ตรวจ Magic Bytes จริงเพื่อตั้ง Content-Type (image/png)
+    media_type = _detect_media_type(file_path)
+    return FileResponse(file_path, media_type=media_type)`,
+        httpBadge: "GET /generations/{id}/image",
+        inbound: `Client Polling:
+GET /generations/b7e289c1-4d1a-47fa... HTTP/1.1
+Authorization: Bearer <token>
+
+Follow-up Request:
+GET /generations/b7e289c1-4d1a-47fa.../image
+Authorization: Bearer <token>`,
+        outbound: `HTTP/1.1 200 OK
+Content-Type: image/png
+Content-Length: 1048576
+Cache-Control: private, max-age=86400
+
+<Binary Image Stream (PNG Image Data)>
+// ภาพแสดงบนหน้าจอของผู้ใช้อย่างสมบูรณ์! 🎨`,
+        secIcon: "🔒",
+        secTitle: "Strict Data Isolation & Magic Byte Typing",
+        secBody: "เพื่อป้องกันไม่ให้ผู้ใช้แอบเดา UUID เพื่อดาวน์โหลดภาพของผู้อื่น ระบบจะตรวจสอบความสัมพันธ์ของ user_id เสมอ และตอบกลับด้วย 404 Not Found (แทนที่จะเป็น 403) ทำให้แฮกเกอร์ไม่สามารถตรวจสอบได้ว่ามีภาพ ID ดังกล่าวอยู่ในระบบหรือไม่",
+        secPill: "Feature: Blind 404 Data Isolation"
+      }
+    };
+
+    function renderStep(step) {
+      currentStep = step;
+      const data = stepData[step];
+
+      // Update Header Text & Badge
+      document.getElementById('stepTag').innerText = data.tag;
+      document.getElementById('stepIconBadge').innerText = data.icon;
+      document.getElementById('stepTitle').innerText = data.title;
+      document.getElementById('stepDescription').innerText = data.description;
+      document.getElementById('stepCounterText').innerText = `ขั้นตอนที่ ${step} จาก 7`;
+
+      // Update DB Status Pill
+      const dbStatusEl = document.getElementById('stepDbStatus');
+      dbStatusEl.innerHTML = `<span class="w-2 h-2 rounded-full ${data.dbBadgeColor}"></span> สถานะ DB: <span class="text-white font-mono font-bold">${data.dbStatus}</span>`;
+
+      // Render Functions List
+      const fnContainer = document.getElementById('functionList');
+      fnContainer.innerHTML = '';
+      data.functions.forEach(fn => {
+        const item = document.createElement('div');
+        item.className = 'p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80 hover:border-indigo-500/30 transition-all';
+        item.innerHTML = `
+          <div class="flex items-center justify-between mb-1">
+            <span class="font-mono font-bold text-indigo-400">${fn.name}</span>
+            <span class="text-[10px] text-slate-400 font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-800">${fn.file}</span>
+          </div>
+          <p class="text-slate-300 text-xs leading-relaxed">${fn.desc}</p>
+        `;
+        fnContainer.appendChild(item);
+      });
+
+      // Render Code Snippet
+      document.getElementById('codeFilePath').innerText = data.codePath;
+      document.getElementById('codeSnippet').innerText = data.codeSnippet;
+
+      // Render Payloads
+      document.getElementById('httpBadge').innerText = data.httpBadge;
+      document.getElementById('inboundPayload').innerText = data.inbound;
+      document.getElementById('outboundPayload').innerText = data.outbound;
+
+      // Render Security Card
+      document.getElementById('securityIcon').innerText = data.secIcon;
+      document.getElementById('securityTitle').innerText = data.secTitle;
+      document.getElementById('securityBody').innerText = data.secBody;
+      document.getElementById('securityPill').innerText = data.secPill;
+
+      // Update Tabs Style
+      document.querySelectorAll('.step-tab').forEach((tab, index) => {
+        if (index + 1 === step) {
+          tab.classList.add('step-active');
+        } else {
+          tab.classList.remove('step-active');
+        }
+      });
+
+      // Update Prev / Next Buttons state
+      document.getElementById('btnPrev').disabled = (step === 1);
+      document.getElementById('btnPrev').style.opacity = (step === 1) ? '0.4' : '1';
+      document.getElementById('btnNext').innerText = (step === 7) ? '🎉 เสร็จสมบูรณ์ (ดูรอบใหม่)' : 'ถัดไป →';
+    }
+
+    function goToStep(step) {
+      renderStep(step);
+    }
+
+    function nextStep() {
+      if (currentStep < 7) {
+        renderStep(currentStep + 1);
+      } else {
+        renderStep(1);
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 1) {
+        renderStep(currentStep - 1);
+      }
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      const btnCallback = document.getElementById('btnModeCallback');
+      const btnDirect = document.getElementById('btnModeDirect');
+
+      if (mode === 'callback') {
+        btnCallback.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-indigo-600 text-white shadow-md';
+        btnDirect.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 text-slate-400 hover:text-white';
+        alert('โหมด Callback: AI Worker ทำงานแบบ Asynchronous และส่งผลลัพธ์ผ่าน Webhook POST /api/callback (เหมาะสำหรับ Production)');
+      } else {
+        btnDirect.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-indigo-600 text-white shadow-md';
+        btnCallback.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 text-slate-400 hover:text-white';
+        alert('โหมด Direct: Backend จะเปิด Connection รอผลลัพธ์ Base64 กลับมาในคำขอเดียวกันทันที (เหมาะสำหรับ Local Dev / Unit Test)');
+      }
+    }
+
+    // Keyboard navigation (ArrowLeft, ArrowRight)
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') nextStep();
+      if (e.key === 'ArrowLeft') prevStep();
+    });
+
+    // Initialize first step
+    renderStep(1);
+  </script>
+</body>
+</html>
