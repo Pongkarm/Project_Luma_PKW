@@ -30,6 +30,13 @@
   width: 100%;
 }
 
+/* The recent results wrap onto a second line rather than scroll sideways:
+   nothing has to be discovered by swiping, on any width. */
+.studio-empty .runstrip__row {
+  flex-wrap: wrap;
+  overflow-x: visible;
+}
+
 /* Over the picture while a tool runs, so the image being worked on stays
    visible and the wait is attached to it. */
 .studio-busy {
@@ -287,6 +294,7 @@
 }
 
 .quickbar__swatch {
+  position: relative;
   width: 18px;
   height: 18px;
   padding: 0;
@@ -294,6 +302,13 @@
   border: 2px solid var(--panel);
   box-shadow: 0 0 0 1px var(--line-strong);
   cursor: pointer;
+}
+
+/* A hit area a little larger than the dot, so it is not a pixel hunt. */
+.quickbar__swatch::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
 }
 
 .quickbar__swatch--green {
@@ -372,5 +387,29 @@
 
   .studio .result__meta {
     display: none;
+  }
+}
+
+/* Fingers, not a pointer: the studio's own small controls grow to something a
+   thumb can hit. The app's other 28px buttons are left as the app has them. */
+@media (width <= 767px) {
+  .quickbar .btn {
+    min-height: 36px;
+  }
+
+  .quickbar__group {
+    gap: var(--sp-10);
+  }
+
+  /* 26px dots, each hit area 36px, with the gap keeping the two apart. */
+  .quickbar__swatch {
+    width: 26px;
+    height: 26px;
+  }
+
+  /* Taller to press, same place on screen. */
+  .studio .controls .linklike {
+    padding: var(--sp-10) 0;
+    margin: calc(-1 * var(--sp-10)) 0;
   }
 }
