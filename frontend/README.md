@@ -22,6 +22,7 @@ npm run dev               # http://localhost:5173
 | `npm run build` | Type-check (`tsc -b`) then production build into `dist/` |
 | `npm run preview` | Serve the production build locally |
 | `npm run lint` | oxlint |
+| `npm run check` | Everything above plus stylelint and the tests — run this before a commit |
 
 `VITE_API_BASE_URL` is the **only** place the backend's origin is written down:
 
@@ -52,6 +53,17 @@ is saved.
 **History** — paginated runs with status, full parameters, prompt copying, full-size viewing,
 and deletion. A run that has not finished can be stopped from the stage; the record is kept.
 
+**Studio** (`/studio`) — four image tools from the backend's `/api/tools`: pencil sketch,
+colour splash (keep green or red), pose landmarks and background removal. Each result becomes
+a new version in a strip along the bottom, so any earlier step is one tap away; a before/after
+slider compares a version with the one it was made from. A cut-out's mask can be taken straight
+to Inpaint with the background (or the subject) already painted. Versions live in memory only
+and the page says so — save one, or use it as a source, to keep it.
+
+**Quick edit** — the same four tools under every finished result, one click each with default
+settings, changing the picture in place. It shares the studio's versions, so "More in Studio"
+carries on from where the bar left off.
+
 **Account** — profile with editing (username, email, password), theme, language, sign out.
 
 **Both languages** — the whole interface in English and Thai, switchable from the top bar or
@@ -62,19 +74,50 @@ Account. Prompt text stays English; see the note below.
 ## How it is put together
 
 ```text
+frontend/
+  src/                the app — everything below
+  tools/              browser checks (headless Chrome sweeps), see tools/README.md
+  index.html, *.config.ts, tsconfig*.json, package.json   build and tool settings
+  dist/, node_modules/                                     generated; not in git
+
 src/
+  main.tsx      entry point: loads the stylesheets, mounts <App />
   app/          routes, guards, error boundary, query client
   config/       base URL, parameter limits, model list, polling, i18n dictionary
   contracts/    request/response types mirrored from the backend's Pydantic schemas
-  services/     apiClient + auth · user · upload · generation · system
-  shared/       tokens, primitives, hooks, formatting
-  features/
+  services/     apiClient + auth · user · upload · generation · tools · system · admin
+  shared/
+    ui/         buttons, fields, sliders, dialogs, drop zone, icons, image viewer
+    hooks/      translation, media queries, authed images, page title, timers
+    stores/     preferences (theme, language, panel state)
+    styles/     tokens.css · base.css · ui.css · layout.css · studio.css
+    utils/      formatting, JWT expiry
+  features/     one folder per page or area
     auth/       sign-in, register, session store, expired-session dialog
-    generate/   workspace shell, mode fields, upload, canvas/, run/, presets
+    generate/   workspace shell, mode fields, upload/, canvas/ (mask), run/ (result stage)
+    studio/     the studio page, tool panel, versions, compare, quick-edit bar
     history/    list, run detail
-    account/
-    layout/     app shell, rail, engine indicator
+    account/    profile
+    admin/      admin console: overview, users, audit, roles
+    layout/     app shell, rail, tab bar, engine indicator
+  __tests__/    unit tests (vitest), one file per area
 ```
+
+### Where to look
+
+| To change… | Look in |
+|---|---|
+| Any text on screen, in either language | `src/config/i18n.ts` — both languages side by side |
+| A limit (prompt length, steps, sizes, sketch line softness) | `src/config/limits.ts` |
+| What a request sends or a response contains | `src/contracts/` — the field names live only here |
+| How an endpoint is called | `src/services/` — one file per area of the API |
+| A page | `src/features/<page>/` — the page file is named after it (`StudioPage.tsx`, …) |
+| Something shared by several pages (a button, the drop zone) | `src/shared/ui/` |
+| Colours, spacing, fonts | `src/shared/styles/tokens.css` |
+| Layout of the shell, the Generate page or History | `src/shared/styles/layout.css` |
+| Layout of the studio or the quick-edit bar | `src/shared/styles/studio.css` |
+| The backend's address | `.env` → `VITE_API_BASE_URL` |
+| A test | `src/__tests__/` — `studio.test.ts`, `tools.test.ts`, … |
 
 Two decisions worth knowing:
 
@@ -95,6 +138,8 @@ Two decisions worth knowing:
 | Draft store | prompt, settings, uploaded image | reload, failed run, expired session |
 | Server cache (TanStack Query) | runs, job status, profile | nothing |
 | Preferences | theme, last mode, panel state, model | per device, forever |
+| Studio store | the studio's versions (images in memory) | moving between pages, not a reload |
+| Mask hand-off | a cut-out's mask on its way to the Inpaint canvas | until the canvas takes it |
 
 Authentication never lives in a component. One store owns the token, one interceptor turns a
 401 into the expired-session dialog, and one guard decides what a signed-out visitor may see.
@@ -125,8 +170,8 @@ decides how a translation step should work, which would have to live in the AI n
 
 ## Backend endpoints this build expects
 
-All of these are on `origin/backend` as of 7 Sep 2026, and on `origin/beta`,
-where all four node branches were merged.
+All of these are on `origin/backend` — the first five since 7 Sep 2026, the tools since
+28 Sep (`37d1196`).
 
 | Endpoint | Used for |
 |---|---|
@@ -135,9 +180,12 @@ where all four node branches were merged.
 | `POST /generations/{id}/cancel` | Stopping a run that has not finished |
 | `GET /generations/{id}/progress` | Queue position and live step count, proxied from the AI node |
 | `PATCH /auth/me` | Changing username, email or password |
+| `POST /api/tools/{sketch,color-splash,pose,remove-bg}` | The studio and the quick-edit bar; the image always goes as the multipart `file` |
+| `GET /api/tools/results/{filename}` | Fetching a tool's output |
 
 Each still degrades rather than breaking when absent: the model pickers fall back to the
 bundled list, and delete or profile changes report the failure instead of appearing to succeed.
+A 404 from the tools says the studio is not on that server yet, as a note rather than an error.
 That behaviour is worth keeping — it is what let this build ship against a backend that did
 not have them yet.
 
@@ -193,7 +241,8 @@ The tests cover the logic that has actually broken here rather than aiming at a
 coverage number: engine limits and dimension snapping, which caused a real 422;
 the callback-mode field mirror; dictionary parity between the two languages,
 which used to be checked by hand after every copy change; date and duration
-formatting; and the password rules.
+formatting; the password rules; and, for the studio, the checks on tool result URLs before
+a token is sent to them, the odd-only sketch kernel, the mask conversion and the version store.
 
 ## Notes on the API this was built against
 
@@ -278,3 +327,8 @@ Desktop is the three-column shape. Below 1100px the controls become a sheet unde
 because a 372px panel and a usable image cannot both fit. Below 768px the rail becomes a tab
 bar and inpaint reports that it needs a larger screen instead of opening a canvas nobody can
 be accurate on.
+
+The studio follows the same rule on a phone: the tool panel is a shorter sheet so the picture
+stays visible, the version strip stays (it is the studio's undo), and the hand-off to Inpaint is
+offered but disabled with the reason shown. Its own small controls — the splash swatches, the
+quick-edit buttons — grow to at least a 36px hit area below 768px.
