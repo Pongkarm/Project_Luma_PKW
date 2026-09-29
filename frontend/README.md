@@ -24,12 +24,85 @@ npm run dev               # http://localhost:5173
 | `npm run lint` | oxlint |
 | `npm run check` | Everything above plus stylelint and the tests — run this before a commit |
 
-`VITE_API_BASE_URL` is the **only** place the backend's origin is written down:
+`VITE_API_BASE_URL` is the **only** place the backend's origin is written down. The dev server
+restarts by itself when `.env` changes. To try another backend without touching the file, set
+it for one run — a value given this way wins over `.env` for as long as that server runs:
 
+```bash
+VITE_API_BASE_URL=http://localhost:8000 npm run dev
 ```
-VITE_API_BASE_URL=http://localhost:8000       # local backend
-VITE_API_BASE_URL=http://192.168.1.20:8000    # the team's LAN node
+
+## Connecting to a backend
+
+The top bar says **Online** when the backend answered, **Backend unreachable** when it did not.
+Before blaming the frontend, ask the backend directly from the same machine:
+
+```bash
+curl http://<backend-ip>:8000/healthz
+# {"status":"healthy", ..., "database":"connected"}
 ```
+
+If that fails, the problem is between the two machines, not in this app.
+
+### Another teammate's backend on the same network
+
+1. **Find the backend machine's current IP** on that machine. It changes whenever the Wi-Fi or
+   hotspot changes, which is the usual reason a working setup stops working:
+   `ipconfig getifaddr en0` on macOS, `ipconfig` on Windows (the IPv4 address).
+2. **The backend has to listen on the network, not just on itself.** Plain
+   `uvicorn main:app` binds to `127.0.0.1` and nobody else can reach it; start it with
+   `--host 0.0.0.0`, as the backend README does. A firewall prompt on Windows has to be allowed.
+3. Put `http://<that-ip>:8000` in `.env`.
+
+CORS needs nothing: the backend allows every origin.
+
+### The whole stack on one machine
+
+For working on the frontend without a teammate's machine, run the backend yourself against
+`mock_ai_server.py`, which stands in for the GPU node and returns a placeholder image.
+
+```bash
+git clone -b backend https://github.com/Pongkarm/Project_Luma_PKW.git ~/luma-backend
+cd ~/luma-backend
+uv venv -p 3.10 .venv        # 3.10 like the Dockerfile — mediapipe 0.10.14 will not install above 3.12
+uv pip install -p .venv/bin/python -r requirements.txt
+
+# PostgreSQL on 5433, kept inside the clone
+initdb -D ./pgdata -U luma -A trust
+pg_ctl -D ./pgdata -o "-p 5433" -l pg.log start
+createdb -h localhost -p 5433 -U luma luma_db
+
+cp .env.example .env
+```
+
+In the backend's `.env`, set `DATABASE_URL=postgresql://luma@localhost:5433/luma_db`, and give
+`SECRET_KEY` and `AI_CALLBACK_SECRET` each a fresh value from
+`python3 -c "import secrets; print(secrets.token_urlsafe(64))"` — the backend refuses to start
+with a placeholder, a secret under 32 characters, or one that has leaked before.
+`ADMIN_BOOTSTRAP_EMAIL` makes the account with that email the first owner once it registers
+and the backend restarts.
+
+Then, in three terminals:
+
+```bash
+cd ~/luma-backend && .venv/bin/python -m uvicorn mock_ai_server:app --port 8001   # fake AI node
+cd ~/luma-backend && .venv/bin/python -m uvicorn main:app --port 8000             # backend
+VITE_API_BASE_URL=http://localhost:8000 npm run dev                                # this app
+```
+
+A new database has no accounts; register one from the sign-in page. After `git pull` on the
+backend, run the `uv pip install` line again if `requirements.txt` changed.
+
+### When it does not connect
+
+| You see | Usually means |
+|---|---|
+| **Backend unreachable**, and `curl …/healthz` fails too | Wrong or stale IP, backend bound to `127.0.0.1`, or a firewall |
+| **Backend unreachable**, but `curl` works | `npm run dev` was started with `VITE_API_BASE_URL=…` in front, which overrides `.env` |
+| The session-expired dialog straight after switching backends | The saved token was signed by the other backend's `SECRET_KEY` — sign in again |
+| The studio says its tools are not on this server | That backend predates `/api/tools` (`37d1196`); pull `origin/backend` |
+| The backend will not start: secret rejected | `SECRET_KEY` / `AI_CALLBACK_SECRET` still the example value or too short |
+| `pip install` fails on `mediapipe` | Python newer than 3.12; make the venv with 3.10 |
 
 ---
 
@@ -171,7 +244,7 @@ decides how a translation step should work, which would have to live in the AI n
 ## Backend endpoints this build expects
 
 All of these are on `origin/backend` — the first five since 7 Sep 2026, the tools since
-28 Sep (`37d1196`).
+28 Sep (`37d1196`), in their current form since 29 Sep (`f8312a5`).
 
 | Endpoint | Used for |
 |---|---|
@@ -182,6 +255,20 @@ All of these are on `origin/backend` — the first five since 7 Sep 2026, the to
 | `PATCH /auth/me` | Changing username, email or password |
 | `POST /api/tools/{sketch,color-splash,pose,remove-bg}` | The studio and the quick-edit bar; the image always goes as the multipart `file` |
 | `GET /api/tools/results/{filename}` | Fetching a tool's output |
+
+What the tools accept, as of `f8312a5`:
+
+- **The image only as `file`.** `image_url` was removed — it let a signed-in user make the
+  server read any file on its disk. This app never sent it.
+- **At most 10 MB and 4096 px on the long side**, or 413. The upload limits in
+  `config/limits.ts` are the same numbers.
+- **`blur_ksize` 3–51** (an even value is rounded up) and **`target_color` `green` or `red`**,
+  or 422. The sketch slider keeps to 15–31, inside that range.
+- **Two tools at a time** run in a worker pool beside the server, so one cut-out no longer
+  stalls every other request. A cut-out of a 512 px image takes about 0.2 s; one that runs past
+  60 s answers 504.
+- When the backend starts, it deletes tool results older than 24 hours. Save anything worth
+  keeping.
 
 Each still degrades rather than breaking when absent: the model pickers fall back to the
 bundled list, and delete or profile changes report the failure instead of appearing to succeed.
