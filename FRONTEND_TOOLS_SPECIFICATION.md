@@ -1,8 +1,8 @@
 # LUMA Creative Studio (Image Processing Tools): Technical Specification & Frontend Contract
 
-> **วันที่จัดทำ:** 27 กันยายน 2026 (ปรับปรุงล่าสุด: 28 กันยายน 2026)  
+> **วันที่จัดทำ:** 27 กันยายน 2026 (ปรับปรุงล่าสุด: 29 กันยายน 2026 ตาม Feedback Frontend)  
 > **ผู้ออกแบบ / สถาปนิก:** Backend & Image Processing Team  
-> **เวอร์ชัน:** 1.0.1  
+> **เวอร์ชัน:** 1.1.0  
 > **ระบบเป้าหมาย:** Frontend Client (PC1) เชื่อมต่อมายัง Backend (`http://192.168.1.20:8000`, `http://172.20.10.6:8000` หรือ `http://localhost:8000`)
 
 ---
@@ -12,17 +12,17 @@
 ### วัตถุประสงค์หลัก:
 จัดทำชุดเครื่องมือประมวลผลและตกแต่งภาพแบบคลาสสิก (Classical Image Processing Suite) จำนวน 4 ฟังก์ชันสำหรับแท็บ **"Post-Processing & Creative Studio"** บนหน้าเว็บ LUMA เพื่อต่อยอดจากภาพที่ AI เพิ่งสร้างเสร็จ (Generated Image) หรือภาพที่ผู้ใช้อัปโหลดเข้ามาใหม่ โดยใช้สูตรคณิตศาสตร์และอัลกอริทึมจากรายวิชา Image Processing (Lecture 3, 8, 9, 10, 11)
 
-### ขอบเขตการทำงาน (In-Scope):
+### ขอบเขตการทำงาน (In-Scope - v1.1.0 Optimized):
 1. **👤 คนที่ 1: MediaPipe Pose Landmark Detection (`POST /api/tools/pose`)**  
    สกัดโครงร่างกระดูกและข้อต่อ 33 จุด วาด Overlay ลงบนภาพ พร้อมคืนพิกัด JSON (x, y, z, visibility) หากไม่พบคนในภาพจะตอบ `200 OK` พร้อม `landmarks: []`
 2. **✏️ คนที่ 2: Artistic Pencil Sketch & Line-Art (`POST /api/tools/sketch`)**  
-   แปลงภาพสีเป็นภาพวาดลายเส้นดินสอขาวดำด้วยเทคนิค Color Dodge Blend รองรับพารามิเตอร์ `blur_ksize` (15–31 เลขคี่)
+   แปลงภาพสีเป็นภาพวาดลายเส้นดินสอขาวดำด้วยเทคนิค Color Dodge Blend รองรับพารามิเตอร์ `blur_ksize` (3–51 เลขคี่)
 3. **🎨 คนที่ 3: Color Splash & Mood Tint Filter (`POST /api/tools/color-splash`)**  
-   ดูดเฉพาะสีเด่นตาม Color Space HSV (รองรับ 'green' และ 'red') และปรับส่วนที่เหลือเป็นขาวดำ
+   ดูดเฉพาะสีเด่นตาม Color Space HSV (รองรับ 'green' และ 'red' ค่าอื่นตอบ 422) และปรับส่วนที่เหลือเป็นขาวดำ
 4. **✂️ คนที่ 4: Smart Background Removal & Auto-Mask (`POST /api/tools/remove-bg`)**  
-   ตัดฉากหลังอัตโนมัติด้วย GrabCut + Morphology Close คืนทั้งภาพโปร่งใส (RGBA PNG) และภาพ Binary Mask (ขาว-ดำ: ขาว=ตัวแบบ, ดำ=ฉากหลัง) สำหรับ Inpainting Canvas
+   ตัดฉากหลังอัตโนมัติด้วย Multiscale GrabCut + Morphology Close คืนทั้งภาพโปร่งใส (RGBA PNG) และภาพ Binary Mask (ขาว-ดำ: ขาว=ตัวแบบ, ดำ=ฉากหลัง) สำหรับ Inpainting Canvas (ความเร็วเฉลี่ย < 1 วินาที)
 5. **🖼️ Image Result Server (`GET /api/tools/results/{filename}`)**  
-   เสิร์ฟภาพผลลัพธ์จากเซิร์ฟเวอร์แบบ Static Streaming รองรับ Header `Authorization` และตั้งค่า Cache Header 24 ชั่วโมง
+   เสิร์ฟภาพผลลัพธ์จากเซิร์ฟเวอร์แบบ Static Streaming รองรับ Header `Authorization` และตั้งค่า Cache Header 24 ชั่วโมง พร้อมระบบล้างไฟล์เก่าอัตโนมัติ
 
 ---
 
@@ -32,18 +32,19 @@
 sequenceDiagram
     autonumber
     actor User as 👤 ผู้ใช้งาน (Frontend)
-    participant UI as 🖥️ Result Stage / QuickEditBar
-    participant API as ⚡ FastAPI Backend (/api/tools/*)
-    participant Engine as 🖼️ OpenCV / MediaPipe Engine
+    participant UI as 🖥️ Result Stage / Studio
+    participant API as ⚡ FastAPI Event Loop (/api/tools/*)
+    participant Worker as 🧵 ThreadPool Worker (Semaphore: 2)
     participant Disk as 💾 Storage (outputs/tools/)
 
     User->>UI: คลิกเลือกเครื่องมือ (เช่น Pencil Sketch หรือ Remove BG)
     UI->>API: POST /api/tools/{tool} (Bearer Token + Multipart file: source.png)
-    Note over API: ตรวจสอบ JWT Auth & Decode Magic Bytes
-    API->>Engine: ส่ง BGR/RGB Image Array เข้าประมวลผล
-    Engine->>Engine: รัน Algorithm (GrabCut / Color Dodge / HSV / Pose)
-    Engine->>Disk: บันทึกภาพผลลัพธ์แบบ UUIDv4 ลง outputs/tools/
-    Disk-->>API: ได้ Relative URL เช่น /api/tools/results/xxx.png
+    Note over API: ตรวจสอบ Auth, ขนาดไฟล์ (<= 10MB)
+    API->>Worker: มอบหมายงาน CPU-bound เข้า ThreadPool แยก (ไม่บล็อก Event Loop)
+    Worker->>Worker: Decode Magic Bytes, เช็คขนาด (<= 4096px), รัน Engine
+    Worker->>Disk: บันทึกภาพผลลัพธ์แบบ UUIDv4 ลง outputs/tools/
+    Disk-->>Worker: ได้ Relative URL เช่น /api/tools/results/xxx.png
+    Worker-->>API: คืนค่าผลลัพธ์พร้อม Metadata
     API-->>UI: ส่งคืน JSON Response { success, result_image_url, metadata }
     UI->>UI: อัปเดตพรีวิวรูปภาพบนหน้าจอทันที
     opt กรณีเป็น Remove BG
@@ -65,6 +66,7 @@ sequenceDiagram
 - **รูปแบบ Request ที่ Frontend ส่งจริง:**
   - `Content-Type: multipart/form-data`
   - แนบภาพในช่อง **`file`** เสมอ (ชื่อไฟล์เป็น `source.png` แม้เนื้อไฟล์เป็น JPEG/WEBP/RGBA Backend ถอดรหัสจากเนื้อไฟล์โดยตรง)
+  - ขีดจำกัด: ขนาดไฟล์ไม่เกิน **10 MB** และความละเอียดด้านยาวไม่เกิน **4096 px** (หากเกินตอบ HTTP 413)
 
 ---
 
@@ -140,7 +142,7 @@ export interface RemoveBgResponse extends ToolBaseResponse {
 - **Method / URL:** `POST /api/tools/sketch`
 - **Request Form / Multipart:**
   - `file`: ภาพต้นฉบับ
-  - `blur_ksize` (int, default: `21`): ขนาด Kernel (เลขคี่ช่วง 15–31 เช่น 15, 21, 31)
+  - `blur_ksize` (int, default: `21`): ขนาด Kernel (ช่วง 3–51 หากส่งเลขคู่ ระบบจะปัดเป็นเลขคี่ให้อัตโนมัติ)
 - **Response (200 OK):**
 ```json
 {
@@ -159,7 +161,7 @@ export interface RemoveBgResponse extends ToolBaseResponse {
 - **Method / URL:** `POST /api/tools/color-splash`
 - **Request Form / Multipart:**
   - `file`: ภาพต้นฉบับ
-  - `target_color` (string, default: `"green"`): เลือกได้ระหว่าง `"green"` หรือ `"red"`
+  - `target_color` (string, default: `"green"`): บังคับเลือก `"green"` หรือ `"red"` (ส่งค่าอื่นได้ HTTP 422)
 - **Response (200 OK):**
 ```json
 {
@@ -198,7 +200,7 @@ export interface RemoveBgResponse extends ToolBaseResponse {
 #### 🖼️ 5. ดาวน์โหลด/แสดงผลรูปภาพผลลัพธ์
 - **Method / URL:** `GET /api/tools/results/{filename}`
 - **Headers:** รองรับทั้งแบบมีและไม่มี Header `Authorization: Bearer <token>`
-- **Response:** Content-Type `image/png` พร้อม Cache-Control 24 ชั่วโมง
+- **Response:** Content-Type `image/png` พร้อม Cache-Control 24 ชั่วโมง และป้องกัน Path Traversal
 
 ---
 
@@ -206,15 +208,17 @@ export interface RemoveBgResponse extends ToolBaseResponse {
 
 | HTTP Status | ข้อความใน `detail` | คำอธิบาย |
 |---|---|---|
-| `400 Bad Request` | *Please provide an image either via 'file' upload or 'image_url'...* | ไม่ได้แนบไฟล์มา |
+| `400 Bad Request` | *Please provide an image file via 'file' field.* | ไม่ได้แนบไฟล์มา หรือไฟล์ว่างเปล่า |
 | `401 Unauthorized` | *Could not validate credentials* | ไม่ได้แนบ Token หรือ Token หมดอายุ |
 | `404 Not Found` | *Tool result image not found.* | ไม่พบไฟล์รูปผลลัพธ์ (เฉพาะ GET /results) |
-| `422 Unprocessable` | *Cannot decode image data...* | ไฟล์เสียหรือไม่ใช่รูปภาพ |
+| `413 Payload Too Large` | *Image file size exceeds...* / *Image dimension exceeds...* | ไฟล์เกิน 10MB หรือความละเอียดเกิน 4096px |
+| `422 Unprocessable` | *Cannot decode image data...* / *Value error...* | ไฟล์เสีย ไม่ใช่รูปภาพ หรือพารามิเตอร์ไม่ตรงข้อกำหนด |
 | `500 Server Error` | *Processing error...* | ข้อผิดพลาดภายใน Engine |
+| `504 Gateway Timeout` | *Operation timed out.* | เครื่องมือใช้เวลาเกิน 60 วินาที |
 
 ---
 
 ## 5. การทดสอบและการตรวจสอบความถูกต้อง (Testing & Verification)
 
-* ผ่านชุดทดสอบอัตโนมัติ `tests/test_image_tools.py` ครบ 13/13 ข้อ (ครอบคลุมทั้ง RGBA Input, JPEG `source.png`, Token on GET, และ Error Handling)
+* ผ่านชุดทดสอบอัตโนมัติ `tests/test_image_tools.py` ครบ 18/18 ข้อ (ครอบคลุม Threadpool, RGBA Chained, JPEG `source.png`, Token on GET, 413 Dimension, 422 Validation, และ Cleanup)
 * Swagger UI พร้อมทดสอบที่: `http://localhost:8000/docs#/Image%20Processing%20Studio%20Tools`

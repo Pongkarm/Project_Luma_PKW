@@ -56,6 +56,8 @@ async def lifespan(app: FastAPI):
         Base.metadata.create_all(bind=engine)
         logger.info("Database tables initialized successfully.")
         _bootstrap_owner()
+        from app.services.image_tools import cleanup_old_tool_results
+        cleanup_old_tool_results(max_age_hours=24)
     except Exception as e:
         logger.warning(f"Could not initialize tables on startup: {e}")
     yield

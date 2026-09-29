@@ -3,11 +3,13 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install system dependencies for Pillow and PostgreSQL
+# Install system dependencies for Pillow, PostgreSQL, and OpenCV/MediaPipe
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     curl \
+    libgl1 \
+    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python requirements
@@ -22,7 +24,7 @@ COPY pytest.ini .
 COPY tests/ tests/
 
 # Create runtime directories
-RUN mkdir -p uploads outputs
+RUN mkdir -p uploads outputs outputs/tools
 
 # Expose ports
 EXPOSE 8000
