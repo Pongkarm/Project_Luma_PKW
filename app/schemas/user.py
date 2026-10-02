@@ -8,7 +8,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
 
-# ข้อมูลที่ "ส่งออกไป" ให้ user เห็น
+# ข้อมูลที่ "ส่งออกไป" ให้ user เห็น ตอนดูหน้าเว็บทั่วไป:
 class UserResponse(BaseModel):
     id: UUID
     username: str
@@ -19,7 +19,7 @@ class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ข้อมูลโปรไฟล์ User สำหรับ GET /auth/me (สำหรับ Navbar & Profile UI)
+# ข้อมูลโปรไฟล์ User สำหรับ GET /auth/me (สำหรับ Navbar & Profile UI) ตอนแอดมินดูในตาราง:
 class UserProfileResponse(BaseModel):
     id: UUID
     username: str

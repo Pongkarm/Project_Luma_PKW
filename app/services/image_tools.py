@@ -112,9 +112,16 @@ def cleanup_old_tool_results(max_age_hours: int = 24) -> int:
 # 1. MediaPipe Pose Landmark Detection (คนที่ 1)
 # -------------------------------------------------------------
 
-def extract_pose_skeleton(image_bgr: np.ndarray) -> Tuple[np.ndarray, List[Dict[str, Any]]]:
+def extract_pose_skeleton(
+    image_bgr: np.ndarray,
+    min_confidence: float = 0.5,
+    fallback_confidence: float = 0.3
+) -> Tuple[np.ndarray, List[Dict[str, Any]]]:
     """
-    ตรวจจับท่าทางและสรีระ 33 จุด (MediaPipe Pose)
+    ตรวจจับท่าทางและสรีระ 33 จุด (MediaPipe Pose) ด้วยกลยุทธ์ Adaptive Multi-Pass:
+    - Pass 1: โมเดลมาตรฐาน (complexity=1, confidence=0.5) สำหรับภาพคนจริงความคมชัดปกติ
+    - Pass 2 (Fallback): ปรับลด threshold (complexity=1, confidence=0.3) สำหรับภาพวาด/Anime/AI Art
+    - Pass 3 (Heavy Fallback): โมเดลละเอียดสูง (complexity=2, confidence=0.25) สำหรับท่าทางซับซ้อน
     - วาดเส้นโครงร่าง (Skeleton) และจุด Landmarks ลงบนภาพต้นฉบับ
     - ส่งออกรายการพิกัด JSON 33 จุด (id, name, x, y, z, visibility)
     - หากไม่พบคน จะส่งคืนภาพเดิมพร้อม landmarks ว่าง []
@@ -129,33 +136,45 @@ def extract_pose_skeleton(image_bgr: np.ndarray) -> Tuple[np.ndarray, List[Dict[
     annotated_image = image_bgr.copy()
     landmarks_data: List[Dict[str, Any]] = []
 
-    with mp_pose.Pose(
-        static_image_mode=True,
-        model_complexity=1,
-        enable_segmentation=False,
-        min_detection_confidence=0.5
-    ) as pose:
-        results = pose.process(image_rgb)
+    passes = [
+        {"model_complexity": 1, "min_detection_confidence": min_confidence},
+        {"model_complexity": 1, "min_detection_confidence": fallback_confidence},
+        {"model_complexity": 2, "min_detection_confidence": 0.25},
+    ]
 
-        if results.pose_landmarks:
-            mp_drawing.draw_landmarks(
-                annotated_image,
-                results.pose_landmarks,
-                mp_pose.POSE_CONNECTIONS,
-                landmark_drawing_spec=mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=3),
-                connection_drawing_spec=mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2),
-            )
+    selected_landmarks = None
 
-            for idx, lm in enumerate(results.pose_landmarks.landmark):
-                name = mp_pose.PoseLandmark(idx).name if hasattr(mp_pose, "PoseLandmark") else f"POINT_{idx}"
-                landmarks_data.append({
-                    "id": idx,
-                    "name": name,
-                    "x": round(float(lm.x), 4),
-                    "y": round(float(lm.y), 4),
-                    "z": round(float(lm.z), 4),
-                    "visibility": round(float(lm.visibility), 4),
-                })
+    for p_cfg in passes:
+        with mp_pose.Pose(
+            static_image_mode=True,
+            model_complexity=p_cfg["model_complexity"],
+            enable_segmentation=False,
+            min_detection_confidence=p_cfg["min_detection_confidence"]
+        ) as pose:
+            results = pose.process(image_rgb)
+            if results and results.pose_landmarks:
+                selected_landmarks = results.pose_landmarks
+                break
+
+    if selected_landmarks:
+        mp_drawing.draw_landmarks(
+            annotated_image,
+            selected_landmarks,
+            mp_pose.POSE_CONNECTIONS,
+            landmark_drawing_spec=mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=3),
+            connection_drawing_spec=mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2),
+        )
+
+        for idx, lm in enumerate(selected_landmarks.landmark):
+            name = mp_pose.PoseLandmark(idx).name if hasattr(mp_pose, "PoseLandmark") else f"POINT_{idx}"
+            landmarks_data.append({
+                "id": idx,
+                "name": name,
+                "x": round(float(lm.x), 4),
+                "y": round(float(lm.y), 4),
+                "z": round(float(lm.z), 4),
+                "visibility": round(float(lm.visibility), 4),
+            })
 
     return annotated_image, landmarks_data
 

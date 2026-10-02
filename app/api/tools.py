@@ -124,13 +124,23 @@ async def detect_pose(
         )
 
     parsed_landmarks = [PoseLandmark(**lm) for lm in landmarks_data]
+    has_detected = len(parsed_landmarks) > 0
+    pose_metadata: Dict[str, Any] = {
+        "total_landmarks": len(parsed_landmarks),
+        "detected": has_detected,
+    }
+    if not has_detected:
+        pose_metadata["warning"] = (
+            "ไม่พบโครงสร้างร่างกายในภาพ (No human pose detected). "
+            "กรุณาใช้ภาพที่มีคนเห็นสรีระครึ่งตัวหรือเต็มตัวชัดเจน"
+        )
 
     return PoseResponse(
         success=True,
         tool="pose",
         result_image_url=result_url,
         landmarks=parsed_landmarks,
-        metadata={"total_landmarks": len(parsed_landmarks)}
+        metadata=pose_metadata
     )
 
 
