@@ -266,6 +266,8 @@ class AITaskQueue:
                 except asyncio.TimeoutError:
                     print(f"[QUEUE TIMEOUT] Task {task_id} exceeded {AIConfig.TASK_TIMEOUT_SECONDS}s.")
                     state_info["status"] = "failed"
+                    # ส่งสัญญาณขัดจังหวะฉุกเฉินไปยัง GPU ทันที เพื่อหยุดงานที่ค้าง ไม่ให้ชนกับงานถัดไป
+                    await asyncio.to_thread(interrupt_forge_generation)
                     await send_callback_with_retry(
                         task_id=task_id,
                         status="failed",
