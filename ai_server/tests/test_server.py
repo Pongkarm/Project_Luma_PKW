@@ -67,9 +67,12 @@ class TestAIServer(unittest.TestCase):
         self.assertEqual(data["status"], "accepted")
         self.assertEqual(data["task_id"], task_id)
 
-        # Check in-memory task status
+        # Check in-memory task status via both /ai/task and /ai/status alias
         status_resp = self.client.get(f"/ai/task/{task_id}", headers=headers)
         self.assertEqual(status_resp.status_code, 200)
+        alias_resp = self.client.get(f"/ai/status/{task_id}", headers=headers)
+        self.assertEqual(alias_resp.status_code, 200)
+        self.assertEqual(alias_resp.json()["status"], status_resp.json()["status"])
         print(f"[PASS] Generate & State: Task ID = {task_id}, State = {status_resp.json()['status']}")
 
     def test_05_task_cancellation(self):

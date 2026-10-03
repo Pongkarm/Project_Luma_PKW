@@ -642,6 +642,7 @@ async def cancel_ai_task(
     }
 
 
+@app.get("/ai/status/{task_id}")
 @app.get("/ai/task/{task_id}")
 async def get_ai_task_status(
     task_id: str,
