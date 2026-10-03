@@ -83,12 +83,26 @@ class AITaskQueue:
         task_id = task_data.get("task_id", f"task-{int(time.time()*1000)}")
         task_data["task_id"] = task_id
         
-        # บันทึกสถานะเริ่มต้นของงานลงใน State Cache
+        # บันทึกสถานะเริ่มต้นของงานลงใน State Cache (เก็บเฉพาะ Metadata เพื่อป้องกัน RAM Leak จาก Base64 Blobs)
+        safe_metadata = {
+            "task_id": task_id,
+            "callback_url": task_data.get("callback_url", AIConfig.BACKEND_CALLBACK_URL),
+            "task_type": task_data.get("task_type", "txt2img")
+        }
         self._task_states[task_id] = {
             "status": "queued",
             "enqueued_at": time.time(),
-            "data": task_data
+            "data": safe_metadata
         }
+
+        # จำกัดขนาด State Cache ป้องกัน Memory Leak ในระยะยาว (จำกัด 200 รายการ)
+        if len(self._task_states) > 200:
+            finished_keys = [
+                k for k, v in self._task_states.items() 
+                if v.get("status") in ("completed", "cancelled", "failed")
+            ]
+            if finished_keys:
+                del self._task_states[finished_keys[0]]
 
         # ใส่ Tuple (ข้อมูลงาน, ตัวจัดการ) ลงใน asyncio.Queue
         await self._queue.put((task_data, handler))
