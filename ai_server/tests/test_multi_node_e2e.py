@@ -11,7 +11,10 @@ import uvicorn
 
 # Inject paths
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-BACKEND_REPO_PATH = r"C:\Users\kong\AppData\Local\Temp\repo_pkw"
+WORKTREE_BACKEND = os.path.abspath(os.path.join(PROJECT_ROOT, "..", "backend_node"))
+TEMP_BACKEND = r"C:\Users\kong\AppData\Local\Temp\repo_pkw"
+
+BACKEND_REPO_PATH = WORKTREE_BACKEND if os.path.exists(os.path.join(WORKTREE_BACKEND, "main.py")) else TEMP_BACKEND
 
 sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, BACKEND_REPO_PATH)
@@ -28,7 +31,7 @@ class MultiNodeIntegrationTest(unittest.TestCase):
     def setUpClass(cls):
         # Configure Backend Environment Variables
         os.environ["DATABASE_URL"] = "sqlite:///./test_multi_node_luma.db"
-        os.environ["SECRET_KEY"] = "test-jwt-secret-key-12345"
+        os.environ["SECRET_KEY"] = "test-jwt-secret-key-production-grade-random-1234567890"
         os.environ["AI_MODE"] = "callback"
         os.environ["AI_SERVER_CALLBACK_URL"] = "http://127.0.0.1:7860/ai/generate"
         os.environ["BACKEND_CALLBACK_URL"] = "http://127.0.0.1:8000/api/callback"
