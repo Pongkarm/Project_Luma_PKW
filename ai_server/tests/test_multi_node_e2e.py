@@ -19,6 +19,10 @@ sys.path.insert(0, BACKEND_REPO_PATH)
 from ai_server.server import app as ai_app
 from ai_server.config import AIConfig
 
+@unittest.skipUnless(
+    os.path.exists(os.path.join(BACKEND_REPO_PATH, "main.py")),
+    f"Multi-node E2E integration test requires backend repository at {BACKEND_REPO_PATH}"
+)
 class MultiNodeIntegrationTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
