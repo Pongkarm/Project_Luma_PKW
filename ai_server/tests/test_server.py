@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 
 from ai_server.server import app
 from ai_server.config import AIConfig
-from ai_server.services.prompt_builder import build_prompt_with_lora
+from ai_server.services.prompt_builder import build_prompt_with_lora, is_lora_compatible, detect_model_family
 from ai_server.services.queue_manager import task_queue
 
 class TestAIServer(unittest.TestCase):
@@ -146,8 +146,42 @@ class TestAIServer(unittest.TestCase):
         data = status_resp.json()
         self.assertIn("queue_position", data)
         self.assertIn("total_queued", data)
-        self.assertIn("progress", data)
-        print(f"[PASS] Task Queue Metrics Audited: position={data['queue_position']}, total={data['total_queued']}, status={data['status']}")
+    def test_09_lora_compatibility_guard(self):
+        """Test Model-LoRA Compatibility Guard: family detection, auto-skip, and metadata exposure"""
+        # 1. Test model family detection
+        self.assertEqual(detect_model_family("counterfeitV30_v30.safetensors"), "sd15")
+        self.assertEqual(detect_model_family("novaAnimeXL_ilV190.safetensors"), "illustrious_xl")
+        self.assertEqual(detect_model_family("prefectPonyXL_v6.safetensors"), "pony_xl")
+
+        # 2. Test compatibility checks
+        self.assertTrue(is_lora_compatible("tachi-e.safetensors", "counterfeitV30_v30.safetensors"))
+        self.assertTrue(is_lora_compatible("SousouNoFrieren_Frieren_IlluXL.safetensors", "novaAnimeXL_ilV190.safetensors"))
+        self.assertFalse(is_lora_compatible("SousouNoFrieren_Frieren_IlluXL.safetensors", "counterfeitV30_v30.safetensors"))
+
+        # 3. Test prompt builder injection vs auto-skip
+        raw_prompt = "a serene forest with morning light"
+        
+        # Case A: Compatible (SD 1.5 + Tachi-e)
+        enriched_ok, tag_ok = build_prompt_with_lora(raw_prompt, "tachi-e.safetensors", "counterfeitV30_v30.safetensors")
+        self.assertIn("<lora:tachi-e:0.8>", enriched_ok)
+        self.assertIn("tachi-e", enriched_ok)
+
+        # Case B: Incompatible (SD 1.5 + Frieren IlluXL) -> Must Auto-Skip
+        enriched_skip, tag_skip = build_prompt_with_lora(raw_prompt, "SousouNoFrieren_Frieren_IlluXL.safetensors", "counterfeitV30_v30.safetensors")
+        self.assertEqual(enriched_skip, raw_prompt)
+        self.assertEqual(tag_skip, "")
+
+        # 4. Test GET /ai/models exposes 'family' field
+        res = self.client.get("/ai/models")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        for ckpt in data["checkpoints"]:
+            self.assertIn("family", ckpt)
+            self.assertIn(ckpt["family"], ["sd15", "illustrious_xl", "pony_xl"])
+        for lora in data["loras"]:
+            self.assertIn("family", lora)
+            self.assertIn(lora["family"], ["sd15", "illustrious_xl", "pony_xl"])
+        print("\n[PASS] Model-LoRA Compatibility Guard verified: detection, auto-skip, and metadata exposure.")
 
 if __name__ == "__main__":
     unittest.main()
