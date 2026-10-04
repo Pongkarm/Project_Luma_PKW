@@ -12,8 +12,8 @@
  *   PAGE_SIZES            จำนวนงานที่ขอต่อครั้ง (แถบล่าสุด, สตูดิโอ, หน้าประวัติ)
  *   DRAFT_KEY             คีย์ของร่างหน้าสร้างภาพใน localStorage
  *   SIZE_PRESETS          ปุ่มขนาด 1:1 · 2:3 · 3:2
- *   FALLBACK_CHECKPOINTS  รายชื่อโมเดลสำรอง เมื่อถามเครื่อง AI ไม่ได้
- *   FALLBACK_LORAS        รายชื่อสไตล์ (LoRA) สำรอง
+ *   FALLBACK_CHECKPOINTS  รายชื่อโมเดลสำรอง เมื่อถามเครื่อง AI ไม่ได้ (พร้อมตระกูลของโมเดล)
+ *   FALLBACK_LORAS        รายชื่อสไตล์ (LoRA) สำรอง (พร้อมตระกูลที่ใช้ได้)
  *   SAMPLERS              วิธีสุ่มที่เลือกได้
  *
  * เชื่อมกับ:
@@ -61,19 +61,24 @@ const SIZE_PRESETS = [
 /*
  * รายชื่อโมเดลสำรอง — ใช้เมื่อขอรายชื่อจริงจาก GET /api/models ไม่สำเร็จ
  * (เช่น เครื่อง AI ปิดอยู่) หน้าเว็บจะได้ยังเลือกโมเดลได้
+ *
+ * family = ตระกูลของโมเดล LoRA ใช้ได้กับโมเดลตระกูลเดียวกันเท่านั้น (ข้ามตระกูลแล้วภาพเพี้ยน)
+ *   sd15 · illustrious_xl · pony_xl — ชื่อเดียวกับ ai_server/data/lora_registry.json ของเครื่อง AI
+ * ถ้า API ไม่ได้ส่ง family มา หน้าเว็บใช้ค่าจากรายชื่อนี้แทน (ดู js/generate/families.js)
  */
 const FALLBACK_CHECKPOINTS = [
-  { id: 'counterfeitV30_v30.safetensors', name: 'Counterfeit v3.0', description: 'Illustration and anime' },
-  { id: 'novaAnimeXL_ilV190.safetensors', name: 'Nova Anime XL', description: 'Detailed anime, XL base' },
-  { id: 'prefectPonyXL_v6.safetensors', name: 'Prefect Pony XL', description: 'Stylised characters' },
+  { id: 'counterfeitV30_v30.safetensors', name: 'Counterfeit v3.0', description: 'Illustration and anime', family: 'sd15' },
+  { id: 'novaAnimeXL_ilV190.safetensors', name: 'Nova Anime XL', description: 'Detailed anime, XL base', family: 'illustrious_xl' },
+  { id: 'prefectPonyXL_v6.safetensors', name: 'Prefect Pony XL', description: 'Stylised characters', family: 'pony_xl' },
 ];
 
 const FALLBACK_LORAS = [
-  { id: 'SousouNoFrieren_Frieren_IlluXL.safetensors', name: 'Frieren' },
-  { id: 'himmel_sousou_no_frieren_ilxl.safetensors', name: 'Himmel' },
-  { id: 'niji_and_midj_mix217.safetensors', name: 'Niji & Midjourney mix' },
-  { id: 'tachi-e.safetensors', name: 'Tachi-e' },
-  { id: '[Artstyle] SomethingWeird_Geekpower [PDXL].safetensors', name: 'Geekpower' },
+  { id: 'SousouNoFrieren_Frieren_IlluXL.safetensors', name: 'Frieren', family: 'illustrious_xl' },
+  { id: 'Char-Frieren-IL-V1.safetensors', name: 'Frieren V1', family: 'illustrious_xl' },
+  { id: 'himmel_sousou_no_frieren_ilxl.safetensors', name: 'Himmel', family: 'illustrious_xl' },
+  { id: 'niji_and_midj_mix217.safetensors', name: 'Niji & Midjourney mix', family: 'sd15' },
+  { id: 'tachi-e.safetensors', name: 'Tachi-e', family: 'sd15' },
+  { id: '[Artstyle] SomethingWeird_Geekpower [PDXL].safetensors', name: 'Geekpower', family: 'pony_xl' },
 ];
 
 const SAMPLERS = ['Euler a', 'Euler', 'DPM++ 2M Karras', 'DPM++ SDE Karras', 'DDIM', 'UniPC'];

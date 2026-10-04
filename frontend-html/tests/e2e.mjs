@@ -77,6 +77,8 @@ await step('สร้างภาพ: ปุ่มขนาด 2:3 และป�
 
 await step('สร้างภาพจากข้อความจนเสร็จ แสดงภาพ + แต่งด่วน + แถบงานล่าสุด', async () => {
   await page.type('prompt', 'a cat on a roof');
+  // เลือกโมเดล XL ก่อน — LoRA ของ AI จำลองเป็นตระกูล Illustrious XL ทั้งหมด (issue #2)
+  await $(`$('model').value = 'novaAnimeXL_ilV190.safetensors'; $('model').dispatchEvent(new Event('change'));`);
   await $(`$('lora').selectedIndex = 1; $('generate-button').click()`);
   await page.until(RESULT_SHOWN, 'ภาพผลลัพธ์', 40000);
   await page.until("document.querySelector('.quickbar')", 'แถบแต่งด่วน');
@@ -100,6 +102,43 @@ await step('ดูภาพขนาดเต็ม เปิดแล้วป�
 await step('ร่างที่กรอกไว้ไม่หายเมื่อรีเฟรช', async () => {
   await page.go('generate.html');
   await page.until("$('prompt').value === 'a cat on a roof'", 'คำอธิบายยังอยู่');
+});
+
+/* issue #2: LoRA ใช้ได้เฉพาะโมเดลตระกูลเดียวกัน — ใช้รายชื่อเต็มใน config.js เพราะ AI จำลองมี LoRA แค่ตระกูลเดียว */
+const LORA_NAMES = `return [...$('lora').options].map((o) => o.textContent).slice(1).join(', ')`;
+const pickModel = (id) => $(`$('model').value = '${id}'; $('model').dispatchEvent(new Event('change'));`);
+
+await step('สไตล์เสริม: แสดงเฉพาะ LoRA ที่ใช้กับตระกูลของโมเดลได้', async () => {
+  await $(`availableModels = FALLBACK_CHECKPOINTS; availableLoras = FALLBACK_LORAS;`);
+  const expect = {
+    'counterfeitV30_v30.safetensors': 'Niji & Midjourney mix, Tachi-e',
+    'novaAnimeXL_ilV190.safetensors': 'Frieren, Frieren V1, Himmel',
+    'prefectPonyXL_v6.safetensors': 'Geekpower',
+  };
+  for (const [model, names] of Object.entries(expect)) {
+    await pickModel(model);
+    const got = await $(LORA_NAMES);
+    if (got !== names) throw new Error(model + ' แสดง "' + got + '" (ควรเป็น "' + names + '")');
+  }
+});
+
+await step('สไตล์เสริม: เปลี่ยนเป็นโมเดลที่ใช้ไม่ได้ → LoRA กลับเป็น "ไม่ใช้" และจดร่างใหม่', async () => {
+  await pickModel('novaAnimeXL_ilV190.safetensors');
+  await $(`$('lora').value = 'SousouNoFrieren_Frieren_IlluXL.safetensors'; $('lora').dispatchEvent(new Event('change'));`);
+  await pickModel('counterfeitV30_v30.safetensors');
+  const state = await $(`return { lora: $('lora').value, saved: JSON.parse(localStorage.getItem(DRAFT_KEY)).lora, toast: document.querySelector('.toast')?.textContent || '' }`);
+  if (state.lora !== '') throw new Error('LoRA ยังเป็น ' + state.lora);
+  if (state.saved !== '') throw new Error('ร่างยังจด LoRA ' + state.saved);
+  if (!state.toast.includes('ใช้กับโมเดลนี้ไม่ได้')) throw new Error('ไม่ได้แจ้งผู้ใช้');
+});
+
+await step('สไตล์เสริม: ร่างเก่าที่คู่ไม่ตรง รีเฟรชแล้ว LoRA เป็น "ไม่ใช้" โดยหน้าไม่ค้าง', async () => {
+  await $(`const d = JSON.parse(localStorage.getItem(DRAFT_KEY)); d.model = 'counterfeitV30_v30.safetensors'; d.lora = 'SousouNoFrieren_Frieren_IlluXL.safetensors'; localStorage.setItem(DRAFT_KEY, JSON.stringify(d));`);
+  await page.go('generate.html');
+  await page.until("$('model').options.length > 0 && $('prompt').value === 'a cat on a roof'", 'โหลดหน้าและคืนร่าง');
+  const state = await $(`return { model: $('model').value, lora: $('lora').value }`);
+  if (state.model !== 'counterfeitV30_v30.safetensors') throw new Error('โมเดลไม่ได้คืนจากร่าง: ' + state.model);
+  if (state.lora !== '') throw new Error('LoRA ที่ใช้ไม่ได้ถูกคืนมา: ' + state.lora);
 });
 
 await step('สร้างจากภาพ: อัปโหลด แสดงการ์ดภาพ แล้วสร้างจนเสร็จ', async () => {

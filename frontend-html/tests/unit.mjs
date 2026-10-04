@@ -28,7 +28,7 @@ function fakeStorage() {
 }
 
 const context = vm.createContext({ sessionStorage: fakeStorage(), localStorage: fakeStorage() });
-for (const file of ['js/config.js', 'js/icons.js', 'js/api.js', 'js/ui.js', 'js/widgets.js', 'js/generate/state.js', 'js/studio/state.js']) {
+for (const file of ['js/config.js', 'js/icons.js', 'js/api.js', 'js/ui.js', 'js/widgets.js', 'js/generate/state.js', 'js/generate/families.js', 'js/studio/state.js']) {
   // icons.js ผูก DOMContentLoaded ตอนโหลด — ให้ document ปลอมรับไว้เฉย ๆ
   context.document = { addEventListener() {} };
   vm.runInContext(readFileSync(join(ROOT, file), 'utf8'), context, { filename: file });
@@ -57,6 +57,36 @@ test('ratioText แสดงอัตราส่วนอย่างต่ำ'
   assert.equal(ratioText(768, 512), '3:2');
   assert.equal(ratioText(512, 768), '2:3');
   assert.equal(ratioText(768, 768), '1:1');
+});
+
+/* ---------- ตระกูลโมเดลกับ LoRA (js/generate/families.js, issue #2) ---------- */
+
+test('detectModelFamily ใช้กฎเดียวกับเครื่อง AI (pony/pdxl → illu/nova/xl → sd15)', () => {
+  const detect = get('detectModelFamily');
+  assert.equal(detect('prefectPonyXL_v6.safetensors'), 'pony_xl'); // มีทั้ง pony และ xl — pony มาก่อน
+  assert.equal(detect('something_PDXL.safetensors'), 'pony_xl');
+  assert.equal(detect('novaAnimeXL_ilV190.safetensors'), 'illustrious_xl');
+  assert.equal(detect('myIllustriousMix.safetensors'), 'illustrious_xl');
+  assert.equal(detect('counterfeitV30_v30.safetensors'), 'sd15');
+  assert.equal(detect('anything_else.ckpt'), 'sd15');
+  assert.equal(detect(''), 'sd15');
+});
+
+test('modelFamily / loraFamily ใช้ family จาก API ก่อน แล้วค่อยรายชื่อสำรอง', () => {
+  assert.equal(get('modelFamily')({ id: 'counterfeitV30_v30.safetensors', family: 'pony_xl' }), 'pony_xl');
+  assert.equal(get('modelFamily')({ id: 'counterfeitV30_v30.safetensors' }), 'sd15');
+  assert.equal(get('loraFamily')({ id: 'tachi-e.safetensors' }), 'sd15');
+  assert.equal(get('loraFamily')({ id: 'tachi-e.safetensors', family: 'illustrious_xl' }), 'illustrious_xl');
+  assert.equal(get('loraFamily')({ id: 'brand-new-lora.safetensors' }), 'unknown');
+});
+
+test('compatibleLoras ได้คู่ตามเกณฑ์ของ issue #2 และเก็บ LoRA ที่ไม่รู้ตระกูลไว้', () => {
+  const names = (family) => get('compatibleLoras')(get('FALLBACK_LORAS'), family).map((l) => l.name).join(', ');
+  assert.equal(names('sd15'), 'Niji & Midjourney mix, Tachi-e');
+  assert.equal(names('illustrious_xl'), 'Frieren, Frieren V1, Himmel');
+  assert.equal(names('pony_xl'), 'Geekpower');
+  const withUnknown = [{ id: 'brand-new-lora.safetensors', name: 'New' }];
+  assert.equal(get('compatibleLoras')(withUnknown, 'pony_xl').length, 1);
 });
 
 /* ---------- สตูดิโอ (js/studio/state.js) ---------- */

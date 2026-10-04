@@ -10,7 +10,7 @@
  *   updateFooter()              อัปเดตปุ่มสร้างภาพ และคำใบ้ขนาดที่จะได้
  *
  * เชื่อมกับ:
- *   ใช้ของ     state.js (mode, source, outputSize, MODE_TEXT), settings.js (paint*),
+ *   ใช้ของ     state.js (mode, source, outputSize, MODE_TEXT), settings.js (paint*, updateLoraOptions),
  *              source.js (setSource), stage.js (updateView), mask.js (MaskEditor.hasMask),
  *              config.js (DRAFT_KEY, LIMITS), api.js (apiImageUrl), ui.js ($)
  *   ถูกใช้โดย  เกือบทุกไฟล์ใน generate/ (เรียก updateFooter/saveDraft หลังมีอะไรเปลี่ยน)
@@ -43,6 +43,8 @@ async function loadDraft() {
     // ข้ามตัวเลือกที่ไม่มีแล้ว (เช่น โมเดลที่ถูกลบจากเครื่อง AI)
     if (element.tagName === 'SELECT' && ![...element.options].some((o) => o.value === draft[id])) continue;
     element.value = draft[id];
+    // คืนโมเดลแล้ว → กรองช่อง LoRA ก่อนคืนค่า LoRA ตัวที่ใช้กับโมเดลนี้ไม่ได้จะถูกข้าม (เหลือ "ไม่ใช้")
+    if (id === 'model') updateLoraOptions({ quiet: true });
   }
   for (const paint of [paintWidth, paintHeight, paintSteps, paintCfg, paintDenoise]) paint();
   $('prompt').dispatchEvent(new Event('input'));
