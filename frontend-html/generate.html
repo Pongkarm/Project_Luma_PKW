@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="th" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>สร้างภาพ · LUMA</title>
+    <script>document.documentElement.dataset.theme = localStorage.getItem('luma.theme') || 'dark';</script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" />
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/ui.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/studio.css" />
+    <link rel="stylesheet" href="css/extra.css" />
+  </head>
+  <body>
+    <div id="root">
+      <div class="app">
+        <a class="skip" href="#main">ข้ามไปยังเนื้อหา</a>
+        <header class="topbar" id="topbar"></header>
+
+        <div class="app__body">
+          <nav class="rail" id="rail"></nav>
+
+          <div class="app__workspace">
+            <!-- ================= ตรงกลาง: พื้นที่แสดงภาพ ================= -->
+            <main class="main" id="main" tabindex="-1">
+              <!-- แถบหัว: ชื่อโหมด + สถานะงาน -->
+              <div class="stagebar" id="stagebar">
+                <div class="inline gap-10 min-w-0">
+                  <span id="stage-title" class="stage-title">สร้างจากข้อความ</span>
+                  <span id="stage-status" class="mono text-meta">ยังไม่ได้สร้าง</span>
+                </div>
+                <button type="button" class="icobtn" id="close-run-button" title="ปิดผลลัพธ์นี้" aria-label="ปิดผลลัพธ์นี้" hidden>
+                  <i data-icon="close" data-size="14"></i>
+                </button>
+              </div>
+
+              <!-- เนื้อหากลางจอ: ว่าง / กำลังสร้าง / ผลลัพธ์ — generate.js เติมให้ -->
+              <div class="stage" id="stage"></div>
+
+              <!-- แถบงานล่าสุด -->
+              <div class="runstrip" id="runstrip" hidden>
+                <div class="inline between">
+                  <span class="eyebrow">สร้างล่าสุด</span>
+                  <a class="text-meta" href="history.html">ดูประวัติทั้งหมด</a>
+                </div>
+                <div class="runstrip__row" id="runstrip-row"></div>
+              </div>
+
+              <!-- ระบาย mask: ใช้แทนพื้นที่ด้านบนเมื่ออยู่ในโหมดแก้เฉพาะจุด -->
+              <div id="mask-view" class="mask-view" hidden>
+                <div class="mask-bar">
+                  <div class="mask-bar__title">
+                    <span class="stage-title">แก้เฉพาะจุด</span>
+                    <span id="mask-coverage" class="mono text-meta">ระบายพื้นที่ที่ต้องการแก้</span>
+                  </div>
+                  <div class="mask-bar__tools">
+                    <div class="seg seg--icons" role="tablist" aria-label="เครื่องมือระบาย">
+                      <button type="button" role="tab" class="seg__item" id="brush-button" aria-selected="true" title="พู่กัน (B)" aria-label="พู่กัน"><i data-icon="brush" data-size="14"></i></button>
+                      <button type="button" role="tab" class="seg__item" id="eraser-button" aria-selected="false" title="ยางลบ (E)" aria-label="ยางลบ"><i data-icon="eraser" data-size="14"></i></button>
+                    </div>
+                    <div class="mask-size">
+                      <label class="text-meta" for="brush-size">ขนาด</label>
+                      <input id="brush-size" class="slider mask-size__slider" type="range" min="4" max="200" step="2" value="40" />
+                      <span id="brush-size-value" class="mono mask-size__value">40</span>
+                    </div>
+                    <button type="button" class="icobtn" id="undo-button" title="ย้อนกลับ (⌘Z)" aria-label="ย้อนกลับ"><i data-icon="undo" data-size="14"></i></button>
+                    <button type="button" class="icobtn" id="redo-button" title="ทำซ้ำ" aria-label="ทำซ้ำ"><i data-icon="redo" data-size="14"></i></button>
+                    <button type="button" class="icobtn" id="clear-button" title="ล้างที่ระบายทั้งหมด" aria-label="ล้างที่ระบายทั้งหมด"><i data-icon="trash" data-size="14"></i></button>
+                    <div class="mask-bar__divider"></div>
+                    <button type="button" class="icobtn" id="mask-only-button" title="ดูเฉพาะพื้นที่ที่ระบาย" aria-label="ดูเฉพาะพื้นที่ที่ระบาย" aria-pressed="false"><i data-icon="eye" data-size="14"></i></button>
+                  </div>
+                </div>
+
+                <div class="mask-area">
+                  <div class="mask-area__inner">
+                    <div id="mask-frame" class="mask-frame">
+                      <img id="mask-image" alt="ภาพที่กำลังระบาย" draggable="false" />
+                      <canvas id="mask-canvas"></canvas>
+                    </div>
+                    <div class="inline gap-16 wrap">
+                      <span class="inline gap-6 text-meta">
+                        <span class="mask-legend-swatch"></span>
+                        สีที่ระบาย = พื้นที่ที่จะถูกสร้างใหม่
+                      </span>
+                      <span class="mono inline gap-6 text-tiny">
+                        <i data-icon="info" data-size="12"></i>B พู่กัน · E ยางลบ · [ ] ขนาด · ⌘Z ย้อนกลับ
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </main>
+
+            <!-- ================= ขวา: แผงตั้งค่า ================= -->
+            <aside class="controls" aria-label="ตั้งค่าการสร้างภาพ">
+              <div class="controls__scroll">
+                <!-- โหมด -->
+                <div class="seg" role="tablist" aria-label="โหมดการสร้าง" id="mode-tabs">
+                  <button type="button" role="tab" class="seg__item" data-mode="txt2img"><i data-icon="generate" data-size="14"></i>ข้อความ</button>
+                  <button type="button" role="tab" class="seg__item" data-mode="img2img"><i data-icon="image" data-size="14"></i>จากภาพ</button>
+                  <button type="button" role="tab" class="seg__item" data-mode="inpaint"><i data-icon="layers" data-size="14"></i>แก้เฉพาะจุด</button>
+                </div>
+
+                <!-- คำอธิบายภาพ (prompt) -->
+                <div class="field">
+                  <label class="label" for="prompt">
+                    <span id="prompt-label">อธิบายภาพที่ต้องการ</span>
+                    <span class="label__meta mono" id="prompt-count">0 / 500</span>
+                  </label>
+                  <textarea id="prompt" class="textarea" rows="4" maxlength="500" placeholder="a glass workshop at dusk, warm lantern light through tall windows"></textarea>
+                </div>
+
+                <!-- สิ่งที่ไม่อยากให้มี (negative prompt) — พับเก็บได้ -->
+                <div class="stack gap-14">
+                  <button type="button" class="disclosure" id="avoid-toggle" aria-expanded="false" aria-controls="avoid-panel">
+                    <span class="disclosure__label"><i data-icon="chevronDown" data-size="14" class="disclosure__chevron"></i>สิ่งที่ไม่อยากให้มี</span>
+                  </button>
+                  <div class="disclosure__panel" id="avoid-panel">
+                    <div class="field">
+                      <label class="label" for="negative-prompt">
+                        <span>ไม่เอา</span>
+                        <span class="label__meta mono" id="negative-count">0 / 500</span>
+                      </label>
+                      <textarea id="negative-prompt" class="textarea" rows="2" maxlength="500" placeholder="blurry, low quality, distorted hands"></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="hairline"></div>
+                <span class="eyebrow" id="step-label">2 · ตั้งค่า</span>
+
+                <!-- โมเดล -->
+                <div class="field">
+                  <label class="label" for="model">โมเดล</label>
+                  <div class="select-wrap">
+                    <select id="model" class="select"></select>
+                    <i data-icon="chevronDown" data-size="14" class="select-wrap__chevron"></i>
+                  </div>
+                </div>
+
+                <!-- ภาพต้นฉบับ (เฉพาะโหมดจากภาพ / แก้เฉพาะจุด) -->
+                <div class="field" id="source-field" hidden>
+                  <span class="label">ภาพต้นฉบับ</span>
+                  <!-- ยังไม่มีภาพ: กล่องลากวาง -->
+                  <div class="drop" id="drop-zone" role="button" tabindex="0">
+                    <i data-icon="upload" data-size="22"></i>
+                    <span class="text-strong" id="drop-text">ลากภาพมาวาง หรือกดเลือกไฟล์</span>
+                    <span class="field__hint">PNG, JPEG หรือ WebP · ไม่เกิน 10 MB · ไม่เกิน 4096 พิกเซล</span>
+                  </div>
+                  <!-- มีภาพแล้ว: การ์ดแสดงภาพ -->
+                  <div class="source-card" id="source-card" hidden>
+                    <img class="source-card__thumb" id="source-thumb" alt="" width="44" height="44" />
+                    <div class="stack gap-2 min-w-0 grow">
+                      <span class="text-strong ellipsis" id="source-name"></span>
+                      <span id="source-meta" class="mono text-tiny"></span>
+                    </div>
+                    <button type="button" class="icobtn" id="source-change" title="เปลี่ยนภาพ" aria-label="เปลี่ยนภาพ"><i data-icon="upload" data-size="14"></i></button>
+                    <button type="button" class="icobtn" id="source-remove" title="เอาภาพออก" aria-label="เอาภาพออก"><i data-icon="trash" data-size="14"></i></button>
+                  </div>
+                  <input id="source-file" type="file" accept="image/png,image/jpeg,image/webp" class="visually-hidden" />
+                </div>
+
+                <!-- ขนาดผลลัพธ์เมื่อใช้ภาพต้นฉบับ (คำนวณจากภาพ) -->
+                <div class="field field--tight hint-tight-sm" id="output-size-field" hidden>
+                  <div class="label">
+                    <span>ขนาดผลลัพธ์</span>
+                    <span class="label__meta mono" id="output-size"></span>
+                  </div>
+                  <span class="field__hint" id="output-size-hint"></span>
+                </div>
+
+                <!-- ขนาดภาพ (เฉพาะโหมดข้อความ) -->
+                <div class="field" id="size-field">
+                  <div class="label">
+                    <span>ขนาดภาพ</span>
+                    <span class="inline gap-8">
+                      <span class="label__meta mono" id="size-meta"></span>
+                      <button type="button" class="icobtn icobtn--sm" id="swap-button" title="สลับด้านกว้างกับด้านสูง" aria-label="สลับด้านกว้างกับด้านสูง"><i data-icon="swap" data-size="13"></i></button>
+                      <button type="button" class="icobtn icobtn--sm" id="size-reset" title="คืนค่าเริ่มต้น" aria-label="คืนค่าเริ่มต้น"><i data-icon="refresh" data-size="13"></i></button>
+                    </span>
+                  </div>
+                  <div class="inline gap-6 wrap" id="size-presets"></div>
+                  <!-- กำหนดเอง: แสดงเมื่อกดปุ่ม "กำหนดเอง" -->
+                  <div class="stack custom-size" id="custom-size" hidden>
+                    <div class="field">
+                      <div class="label">
+                        <label for="width">กว้าง</label>
+                        <input class="num" id="width-number" type="number" min="256" max="768" step="8" aria-label="กว้าง" />
+                      </div>
+                      <input id="width" class="slider" type="range" min="256" max="768" step="8" value="768" />
+                    </div>
+                    <div class="field">
+                      <div class="label">
+                        <label for="height">สูง</label>
+                        <input class="num" id="height-number" type="number" min="256" max="768" step="8" aria-label="สูง" />
+                      </div>
+                      <input id="height" class="slider" type="range" min="256" max="768" step="8" value="768" />
+                    </div>
+                  </div>
+                  <span class="field__hint">ด้านละ 256–768 พิกเซล ปรับทีละ 8</span>
+                </div>
+
+                <!-- ระดับการเปลี่ยนแปลง (เฉพาะโหมดที่ใช้ภาพ) -->
+                <div class="field" id="denoise-field" hidden>
+                  <div class="label">
+                    <label for="denoise">ระดับการเปลี่ยนแปลง</label>
+                    <input class="num" id="denoise-number" type="number" min="0" max="1" step="0.05" aria-label="ระดับการเปลี่ยนแปลง" />
+                  </div>
+                  <input id="denoise" class="slider" type="range" min="0" max="1" step="0.05" value="0.65" />
+                  <div class="slider-ends"><span>คงภาพเดิมไว้</span><span>เปลี่ยนใหม่หมด</span></div>
+                </div>
+
+                <div class="hairline"></div>
+
+                <!-- ตั้งค่าขั้นสูง — พับเก็บได้ -->
+                <div class="stack gap-14">
+                  <button type="button" class="disclosure" id="advanced-toggle" aria-expanded="false" aria-controls="advanced-panel">
+                    <span class="disclosure__label"><i data-icon="chevronDown" data-size="14" class="disclosure__chevron"></i>3 · ปรับละเอียด · ตั้งค่าขั้นสูง</span>
+                  </button>
+                  <div class="disclosure__panel" id="advanced-panel">
+                    <div class="field">
+                      <div class="label">
+                        <label for="seed">Seed</label>
+                        <span class="label__meta">เว้นว่าง = สุ่ม</span>
+                      </div>
+                      <div class="inline gap-8">
+                        <input id="seed" class="input mono" inputmode="numeric" placeholder="สุ่ม" />
+                        <button type="button" class="icobtn" id="seed-random" title="สุ่มค่า Seed ใหม่" aria-label="สุ่มค่า Seed ใหม่"><i data-icon="refresh" data-size="14"></i></button>
+                      </div>
+                      <span class="field__hint">ใช้ seed เดิมกับค่าเดิม จะได้ภาพเดิมซ้ำ เว้นว่างไว้ถ้าอยากได้ภาพใหม่ทุกครั้ง</span>
+                    </div>
+
+                    <div class="field">
+                      <div class="label">
+                        <label for="steps">จำนวนรอบ</label>
+                        <input class="num" id="steps-number" type="number" min="1" max="50" step="1" aria-label="จำนวนรอบ" />
+                      </div>
+                      <input id="steps" class="slider" type="range" min="1" max="50" step="1" value="25" />
+                      <div class="slider-ends"><span>เร็วกว่า</span><span>ละเอียดกว่า</span></div>
+                    </div>
+                    <span class="field__hint hint-tight">ยิ่งมากยิ่งละเอียด แต่ใช้เวลานานขึ้น ปกติ 25 ก็พอสำหรับภาพทั่วไป</span>
+
+                    <div class="field">
+                      <div class="label">
+                        <label for="cfg">ความเคร่งตามคำสั่ง <span class="label__meta">(CFG)</span></label>
+                        <input class="num" id="cfg-number" type="number" min="1" max="20" step="0.5" aria-label="CFG" />
+                      </div>
+                      <input id="cfg" class="slider" type="range" min="1" max="20" step="0.5" value="7.5" />
+                      <div class="slider-ends"><span>อิสระ</span><span>ตามคำสั่งเป๊ะ</span></div>
+                    </div>
+                    <span class="field__hint hint-tight">ค่าต่ำปล่อยให้ AI ตีความเอง ค่าสูงบังคับให้ทำตามคำสั่งเป๊ะ ซึ่งอาจได้ภาพแข็งๆ</span>
+
+                    <div class="field">
+                      <label class="label" for="sampler">วิธีสุ่มภาพ</label>
+                      <div class="select-wrap">
+                        <select id="sampler" class="select"></select>
+                        <i data-icon="chevronDown" data-size="14" class="select-wrap__chevron"></i>
+                      </div>
+                      <span class="field__hint">วิธีคำนวณภาพที่ต่างกัน ถ้าไม่แน่ใจใช้ Euler a ได้เลย</span>
+                    </div>
+
+                    <div class="field">
+                      <label class="label" for="lora">สไตล์เสริม</label>
+                      <div class="select-wrap">
+                        <select id="lora" class="select"></select>
+                        <i data-icon="chevronDown" data-size="14" class="select-wrap__chevron"></i>
+                      </div>
+                      <span class="field__hint">ระบบจะเติมคำสั่งของสไตล์นี้ให้เอง เลือกได้ครั้งละหนึ่งสไตล์</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="form-alert" hidden></div>
+
+                <div class="alert alert--note">
+                  <i data-icon="info" data-size="14" class="alert__icon"></i>
+                  <div>สร้างภาพหนึ่งครั้งใช้เวลาราว 30–40 วินาที และระบบทำได้ทีละงาน</div>
+                </div>
+              </div>
+
+              <!-- ปุ่มสร้างภาพ (ติดด้านล่างของแผง) -->
+              <div class="controls__foot">
+                <button type="button" class="btn btn--primary btn--lg btn--block" id="generate-button">
+                  <i data-icon="generate" data-size="16"></i><span id="generate-text">สร้างภาพ</span>
+                </button>
+                <span class="foot-hint">
+                  <span id="submit-hint"></span>
+                  <span class="mono kbd-hint">⌘↵</span>
+                </span>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        <nav class="tabbar" id="tabbar"></nav>
+      </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/icons.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/widgets.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/mask.js"></script>
+    <!-- หน้านี้แบ่งโค้ดเป็นหลายไฟล์ตามหน้าที่ (อธิบายไว้ด้านบนของ js/generate/state.js) -->
+    <script src="js/generate/state.js"></script>
+    <script src="js/generate/settings.js"></script>
+    <script src="js/generate/draft.js"></script>
+    <script src="js/generate/source.js"></script>
+    <script src="js/generate/stage.js"></script>
+    <script src="js/generate/run.js"></script>
+    <script src="js/generate/recent.js"></script>
+    <script src="js/generate/mask-tools.js"></script>
+    <script src="js/generate/main.js"></script>
+  </body>
+</html>

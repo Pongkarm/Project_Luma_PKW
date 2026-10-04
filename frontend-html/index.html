@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="data:," />
+    <title>LUMA</title>
+    <script>
+      // หน้าแรก: ล็อกอินแล้วไปหน้าสร้างภาพ ยังไม่ล็อกอินไปหน้าเข้าสู่ระบบ
+      location.replace(localStorage.getItem('luma.token') ? 'generate.html' : 'login.html');
+    </script>
+  </head>
+  <body></body>
+</html>

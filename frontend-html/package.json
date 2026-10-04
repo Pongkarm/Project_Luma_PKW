@@ -1,0 +1,15 @@
+{
+  "name": "luma-frontend-html",
+  "private": true,
+  "type": "module",
+  "description": "LUMA frontend แบบ HTML + JavaScript ธรรมดา — ไฟล์นี้มีไว้สำหรับคำสั่งทดสอบเท่านั้น ไม่มีแพ็กเกจให้ติดตั้ง",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "python3 -m http.server 5500 --bind 0.0.0.0",
+    "test": "node tests/e2e.mjs",
+    "test:responsive": "node tests/responsive.mjs",
+    "test:all": "node tests/e2e.mjs && node tests/responsive.mjs"
+  }
+}

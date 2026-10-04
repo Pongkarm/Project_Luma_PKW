@@ -1,0 +1,109 @@
+/*
+ * ui.js — ฟังก์ชันช่วยเล็ก ๆ ที่ทุกหน้าใช้
+ *
+ *  - $(id), escapeHtml(), จัดรูปแบบวันที่/เวลา/ขนาดไฟล์
+ *  - สถานะงาน (รอคิว / กำลังสร้าง / เสร็จแล้ว / ไม่สำเร็จ) และป้ายสถานะ
+ *  - กล่องแจ้งเตือน (showAlert) และข้อความเด้งมุมจอ (toast)
+ */
+
+/* ---------- ฟังก์ชันช่วย ---------- */
+
+/* หา element จาก id — เขียนสั้นกว่า document.getElementById */
+function $(id) {
+  return document.getElementById(id);
+}
+
+/*
+ * กันไม่ให้ข้อความจากผู้ใช้ (เช่น prompt) กลายเป็นโค้ด HTML
+ * ต้องใช้ทุกครั้งที่เอาข้อความจาก backend ไปใส่ใน innerHTML
+ */
+function escapeHtml(text) {
+  return String(text ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+/* วันที่แบบไทย เช่น "2 ต.ค. 2569 15:00" */
+function formatDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+/* วินาที → "1:05" */
+function formatClock(seconds) {
+  const s = Math.max(0, Math.floor(seconds));
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+
+/* ขนาดไฟล์ เช่น "47 KB" หรือ "2.3 MB" */
+function formatBytes(bytes) {
+  if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+/* ---------- สถานะงาน ---------- */
+
+/* backend ไม่มีสถานะ "ยกเลิก" — งานที่ถูกหยุดจะเป็น failed พร้อมข้อความนี้ */
+const CANCELLED_MESSAGE = 'Cancelled by user';
+
+const STATUS = {
+  pending: { text: 'รอคิว', icon: 'queue' },
+  processing: { text: 'กำลังสร้าง', icon: 'refresh' },
+  completed: { text: 'เสร็จแล้ว', icon: 'checkCircle' },
+  failed: { text: 'ไม่สำเร็จ', icon: 'xCircle' },
+};
+
+const TASK_TEXT = { txt2img: 'สร้างจากข้อความ', img2img: 'สร้างจากภาพ', inpaint: 'แก้เฉพาะจุด' };
+
+/* งานจบแล้วหรือยัง (สำเร็จหรือล้มเหลว) */
+function isFinished(run) {
+  return run.status === 'completed' || run.status === 'failed';
+}
+
+/* งานนี้ถูกผู้ใช้กดหยุดหรือไม่ (ดูจากข้อความ error) */
+function wasCancelled(run) {
+  return run.status === 'failed' && run.error_message === CANCELLED_MESSAGE;
+}
+
+/* ป้ายสถานะ เช่น ✓ เสร็จแล้ว (สีต่างกันตามสถานะ) */
+function statusChip(status) {
+  const info = STATUS[status] || STATUS.pending;
+  let svg = icon(info.icon, 12, status === 'processing' ? 'spin' : '');
+  if (status === 'pending') svg = svg.replaceAll('<path ', '<path stroke-dasharray="3 3" ');
+  return '<span class="status status--' + status + '">' + svg + info.text + '</span>';
+}
+
+/* ---------- กล่องแจ้งเตือน ---------- */
+
+/*
+ * แสดงข้อความในกล่อง
+ *   tone: 'error' (แดง) | 'info' (ฟ้า) | 'note' (เทา)   ใส่ text ว่างเพื่อซ่อน
+ */
+function showAlert(element, text, tone = 'error') {
+  if (!text) {
+    element.hidden = true;
+    element.innerHTML = '';
+    return;
+  }
+  element.className = 'alert' + (tone === 'error' ? ' alert--error' : tone === 'note' ? ' alert--note' : '');
+  element.innerHTML = icon(tone === 'error' ? 'alert' : 'info', 14, 'alert__icon') + '<div>' + escapeHtml(text) + '</div>';
+  element.hidden = false;
+}
+
+/* ข้อความเด้งมุมจอแล้วหายเองใน 3 วินาที */
+function toast(text) {
+  let box = document.querySelector('.toasts');
+  if (!box) {
+    box = document.createElement('div');
+    box.className = 'toasts';
+    document.body.appendChild(box);
+  }
+  const item = document.createElement('div');
+  item.className = 'toast';
+  item.innerHTML = icon('checkCircle', 14, 'toast__icon') + escapeHtml(text);
+  box.appendChild(item);
+  setTimeout(() => item.remove(), 3000);
+}

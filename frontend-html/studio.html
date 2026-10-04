@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="th" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>สตูดิโอ · LUMA</title>
+    <script>document.documentElement.dataset.theme = localStorage.getItem('luma.theme') || 'dark';</script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" />
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/ui.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/studio.css" />
+    <link rel="stylesheet" href="css/extra.css" />
+  </head>
+  <body>
+    <div id="root">
+      <div class="app">
+        <a class="skip" href="#main">ข้ามไปยังเนื้อหา</a>
+        <header class="topbar" id="topbar"></header>
+
+        <div class="app__body">
+          <nav class="rail" id="rail"></nav>
+
+          <div class="app__workspace studio">
+            <!-- ================= ตรงกลาง: ภาพเวอร์ชันปัจจุบัน ================= -->
+            <main class="main" id="main" tabindex="-1">
+              <div class="stagebar">
+                <div class="inline gap-10 min-w-0">
+                  <span class="stage-title">สตูดิโอ</span>
+                  <span class="mono studio-subtitle" id="studio-subtitle">ยังไม่ได้สร้าง</span>
+                </div>
+                <div class="inline gap-6" id="stage-actions" hidden>
+                  <button type="button" class="btn btn--sm btn--secondary" id="compare-button" aria-pressed="false">
+                    <i data-icon="compare" data-size="14"></i>เทียบ
+                  </button>
+                  <button type="button" class="icobtn" id="close-button" title="ปิดภาพนี้" aria-label="ปิดภาพนี้"><i data-icon="close" data-size="14"></i></button>
+                </div>
+              </div>
+
+              <div class="stage">
+                <!-- ยังไม่มีภาพ: เลือกไฟล์ หรือเลือกจากภาพที่เพิ่งสร้าง -->
+                <div class="studio-empty" id="studio-empty">
+                  <div class="stack gap-6 text-center">
+                    <h2 class="heading">เลือกภาพที่จะแต่ง</h2>
+                    <p class="text-muted">
+                      ลากภาพมาวาง หรือเปิดภาพที่เพิ่งสร้าง แต่ละเครื่องมือใช้เวลาไม่กี่วินาทีและได้เป็นเวอร์ชันใหม่ ภาพต้นฉบับยังอยู่เสมอ
+                    </p>
+                  </div>
+                  <div class="drop" id="drop-zone" role="button" tabindex="0">
+                    <i data-icon="upload" data-size="22"></i>
+                    <span class="text-strong">ลากภาพมาวางตรงนี้ หรือคลิกเพื่อเลือก</span>
+                    <span class="field__hint">PNG, JPEG หรือ WebP · ไม่เกิน 10 MB · ไม่เกิน 4096 พิกเซล</span>
+                  </div>
+                  <input id="studio-file" type="file" accept="image/png,image/jpeg,image/webp" class="visually-hidden" />
+                  <div class="stack gap-8 full" id="recent-box" hidden>
+                    <span class="eyebrow">หรือเริ่มจากภาพที่เพิ่งสร้าง</span>
+                    <div class="runstrip__row" id="recent-row"></div>
+                  </div>
+                </div>
+
+                <!-- มีภาพแล้ว: ภาพ + แถบปุ่ม -->
+                <div class="result" id="studio-result" hidden>
+                  <div class="result__media result__media--zoom relative" id="studio-media" title="ดูขนาดเต็ม"></div>
+                  <div class="result__bar">
+                    <span class="result__meta" id="studio-caption"></span>
+                    <div class="inline gap-8 wrap">
+                      <a class="btn btn--sm btn--secondary" id="save-link"><i data-icon="download" data-size="14"></i>บันทึกภาพ</a>
+                      <button type="button" class="btn btn--secondary btn--sm" id="use-source-button">ใช้เป็นภาพตั้งต้น</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- แถบเวอร์ชัน -->
+              <div class="vstrip" role="group" aria-label="เวอร์ชัน" id="version-strip" hidden>
+                <span class="eyebrow">เวอร์ชัน</span>
+                <div class="vstrip__row" id="version-row"></div>
+              </div>
+            </main>
+
+            <!-- ================= ขวา: เครื่องมือ ================= -->
+            <aside class="controls" aria-label="เครื่องมือสตูดิโอ">
+              <div class="controls__scroll">
+                <div class="seg" role="tablist" aria-label="เครื่องมือสตูดิโอ" id="tool-tabs">
+                  <button type="button" role="tab" class="seg__item" data-tool="sketch" aria-selected="true"><i data-icon="pencil" data-size="14"></i>ลายเส้น</button>
+                  <button type="button" role="tab" class="seg__item" data-tool="color-splash" aria-selected="false"><i data-icon="droplet" data-size="14"></i>เน้นสี</button>
+                  <button type="button" role="tab" class="seg__item" data-tool="pose" aria-selected="false"><i data-icon="pose" data-size="14"></i>ท่าทาง</button>
+                  <button type="button" role="tab" class="seg__item" data-tool="remove-bg" aria-selected="false"><i data-icon="scissors" data-size="14"></i>ตัดฉาก</button>
+                </div>
+                <p class="text-soft" id="tool-about"></p>
+
+                <!-- ตั้งค่าของลายเส้น -->
+                <div class="field" id="sketch-options">
+                  <div class="label">
+                    <label for="blur">ความนุ่มของเส้น</label>
+                    <input class="num" id="blur-number" type="number" min="3" max="51" step="2" aria-label="ความนุ่มของเส้น" />
+                  </div>
+                  <input id="blur" class="slider" type="range" min="3" max="51" step="2" value="21" />
+                  <div class="slider-ends"><span>คม</span><span>นุ่ม</span></div>
+                </div>
+
+                <!-- ตั้งค่าของเน้นสี -->
+                <div class="field" id="splash-options" hidden>
+                  <span class="label">สีที่จะเก็บไว้</span>
+                  <div class="seg" role="tablist" aria-label="สีที่จะเก็บไว้" id="color-tabs">
+                    <button type="button" role="tab" class="seg__item" data-color="green" aria-selected="true">เขียว</button>
+                    <button type="button" role="tab" class="seg__item" data-color="red" aria-selected="false">แดง</button>
+                  </div>
+                </div>
+
+                <span class="field__hint" id="no-options" hidden>ไม่ต้องตั้งค่าอะไร เครื่องมือจัดการเอง</span>
+
+                <div id="tool-alert" hidden></div>
+
+                <!-- ผลของท่าทาง: ตารางจุดบนร่างกาย -->
+                <div class="field" id="pose-panel" hidden>
+                  <div class="label">
+                    <span class="eyebrow">จุดบนร่างกาย</span>
+                    <span class="label__meta mono" id="pose-count"></span>
+                  </div>
+                  <div class="field">
+                    <div class="label">
+                      <label for="min-visibility">ความมั่นใจขั้นต่ำ</label>
+                      <span class="label__meta mono" id="min-visibility-value">0.50</span>
+                    </div>
+                    <input id="min-visibility" class="slider" type="range" min="0" max="1" step="0.05" value="0.5" />
+                  </div>
+                  <div class="studio-table" role="region" aria-label="จุดบนร่างกาย" tabindex="0">
+                    <table>
+                      <thead><tr><th scope="col">จุด</th><th scope="col">x</th><th scope="col">y</th><th scope="col">vis</th></tr></thead>
+                      <tbody id="pose-table"></tbody>
+                    </table>
+                  </div>
+                  <button type="button" class="btn btn--secondary btn--sm" id="copy-json">คัดลอกเป็น JSON</button>
+                </div>
+
+                <!-- ผลของตัดฉาก: mask + ส่งไปวาดใหม่ -->
+                <div class="field" id="mask-panel" hidden>
+                  <div class="label">
+                    <span class="eyebrow">Mask</span>
+                    <button type="button" class="linklike" id="toggle-mask">ดู mask</button>
+                  </div>
+                  <img id="mask-thumb" alt="" class="studio-mask-thumb" />
+                  <button type="button" class="btn btn--secondary" id="replace-bg"><i data-icon="layers" data-size="14"></i>วาดฉากหลังใหม่</button>
+                  <button type="button" class="btn btn--ghost" id="replace-subject">วาดตัวแบบใหม่แทน</button>
+                  <span class="field__hint">จะเปิดหน้า Inpaint พร้อมระบายพื้นที่นี้ไว้ให้ ยังระบายเพิ่มหรือลบออกได้</span>
+                </div>
+
+                <div class="alert alert--note">
+                  <i data-icon="info" data-size="14" class="alert__icon"></i>
+                  <div>เวอร์ชันในสตูดิโอไม่ถูกเก็บในประวัติ ถ้าอยากเก็บ ให้บันทึกภาพหรือใช้เป็นภาพตั้งต้น</div>
+                </div>
+              </div>
+
+              <div class="controls__foot">
+                <button type="button" class="btn btn--primary btn--lg btn--block" id="apply-button" disabled>
+                  <span id="apply-icon"></span><span id="apply-text">เลือกภาพก่อน</span>
+                </button>
+                <span class="studio-applies-to" id="applies-to" hidden></span>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        <nav class="tabbar" id="tabbar"></nav>
+      </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/icons.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/widgets.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/studio/state.js"></script>
+    <script src="js/studio/view.js"></script>
+    <script src="js/studio/tools.js"></script>
+    <script src="js/studio/main.js"></script>
+  </body>
+</html>

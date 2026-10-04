@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="th" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>บัญชี · LUMA</title>
+    <script>document.documentElement.dataset.theme = localStorage.getItem('luma.theme') || 'dark';</script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" />
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/ui.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/extra.css" />
+  </head>
+  <body>
+    <div id="root">
+      <div class="app">
+        <a class="skip" href="#main">ข้ามไปยังเนื้อหา</a>
+        <header class="topbar" id="topbar"></header>
+
+        <div class="app__body">
+          <nav class="rail" id="rail"></nav>
+
+          <main class="main" id="main" tabindex="-1">
+            <div class="stagebar">
+              <span class="stage-title">บัญชี</span>
+            </div>
+
+            <div class="account__scroll">
+              <div class="account">
+                <!-- การ์ดโปรไฟล์ -->
+                <section class="card account__header" id="profile-card">
+                  <span class="avatar avatar--lg" aria-hidden="true" id="avatar">?</span>
+                  <div class="stack gap-2 min-w-0">
+                    <span class="account__name" id="profile-name">—</span>
+                    <span class="account__email" id="profile-email">—</span>
+                    <span class="account__email" id="profile-since">—</span>
+                  </div>
+                  <div class="account__stat">
+                    <div class="account__statNum" id="profile-runs">0</div>
+                    <div class="account__statLabel">จำนวนภาพที่สร้าง</div>
+                    <button type="button" class="btn btn--secondary btn--sm mt-8" id="edit-button">
+                      <i data-icon="sliders" data-size="14"></i>แก้ไขโปรไฟล์
+                    </button>
+                  </div>
+                </section>
+
+                <!-- ฟอร์มแก้ไขโปรไฟล์ (แสดงแทนการ์ดเมื่อกด "แก้ไขโปรไฟล์") -->
+                <section class="card account__section" id="edit-card" hidden>
+                  <span class="eyebrow">แก้ไขโปรไฟล์</span>
+                  <form class="stack gap-14" id="edit-form">
+                    <div id="edit-alert" hidden></div>
+
+                    <div class="field">
+                      <label class="label" for="new-username">ชื่อผู้ใช้</label>
+                      <input id="new-username" class="input" autocomplete="username" minlength="3" maxlength="50" required />
+                      <span class="field__hint">ใช้ชื่อนี้เข้าสู่ระบบ จึงต้องไม่ซ้ำกับคนอื่น</span>
+                    </div>
+
+                    <div class="field">
+                      <label class="label" for="new-email">อีเมล</label>
+                      <input id="new-email" class="input" type="email" autocomplete="email" required />
+                    </div>
+
+                    <label class="label clickable" for="with-password">
+                      <span>เปลี่ยนรหัสผ่านด้วย</span>
+                      <input id="with-password" type="checkbox" />
+                    </label>
+
+                    <div class="field" id="password-box" hidden>
+                      <div class="field">
+                        <label class="label" for="new-password">รหัสผ่านใหม่</label>
+                        <div class="pw">
+                          <input id="new-password" class="input pw__input" type="password" autocomplete="new-password" />
+                          <button type="button" class="pw__toggle" title="แสดงรหัสผ่าน" aria-label="แสดงรหัสผ่าน"></button>
+                        </div>
+                      </div>
+                      <div class="auth__rules">
+                        <span class="auth__rule" id="rule-length"></span>
+                        <span class="auth__rule" id="rule-variety"></span>
+                        <span class="auth__rule" id="rule-match"></span>
+                      </div>
+                      <div class="field mt-14">
+                        <label class="label" for="confirm-password">ยืนยันรหัสผ่าน</label>
+                        <div class="pw">
+                          <input id="confirm-password" class="input pw__input" type="password" autocomplete="new-password" />
+                          <button type="button" class="pw__toggle" title="แสดงรหัสผ่าน" aria-label="แสดงรหัสผ่าน"></button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- ต้องใส่รหัสผ่านปัจจุบันทุกครั้ง -->
+                    <div class="confirm-gate">
+                      <span class="confirm-gate__head"><i data-icon="lock" data-size="15" class="confirm-gate__icon"></i>ยืนยันว่าเป็นคุณ</span>
+                      <div class="field">
+                        <label class="label" for="current-password">รหัสผ่านปัจจุบัน</label>
+                        <div class="pw">
+                          <input id="current-password" class="input pw__input" type="password" autocomplete="current-password" required />
+                          <button type="button" class="pw__toggle" title="แสดงรหัสผ่าน" aria-label="แสดงรหัสผ่าน"></button>
+                        </div>
+                        <span class="field__hint">จะยังไม่บันทึกอะไรทั้งสิ้น จนกว่าจะใส่รหัสผ่านปัจจุบัน</span>
+                      </div>
+                    </div>
+
+                    <div class="inline gap-8">
+                      <button type="button" class="btn btn--secondary" id="cancel-edit">ยกเลิก</button>
+                      <button type="submit" class="btn btn--primary" id="save-button" disabled>บันทึก</button>
+                    </div>
+                  </form>
+                </section>
+
+                <!-- ธีม -->
+                <section class="card account__section">
+                  <span class="eyebrow">การแสดงผล</span>
+                  <div class="seg" role="tablist" aria-label="ธีม" id="theme-tabs">
+                    <button type="button" role="tab" class="seg__item" data-theme-value="dark"><i data-icon="moon" data-size="14"></i>มืด</button>
+                    <button type="button" role="tab" class="seg__item" data-theme-value="light"><i data-icon="sun" data-size="14"></i>สว่าง</button>
+                  </div>
+                </section>
+
+                <!-- การเชื่อมต่อ -->
+                <section class="card account__section">
+                  <span class="eyebrow">การเชื่อมต่อ</span>
+                  <span class="mono text-soft" id="api-url"></span>
+                  <div class="alert alert--note">
+                    <i data-icon="info" data-size="14" class="alert__icon"></i>
+                    <div>ระบบออกโทเคนให้ครั้งเดียว ไม่มีการต่ออายุอัตโนมัติ และไม่มีปลายทางสำหรับออกจากระบบ การออกจากระบบจึงเป็นการลบโทเคนออกจากเครื่องนี้เท่านั้น</div>
+                  </div>
+                </section>
+
+                <section class="card account__section">
+                  <button type="button" class="btn btn--danger self-start" id="sign-out"><i data-icon="lock" data-size="14"></i>ออกจากระบบ</button>
+                </section>
+              </div>
+            </div>
+          </main>
+        </div>
+
+        <nav class="tabbar" id="tabbar"></nav>
+      </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/icons.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/widgets.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/account.js"></script>
+  </body>
+</html>

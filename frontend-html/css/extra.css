@@ -1,0 +1,356 @@
+/*
+ * extra.css — ส่วนเสริมเล็ก ๆ ของเวอร์ชัน HTML
+ * ไฟล์ CSS อื่นในโฟลเดอร์นี้คัดลอกมาจากเวอร์ชัน React ตรง ๆ (frontend/src/shared/styles/)
+ */
+
+/* ให้แอตทริบิวต์ hidden ซ่อนได้จริงเสมอ แม้ class อื่นจะกำหนด display ไว้ */
+[hidden] {
+  display: none !important;
+}
+
+/* หัวข้อในแถบบนของพื้นที่กลาง — ห้ามตัดบรรทัด ถ้าที่ไม่พอให้ข้อความรองข้าง ๆ ถูกตัดเป็น … แทน */
+.stage-title {
+  font-weight: 600;
+  font-size: var(--fs-md);
+  white-space: nowrap;
+}
+
+.stagebar > div:first-child {
+  min-width: 0;
+}
+
+/* ---------- ระบาย mask (หน้าสร้างภาพ โหมดแก้เฉพาะจุด) ---------- */
+
+.mask-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* แถบเครื่องมือด้านบน — สูงขึ้นได้เมื่อปุ่มตัดขึ้นบรรทัดใหม่บนจอแคบ (ไม่ซ้อนทับภาพ) */
+.mask-bar {
+  min-height: var(--stagebar-h);
+  flex: none;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-8) var(--sp-12);
+  padding: var(--sp-6) 12px var(--sp-6) 16px;
+}
+
+.mask-bar__title,
+.mask-bar__tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.mask-bar__title {
+  gap: var(--sp-10);
+}
+
+.mask-bar__tools {
+  gap: var(--sp-6);
+}
+
+.mask-bar__divider {
+  width: 1px;
+  height: 18px;
+  background: var(--line);
+  margin: 0 2px;
+}
+
+/* กล่อง "ขนาด [แถบเลื่อน] 40" */
+.mask-size {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+  height: 28px;
+  padding: 0 10px 0 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--panel-2);
+}
+
+.mask-area {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-20);
+  overflow: auto;
+}
+
+.mask-area__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-10);
+  align-items: center;
+}
+
+/* ภาพกับ canvas ซ้อนกันพอดี: canvas วางทับเต็มกรอบของภาพ */
+.mask-frame {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--ph-image);
+}
+
+.mask-frame img {
+  display: block;
+  max-width: min(100%, 620px);
+  max-height: 58vh;
+  width: auto;
+  height: auto;
+  user-select: none;
+}
+
+.mask-frame canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  touch-action: none; /* ลากนิ้วบนมือถือแล้ววาด ไม่เลื่อนหน้า */
+  opacity: 0.55;
+}
+
+@media (width <= 767px) {
+  .mask-area {
+    padding: var(--sp-12);
+  }
+}
+
+/* =====================================================================
+ * class ช่วยจัดหน้า — ใช้แทนการเขียน style="..." ซ้ำ ๆ ใน HTML และ JS
+ * ตั้งชื่อตามความหมาย อ่านใน HTML แล้วรู้เลยว่าหน้าตาเป็นแบบไหน
+ * ===================================================================== */
+
+/* เรียงลูกในแนวตั้ง (stack) หรือแนวนอนกึ่งกลาง (inline) — ตัวเลขต่อท้าย = ระยะห่าง px */
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.inline {
+  display: flex;
+  align-items: center;
+}
+
+.wrap { flex-wrap: wrap; }
+.gap-2 { gap: var(--sp-2); }
+.gap-4 { gap: var(--sp-4); }
+.gap-6 { gap: var(--sp-6); }
+.gap-8 { gap: var(--sp-8); }
+.gap-10 { gap: var(--sp-10); }
+.gap-14 { gap: var(--sp-14); }
+.gap-16 { gap: var(--sp-16); }
+.gap-32 { gap: var(--sp-32); }
+.min-w-0 { min-width: 0; }
+.grow { flex: 1 1 0%; }
+.center { align-items: center; }
+.between { justify-content: space-between; }
+.full { width: 100%; }
+.fill { width: 100%; height: 100%; }
+.self-start { align-self: flex-start; }
+.mt-2 { margin-top: var(--sp-2); }
+.mt-8 { margin-top: var(--sp-8); }
+.mt-14 { margin-top: var(--sp-14); }
+.pad-16 { padding: var(--sp-16); }
+.pad-24 { padding: var(--sp-24); }
+.relative { position: relative; }
+
+/* ตัวอักษร */
+.text-meta { font-size: var(--fs-xs); color: var(--ink-3); }          /* ข้อความรองตัวเล็ก */
+.text-tiny { font-size: var(--fs-2xs); color: var(--ink-3); }         /* ข้อความรองตัวเล็กมาก */
+.text-muted { font-size: var(--fs-sm); color: var(--ink-3); line-height: 1.6; } /* ย่อหน้าคำอธิบาย */
+.text-soft { font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.55; }
+.text-strong { font-size: var(--fs-sm); font-weight: 500; color: var(--ink); }
+.heading { font-size: var(--fs-md); font-weight: 600; }
+.heading-lg { font-size: var(--fs-lg); font-weight: 600; }
+.heading-sm { font-size: var(--fs-sm); font-weight: 600; }
+.ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ปุ่มไอคอนขนาดเล็ก (ในแถวหัวข้อของช่องตั้งค่า) */
+.icobtn--sm { width: 22px; height: 22px; }
+
+/* ปุ่มแบบโปร่งที่ยังมีกรอบ (ปุ่มขนาดภาพที่ยังไม่ได้เลือก) */
+.btn--outlined { border: 1px solid var(--line); }
+
+/* ---------- หน้าสร้างภาพ ---------- */
+
+/* การ์ดภาพต้นฉบับในแผงขวา */
+.source-card {
+  display: flex;
+  gap: var(--sp-10);
+  align-items: center;
+  padding: var(--sp-8);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--panel-2);
+}
+
+.source-card__thumb {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  object-fit: cover;
+  border-radius: var(--r-sm);
+  background: var(--ph-image);
+}
+
+/* กรอบเล็ก ๆ แสดงรูปร่างของภาพในปุ่ม 1:1 / 2:3 / 3:2 */
+.size-shape {
+  border: 1.5px solid;
+  border-radius: 2px;
+  flex: 0 0 auto;
+  opacity: 0.9;
+}
+
+.size-shape--square { width: 14px; height: 14px; }
+.size-shape--tall { width: 9px; height: 14px; }
+.size-shape--wide { width: 14px; height: 9px; }
+
+/* คำอธิบายที่อยู่ใต้แถบเลื่อน ให้ชิดขึ้นไปหาแถบเลื่อน */
+.hint-tight { margin-top: -10px; }
+
+/* บรรทัดใต้ปุ่มสร้างภาพ: ขนาดที่จะได้ + ⌘↵ */
+.foot-hint {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-6);
+}
+
+.kbd-hint { opacity: 0.75; }
+
+/* คำอธิบายสีที่ระบายใต้ภาพ mask */
+.mask-legend-swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: var(--accent);
+  opacity: 0.55;
+}
+
+/* ภาพต้นฉบับที่แสดงตรงกลางก่อนกดสร้าง */
+.source-preview {
+  display: block;
+  max-width: 100%;
+  max-height: 58vh;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+}
+
+/* รายละเอียด error ที่พับไว้ (กดดูได้) */
+.error-detail summary { font-size: var(--fs-2xs); color: var(--ink-3); cursor: pointer; }
+.error-detail p { font-size: var(--fs-2xs); color: var(--ink-3); text-align: left; margin-top: var(--sp-8); word-break: break-word; }
+
+/* ---------- หน้าประวัติ ---------- */
+
+.detail-image {
+  border-radius: var(--r);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--ph-image);
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-3);
+}
+
+.detail-image img { width: 100%; display: block; cursor: zoom-in; }
+
+/* ตารางค่าของงาน 2 คอลัมน์ */
+.facts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+}
+
+.source-thumb {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: var(--ph-image);
+}
+
+/* ปุ่ม "คัดลอกคำอธิบาย" ตัวเล็กข้างหัวข้อ */
+.btn--tiny { height: 22px; padding: 0 6px; font-size: var(--fs-2xs); }
+
+/* ข้อความ error บนการ์ดงานที่ล้มเหลว */
+.runcard__error { font-size: var(--fs-xs); padding: 0 16px; text-align: center; line-height: 1.5; }
+
+/* ---------- แถบบน ---------- */
+
+.topbar__mode { font-size: var(--fs-xs); color: var(--ink-3); letter-spacing: 0.04em; }
+
+.topbar__user {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+/* ---------- หน้าบัญชี ---------- */
+
+.account__scroll {
+  padding: var(--sp-24);
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+}
+
+/* ---------- เพิ่มเติม (แทน style ที่เคยแทรกไว้) ---------- */
+
+.text-center { text-align: center; }
+.text-xs { font-size: var(--fs-xs); }
+.text-dim { color: var(--ink-3); }
+.clickable { cursor: pointer; }
+.pad-0 { padding: 0; }
+.contents { display: contents; }
+.hint-tight-sm { margin-top: -4px; }
+
+/* ช่องกำหนดขนาดเอง (กว้าง/สูง) ใต้ปุ่มขนาด */
+.custom-size { gap: var(--sp-12); margin-top: var(--sp-6); }
+
+/* แถบเลื่อนขนาดพู่กัน + ตัวเลข */
+.mask-size__slider { width: 76px; }
+.mask-size__value { font-size: var(--fs-xs); color: var(--ink-2); width: 26px; }
+
+/* ความกว้างของแถบความคืบหน้า (.track) ตามที่ใช้ */
+.track--sm { width: 160px; }
+.track--md { width: 200px; }
+.track--card { width: 60%; }
+
+.skeleton--detail { width: 100%; height: 160px; }
+
+/* สาเหตุที่งานล้มเหลวในแผงรายละเอียด */
+.detail-error { font-size: var(--fs-xs); line-height: 1.55; word-break: break-word; }
+
+/* โลโก้ของแผงแอดมินเป็นลิงก์กลับหน้าหลัก — ไม่ต้องมีขีดเส้นใต้ */
+a.adm__brand { text-decoration: none; }
+
+/* โหมด "ดูเฉพาะพื้นที่ที่ระบาย": ซ่อนภาพ แล้วแสดง mask เป็นสีขาวบนพื้นดำ */
+.mask-frame--mask-only { background: #000; }
+.mask-frame--mask-only img { opacity: 0; }
+.mask-frame--mask-only canvas { opacity: 1; filter: grayscale(1) brightness(2.6); }
+
+.detail-error { color: var(--ink-3); }
+.detail-error--fail { color: var(--fail); }

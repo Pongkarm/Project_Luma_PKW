@@ -1,0 +1,50 @@
+/*
+ * config.js — ค่าตั้งต้นทั้งหมดของเว็บอยู่ที่ไฟล์นี้ไฟล์เดียว
+ *
+ * ถ้า backend ย้ายเครื่องหรือ IP เปลี่ยน ให้แก้ API_BASE_URL บรรทัดเดียว
+ *   backend ในเครื่องตัวเอง:  http://localhost:8000
+ *   backend ของเพื่อน:        http://<IP ของเครื่องเพื่อน>:8000
+ */
+const API_BASE_URL = 'http://localhost:8000';
+
+/*
+ * ขอบเขตของค่าต่าง ๆ ที่ส่งไปให้ AI ได้
+ * ใช้ค่าที่ "แคบกว่า" ระหว่าง backend กับ AI node เพื่อไม่ให้งานถูกปฏิเสธกลางทาง
+ */
+const LIMITS = {
+  promptMax: 500,
+  steps: { min: 1, max: 50, default: 25 },
+  cfgScale: { min: 1, max: 20, step: 0.5, default: 7.5 },
+  denoise: { min: 0, max: 1, step: 0.05, img2img: 0.65, inpaint: 0.8 },
+  size: { min: 256, max: 768, multipleOf: 8 },
+  uploadMaxBytes: 10 * 1024 * 1024,
+  uploadTypes: ['image/png', 'image/jpeg', 'image/webp'],
+  sketchBlur: { min: 3, max: 51, default: 21 },
+};
+
+/* ขนาดภาพสำเร็จรูป (กว้าง x สูง) */
+const SIZE_PRESETS = [
+  { label: '1:1', name: 'จัตุรัส', width: 768, height: 768 },
+  { label: '2:3', name: 'แนวตั้ง', width: 512, height: 768 },
+  { label: '3:2', name: 'แนวนอน', width: 768, height: 512 },
+];
+
+/*
+ * รายชื่อโมเดลสำรอง — ใช้เมื่อขอรายชื่อจริงจาก GET /api/models ไม่สำเร็จ
+ * (เช่น เครื่อง AI ปิดอยู่) หน้าเว็บจะได้ยังเลือกโมเดลได้
+ */
+const FALLBACK_CHECKPOINTS = [
+  { id: 'counterfeitV30_v30.safetensors', name: 'Counterfeit v3.0', description: 'Illustration and anime' },
+  { id: 'novaAnimeXL_ilV190.safetensors', name: 'Nova Anime XL', description: 'Detailed anime, XL base' },
+  { id: 'prefectPonyXL_v6.safetensors', name: 'Prefect Pony XL', description: 'Stylised characters' },
+];
+
+const FALLBACK_LORAS = [
+  { id: 'SousouNoFrieren_Frieren_IlluXL.safetensors', name: 'Frieren' },
+  { id: 'himmel_sousou_no_frieren_ilxl.safetensors', name: 'Himmel' },
+  { id: 'niji_and_midj_mix217.safetensors', name: 'Niji & Midjourney mix' },
+  { id: 'tachi-e.safetensors', name: 'Tachi-e' },
+  { id: '[Artstyle] SomethingWeird_Geekpower [PDXL].safetensors', name: 'Geekpower' },
+];
+
+const SAMPLERS = ['Euler a', 'Euler', 'DPM++ 2M Karras', 'DPM++ SDE Karras', 'DDIM', 'UniPC'];

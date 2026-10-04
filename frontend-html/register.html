@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="th" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>สมัครสมาชิก · LUMA</title>
+    <script>document.documentElement.dataset.theme = localStorage.getItem('luma.theme') || 'dark';</script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" />
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/ui.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/extra.css" />
+  </head>
+  <body>
+    <div id="root">
+      <div class="auth">
+        <!-- ซ้าย: แนะนำระบบ (ซ่อนบนจอเล็ก) -->
+        <aside class="auth__brand">
+          <span class="mark"><span class="brand__mark" aria-hidden="true">L</span><span class="brand__word">LUMA</span></span>
+          <div class="stack gap-32">
+            <h2 class="auth__tagline">สร้างภาพด้วย AI คุณภาพสตูดิโอ ใช้งานร่วมกันได้ทั้งทีม</h2>
+            <div class="auth__features">
+              <div class="auth__feature">
+                <i data-icon="generate"></i>
+                <div class="stack gap-2">
+                  <span class="auth__featureName">สร้างจากข้อความ</span>
+                  <span class="auth__featureBody">พิมพ์สิ่งที่อยากได้ แล้วให้ GPU ของสตูดิโอสร้างภาพให้</span>
+                </div>
+              </div>
+              <div class="auth__feature">
+                <i data-icon="image"></i>
+                <div class="stack gap-2">
+                  <span class="auth__featureName">สร้างจากภาพ</span>
+                  <span class="auth__featureBody">เริ่มจากภาพที่มี แล้วกำหนดว่าจะให้เปลี่ยนมากแค่ไหน</span>
+                </div>
+              </div>
+              <div class="auth__feature">
+                <i data-icon="layers"></i>
+                <div class="stack gap-2">
+                  <span class="auth__featureName">แก้เฉพาะจุด</span>
+                  <span class="auth__featureBody">ระบายเฉพาะบริเวณที่ต้องการ แล้วให้สร้างใหม่แค่ตรงนั้น</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <span class="auth__foot">ระบบสร้างทีละงาน เข้าคิวร่วมกันทั้งสตูดิโอ</span>
+        </aside>
+
+        <!-- ขวา: ฟอร์มสมัคร -->
+        <main class="auth__panel">
+          <div class="auth__card">
+            <div class="auth__markRow"><span class="brand__mark" aria-hidden="true">L</span><span class="brand__word">LUMA</span></div>
+            <div class="auth__head">
+              <h1 class="auth__title">สมัครบัญชีใหม่</h1>
+              <p class="auth__sub">ใช้เวลาไม่ถึงนาที</p>
+            </div>
+
+            <form class="stack gap-16" id="register-form">
+              <div id="register-alert" hidden></div>
+
+              <div class="field">
+                <label class="label" for="username">ชื่อผู้ใช้</label>
+                <input id="username" class="input" autocomplete="username" minlength="3" maxlength="50" required />
+              </div>
+
+              <div class="field">
+                <label class="label" for="email">อีเมล</label>
+                <input id="email" class="input" type="email" autocomplete="email" required />
+              </div>
+
+              <div>
+                <div class="field">
+                  <label class="label" for="password">รหัสผ่าน</label>
+                  <div class="pw">
+                    <input id="password" class="input pw__input" type="password" autocomplete="new-password" required />
+                    <button type="button" class="pw__toggle" title="แสดงรหัสผ่าน" aria-label="แสดงรหัสผ่าน"></button>
+                  </div>
+                </div>
+
+                <!-- เงื่อนไขรหัสผ่าน: ติ๊กถูกเมื่อผ่าน (register.js อัปเดตให้ทุกครั้งที่พิมพ์) -->
+                <div class="auth__rules">
+                  <span class="auth__rule" id="rule-length">อย่างน้อย 8 ตัวอักษร</span>
+                  <span class="auth__rule" id="rule-variety">มีตัวเลขหรือสัญลักษณ์</span>
+                  <span class="auth__rule" id="rule-match">ตรงกันแล้ว</span>
+                </div>
+
+                <div class="field mt-14">
+                  <label class="label" for="password-confirm">ยืนยันรหัสผ่าน</label>
+                  <div class="pw">
+                    <input id="password-confirm" class="input pw__input" type="password" autocomplete="new-password" required />
+                    <button type="button" class="pw__toggle" title="แสดงรหัสผ่าน" aria-label="แสดงรหัสผ่าน"></button>
+                  </div>
+                </div>
+              </div>
+
+              <button id="register-button" type="submit" class="btn btn--primary btn--block mt-2" disabled>สมัครบัญชี</button>
+            </form>
+
+            <div class="auth__divider"></div>
+            <p class="auth__alt">มีบัญชีแล้ว? <a href="login.html">เข้าสู่ระบบ</a></p>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/icons.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/widgets.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/register.js"></script>
+  </body>
+</html>

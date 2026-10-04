@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="th" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>ประวัติ · LUMA</title>
+    <script>document.documentElement.dataset.theme = localStorage.getItem('luma.theme') || 'dark';</script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" />
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/ui.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/extra.css" />
+  </head>
+  <body>
+    <div id="root">
+      <div class="app">
+        <a class="skip" href="#main">ข้ามไปยังเนื้อหา</a>
+        <header class="topbar" id="topbar"></header>
+
+        <div class="app__body">
+          <nav class="rail" id="rail"></nav>
+
+          <div class="app__workspace">
+            <!-- ================= ตรงกลาง: รายการงาน ================= -->
+            <main class="main" id="main" tabindex="-1">
+              <div class="stagebar">
+                <div class="inline gap-10">
+                  <span class="stage-title">ประวัติ</span>
+                  <span class="mono text-meta" id="total-text"></span>
+                </div>
+                <div class="inline gap-10">
+                  <span class="mono text-meta" id="range-text"></span>
+                  <div class="inline gap-4">
+                    <button type="button" class="icobtn" id="prev-button" title="หน้าก่อนหน้า" aria-label="หน้าก่อนหน้า" disabled><i data-icon="chevronLeft" data-size="14"></i></button>
+                    <button type="button" class="icobtn" id="next-button" title="หน้าถัดไป" aria-label="หน้าถัดไป" disabled><i data-icon="chevronRight" data-size="14"></i></button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="pad-16" id="history-alert" hidden></div>
+
+              <!-- การ์ดของแต่ละงาน — history.js เติมให้ -->
+              <div class="grid-runs" id="grid"></div>
+
+              <!-- ยังไม่มีงาน -->
+              <div class="stage" id="empty" hidden>
+                <div class="centered-note">
+                  <i data-icon="clock" data-size="22"></i>
+                  <h2 class="heading">ยังไม่มีประวัติ</h2>
+                  <p class="text-muted">ภาพที่คุณสร้างจะถูกเก็บไว้ที่นี่</p>
+                </div>
+              </div>
+            </main>
+
+            <!-- ================= ขวา: รายละเอียดงานที่เลือก ================= -->
+            <aside class="controls" aria-label="รายละเอียด" id="detail" hidden>
+              <div class="stagebar">
+                <span class="heading-sm">รายละเอียด</span>
+                <span class="mono text-tiny" id="detail-id"></span>
+              </div>
+
+              <div class="controls__scroll">
+                <div class="detail-image" id="detail-image"></div>
+
+                <div class="stack gap-8">
+                  <span class="label pad-0">
+                    <span class="eyebrow">คำอธิบายภาพ</span>
+                    <button type="button" class="btn btn--sm btn--ghost btn--tiny" id="copy-prompt">คัดลอกคำอธิบาย</button>
+                  </span>
+                  <p class="text-soft" id="detail-prompt"></p>
+                </div>
+
+                <div class="stack gap-8" id="detail-negative-box">
+                  <span class="eyebrow">สิ่งที่ไม่เอา</span>
+                  <p class="text-muted" id="detail-negative"></p>
+                </div>
+
+                <div class="stack gap-8" id="detail-error-box">
+                  <span class="eyebrow" id="detail-error-title"></span>
+                  <p class="mono detail-error" id="detail-error"></p>
+                </div>
+
+                <!-- ค่าต่าง ๆ ของงาน แบบสองคอลัมน์ -->
+                <div class="facts-grid" id="detail-facts"></div>
+
+                <div class="stack gap-8" id="detail-source-box">
+                  <span class="eyebrow">สร้างต่อจาก</span>
+                  <img class="source-thumb" id="detail-source" alt="ภาพต้นฉบับของงานนี้" />
+                </div>
+              </div>
+
+              <div class="controls__foot">
+                <a class="btn btn--primary btn--block" id="detail-save"><i data-icon="download" data-size="14"></i>บันทึกภาพ</a>
+                <button type="button" class="btn btn--secondary btn--block" id="detail-studio"><i data-icon="wand" data-size="14"></i>แต่งในสตูดิโอ</button>
+                <button type="button" class="btn btn--secondary btn--block" id="detail-follow">ดูความคืบหน้า</button>
+                <button type="button" class="btn btn--secondary btn--block" id="detail-reuse">ใช้ค่าเดิมนี้</button>
+                <button type="button" class="btn btn--danger btn--block" id="detail-delete"><i data-icon="trash" data-size="14"></i>ลบ</button>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        <nav class="tabbar" id="tabbar"></nav>
+      </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/icons.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/widgets.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/history/list.js"></script>
+    <script src="js/history/detail.js"></script>
+    <script src="js/history/main.js"></script>
+  </body>
+</html>

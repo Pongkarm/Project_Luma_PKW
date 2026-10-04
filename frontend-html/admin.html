@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="th" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>แผงแอดมิน · LUMA</title>
+    <script>document.documentElement.dataset.theme = localStorage.getItem('luma.theme') || 'dark';</script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" />
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/ui.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/extra.css" />
+  </head>
+  <body>
+    <div id="root">
+      <!-- ไม่มีสิทธิ์ หรือ backend ไม่ตอบ -->
+      <div class="adm-notice" id="admin-blocked" hidden></div>
+
+      <div class="adm" id="admin-app" hidden>
+        <!-- เมนูซ้ายของแผงแอดมิน (admin.js เติมรายการตามสิทธิ์) -->
+        <nav class="adm__rail" aria-label="Admin sections">
+          <a class="adm__brand" href="generate.html" title="กลับไปหน้าสร้างภาพ">LUMA<span>ADMIN</span></a>
+          <div class="adm__nav" id="admin-nav"></div>
+          <div class="adm__who">
+            <span class="adm__whoName" id="who-name"></span>
+            <span class="adm__whoRole" id="who-role"></span>
+          </div>
+        </nav>
+
+        <!-- เนื้อหาของแต่ละหน้า (เลือกด้วย #overview, #users, ...) -->
+        <main class="adm__main" id="admin-main"></main>
+      </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/icons.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/widgets.js"></script>
+    <script src="js/layout.js"></script>
+    <!-- แต่ละหน้าย่อยอยู่คนละไฟล์ main.js ต้องโหลดท้ายสุด เพราะเป็นตัวเริ่มทำงาน -->
+    <script src="js/admin/overview.js"></script>
+    <script src="js/admin/users.js"></script>
+    <script src="js/admin/audit.js"></script>
+    <script src="js/admin/admins.js"></script>
+    <script src="js/admin/main.js"></script>
+  </body>
+</html>
