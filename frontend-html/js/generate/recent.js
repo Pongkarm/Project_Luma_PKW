@@ -10,7 +10,7 @@ const thumbUrls = {}; // จำภาพที่โหลดแล้ว จะ
 async function loadRecent() {
   let data;
   try {
-    data = await apiRequest('/generations?page=1&page_size=12');
+    data = await apiRequest('/generations?page=1&page_size=' + PAGE_SIZES.recent);
   } catch (ignored) {
     return;
   }
@@ -19,13 +19,11 @@ async function loadRecent() {
     .map((item) => {
       let inner;
       if (thumbUrls[item.id]) inner = '<img class="img-in" alt="" src="' + thumbUrls[item.id] + '" />';
-      else if (item.status === 'failed') inner = icon('xCircle', 16);
       else if (item.status === 'completed') inner = '<span class="skeleton fill"></span>';
-      else if (item.status === 'processing') inner = icon('refresh', 16, 'spin');
-      else inner = icon('queue', 16).replaceAll('<path ', '<path stroke-dasharray="3 3" ');
+      else inner = statusIcon(item.status, 16);
       return (
-        '<button type="button" class="thumb" data-run="' + item.id + '" aria-current="false" title="' +
-        escapeHtml(STATUS[item.status].text + ' · ' + item.prompt) + '">' + inner + '</button>'
+        '<button type="button" class="thumb" data-run="' + escapeHtml(item.id) + '" aria-current="false" title="' +
+        escapeHtml(statusInfo(item.status).text + ' · ' + item.prompt) + '">' + inner + '</button>'
       );
     })
     .join('');

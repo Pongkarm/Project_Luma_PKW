@@ -21,6 +21,12 @@ function setToken(token) {
   else localStorage.removeItem(TOKEN_KEY);
 }
 
+/* หัว Authorization ของคำขอ (ว่างถ้ายังไม่ล็อกอิน — ไม่ส่ง "Bearer null") */
+function authHeaders() {
+  const token = getToken();
+  return token ? { Authorization: 'Bearer ' + token } : {};
+}
+
 /* ข้อผิดพลาดจาก API — เก็บ status ไว้ให้หน้าเว็บตัดสินใจได้ */
 class ApiError extends Error {
   constructor(status, message) {
@@ -73,7 +79,7 @@ function handleUnauthorized() {
  * คืนค่า: ข้อมูล JSON ที่ backend ตอบ
  */
 async function apiRequest(path, options = {}) {
-  const headers = {};
+  const headers = options.auth === false ? {} : authHeaders();
   let body;
 
   if (options.json !== undefined) {
@@ -84,9 +90,6 @@ async function apiRequest(path, options = {}) {
     headers['Content-Type'] = 'application/x-www-form-urlencoded';
     body = new URLSearchParams(options.form).toString();
   }
-
-  const token = getToken();
-  if (options.auth !== false && token) headers['Authorization'] = 'Bearer ' + token;
 
   let response;
   try {
@@ -125,8 +128,7 @@ function apiUpload(path, fileBlob, fileName, fields = {}, onProgress) {
 
     const xhr = new XMLHttpRequest();
     xhr.open('POST', API_BASE_URL + path);
-    const token = getToken();
-    if (token) xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+    for (const [name, value] of Object.entries(authHeaders())) xhr.setRequestHeader(name, value);
 
     if (onProgress) {
       xhr.upload.onprogress = (event) => {
@@ -160,9 +162,7 @@ function apiUpload(path, fileBlob, fileName, fields = {}, onProgress) {
 async function apiBlob(path) {
   let response;
   try {
-    response = await fetch(API_BASE_URL + path, {
-      headers: { Authorization: 'Bearer ' + getToken() },
-    });
+    response = await fetch(API_BASE_URL + path, { headers: authHeaders() });
   } catch (networkError) {
     throw new ApiError(0, errorMessage(0));
   }

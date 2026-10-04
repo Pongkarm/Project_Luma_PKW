@@ -2,12 +2,10 @@
 <html lang="th">
   <head>
     <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' http: https:; object-src 'none'; base-uri 'self'" />
     <link rel="icon" href="data:," />
     <title>LUMA</title>
-    <script>
-      // หน้าแรก: ล็อกอินแล้วไปหน้าสร้างภาพ ยังไม่ล็อกอินไปหน้าเข้าสู่ระบบ
-      location.replace(localStorage.getItem('luma.token') ? 'generate.html' : 'login.html');
-    </script>
+    <script src="js/start.js"></script>
   </head>
   <body></body>
 </html>

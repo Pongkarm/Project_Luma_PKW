@@ -7,6 +7,7 @@
 /* ใช้เครื่องมือกับเวอร์ชันที่แสดงอยู่ → ได้เวอร์ชันใหม่ (ตัดฉากได้ mask มาด้วย) */
 async function applyTool() {
   if (!current || busy) return;
+  const mySession = session;
   const sourceVersion = current;
   const fields = {};
   let detail = null;
@@ -27,15 +28,17 @@ async function applyTool() {
     // ส่งตัวไฟล์ภาพไปเสมอ (ไม่ส่งเป็นที่อยู่ไฟล์) เพื่อให้ใช้เครื่องมือต่อกันได้
     const result = await apiUpload('/api/tools/' + tool, sourceVersion.blob, 'source.png', fields);
     const blob = await apiBlob(toServerPath(result.result_image_url));
+    const maskPath = tool === 'remove-bg' ? toServerPath(result.mask_image_url) : null;
+    const maskBlob = maskPath ? await apiBlob(maskPath) : null;
+    if (mySession !== session) return; // ผู้ใช้เปลี่ยน/ปิดภาพไปแล้ว — ทิ้งผลนี้
+
     const version = { blob, url: URL.createObjectURL(blob), tool, detail, parent: sourceVersion };
     if (tool === 'pose') version.landmarks = result.landmarks || [];
-    if (tool === 'remove-bg') {
-      const maskBlob = await apiBlob(toServerPath(result.mask_image_url));
-      version.mask = { blob: maskBlob, url: URL.createObjectURL(maskBlob), path: toServerPath(result.mask_image_url) };
-    }
+    if (maskBlob) version.mask = { blob: maskBlob, url: URL.createObjectURL(maskBlob), path: maskPath };
     busy = false;
     await addVersion(version);
   } catch (error) {
+    if (mySession !== session) return;
     busy = false;
     if (error.status === 404 || error.status === 405) {
       showAlert($('tool-alert'), 'เซิร์ฟเวอร์นี้ยังไม่มีเครื่องมือสตูดิโอ จะมาพร้อมอัปเดต backend รอบหน้า ภาพของคุณไม่ได้มีปัญหาอะไร', 'note');
@@ -104,11 +107,11 @@ async function openRun(runId) {
 async function loadRecent() {
   let data;
   try {
-    data = await apiRequest('/generations?page=1&page_size=12');
+    data = await apiRequest('/generations?page=1&page_size=' + PAGE_SIZES.recent);
   } catch (ignored) {
     return;
   }
-  const done = data.items.filter((item) => item.status === 'completed').slice(0, 8);
+  const done = data.items.filter((item) => item.status === 'completed').slice(0, PAGE_SIZES.studioRecent);
   if (done.length === 0) return;
   $('recent-box').hidden = false;
   $('recent-row').innerHTML = done

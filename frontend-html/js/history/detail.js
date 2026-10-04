@@ -40,22 +40,27 @@ async function select(run) {
 
   // ปุ่มด้านล่าง: บางปุ่มใช้ได้เฉพาะงานที่เสร็จแล้ว
   const done = run.status === 'completed';
-  $('detail-save').hidden = !done;
   $('detail-studio').hidden = !done;
   $('detail-follow').hidden = isFinished(run);
+  // ปุ่มบันทึกภาพแสดงหลังโหลดภาพของงานนี้สำเร็จเท่านั้น (ไม่อย่างนั้นจะบันทึกภาพของงานก่อนหน้า)
+  $('detail-save').hidden = true;
+  $('detail-save').removeAttribute('href');
 
   // ภาพผลลัพธ์
   selectedImageUrl = null;
   if (done) {
     $('detail-image').innerHTML = '<span class="skeleton skeleton--detail"></span>';
     try {
-      selectedImageUrl = imageUrls[run.id] || (await apiImageUrl('/generations/' + run.id + '/image'));
+      const url = imageUrls[run.id] || (await apiImageUrl('/generations/' + run.id + '/image'));
+      imageUrls[run.id] = url;
       if (selected !== run) return;
-      $('detail-image').innerHTML = '<img class="img-in" src="' + selectedImageUrl + '" alt="' + escapeHtml(run.prompt) + '" title="ดูขนาดเต็ม" />';
-      $('detail-save').href = selectedImageUrl;
+      selectedImageUrl = url;
+      $('detail-image').innerHTML = '<img class="img-in" src="' + url + '" alt="' + escapeHtml(run.prompt) + '" title="ดูขนาดเต็ม" />';
+      $('detail-save').href = url;
       $('detail-save').download = 'luma-' + run.id + '.png';
+      $('detail-save').hidden = false;
     } catch (error) {
-      $('detail-image').innerHTML = '<span class="pad-24">โหลดภาพไม่ได้</span>';
+      if (selected === run) $('detail-image').innerHTML = '<span class="pad-24">โหลดภาพไม่ได้</span>';
     }
   } else {
     $('detail-image').innerHTML = '<div class="pad-24">' + statusChip(run.status) + '</div>';
@@ -86,7 +91,7 @@ function closeDetail() {
 function reuseSettings() {
   let draft = {};
   try {
-    draft = JSON.parse(localStorage.getItem('luma.html.draft')) || {};
+    draft = JSON.parse(localStorage.getItem(DRAFT_KEY)) || {};
   } catch (ignored) {
     // ร่างเสีย — เขียนใหม่
   }
@@ -95,6 +100,7 @@ function reuseSettings() {
     prompt: selected.prompt,
     'negative-prompt': selected.negative_prompt || '',
     model: selected.model_name,
+    lora: selected.lora_config && selected.lora_config.id ? selected.lora_config.id : '',
     sampler: selected.sampler_name,
     steps: String(selected.steps),
     cfg: String(selected.cfg_scale),
@@ -103,7 +109,7 @@ function reuseSettings() {
     // backend ไม่ได้บอก seed ที่สุ่มได้จริง จึงส่งต่อได้เฉพาะ seed ที่ผู้ใช้ตั้งเอง
     seed: selected.seed === null ? '' : String(selected.seed),
   });
-  localStorage.setItem('luma.html.draft', JSON.stringify(draft));
+  localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
   location.href = 'generate.html';
 }
 

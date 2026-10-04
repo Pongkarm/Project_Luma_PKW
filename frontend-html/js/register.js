@@ -9,30 +9,9 @@ if (getToken()) location.href = 'generate.html';
 
 setupPasswordToggles();
 
-/* เงื่อนไขรหัสผ่าน (backend ไม่ได้บังคับ เราตั้งเองเพื่อความปลอดภัย) */
-const RULES = [
-  { id: 'rule-length', text: 'อย่างน้อย 8 ตัวอักษร', test: (pw) => pw.length >= 8 },
-  { id: 'rule-variety', text: 'มีตัวเลขหรือสัญลักษณ์', test: (pw) => /[^A-Za-z]/.test(pw) },
-  { id: 'rule-match', text: 'ตรงกันแล้ว', test: (pw, confirm) => pw.length > 0 && pw === confirm },
-];
-
-/* อัปเดตเครื่องหมายถูกของแต่ละเงื่อนไข และเปิด/ปิดปุ่มสมัคร */
+/* อัปเดตเครื่องหมายถูกของแต่ละเงื่อนไขรหัสผ่าน และเปิด/ปิดปุ่มสมัคร */
 function updateRules() {
-  const password = $('password').value;
-  const confirm = $('password-confirm').value;
-  let allMet = true;
-
-  for (const rule of RULES) {
-    const met = rule.test(password, confirm);
-    if (!met) allMet = false;
-    const element = $(rule.id);
-    element.className = 'auth__rule' + (met ? ' auth__rule--met' : '');
-    // ผ่าน = วงกลมติ๊กถูก, ยังไม่ผ่าน = วงกลมเส้นประ
-    let mark = icon(met ? 'checkCircle' : 'queue', 12, 'auth__ruleIcon');
-    if (!met) mark = mark.replaceAll('<path ', '<path stroke-dasharray="3 3" ');
-    element.innerHTML = mark + rule.text;
-  }
-
+  const allMet = renderPasswordRules($('password').value, $('password-confirm').value);
   const filled = $('username').value.trim().length >= 3 && $('email').value.trim();
   $('register-button').disabled = !(allMet && filled);
 }

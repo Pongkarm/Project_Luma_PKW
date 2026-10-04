@@ -55,7 +55,7 @@ function drawSizePresets() {
     '<button type="button" class="btn btn--sm ' + look(customOpen) + '" aria-pressed="' + customOpen + '" data-custom="1">กำหนดเอง</button>';
   $('size-presets').innerHTML = html;
   $('size-meta').textContent = width + ' × ' + height + ' px · ' + ratioText(width, height);
-  $('size-reset').disabled = width === 768 && height === 768 && !customOpen;
+  $('size-reset').disabled = width === DEFAULT_SIZE.width && height === DEFAULT_SIZE.height && !customOpen;
 }
 
 let paintWidth;
@@ -94,7 +94,7 @@ function setupForm() {
   $('swap-button').addEventListener('click', () => setSize(Number($('height').value), Number($('width').value)));
   $('size-reset').addEventListener('click', () => {
     $('custom-size').hidden = true;
-    setSize(768, 768);
+    setSize(DEFAULT_SIZE.width, DEFAULT_SIZE.height);
   });
 
   $('seed-random').addEventListener('click', () => {

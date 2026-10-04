@@ -7,13 +7,6 @@
 
 let user = null;
 
-/* เงื่อนไขรหัสผ่านใหม่ (เหมือนหน้าสมัครสมาชิก) */
-const RULES = [
-  { id: 'rule-length', text: 'อย่างน้อย 8 ตัวอักษร', test: (pw) => pw.length >= 8 },
-  { id: 'rule-variety', text: 'มีตัวเลขหรือสัญลักษณ์', test: (pw) => /[^A-Za-z]/.test(pw) },
-  { id: 'rule-match', text: 'ตรงกันแล้ว', test: (pw, confirm) => pw.length > 0 && pw === confirm },
-];
-
 /* เติมการ์ดโปรไฟล์จากข้อมูลผู้ใช้ (และตัวเลขบนแถบบน) */
 function drawProfile() {
   $('avatar').textContent = user.username.slice(0, 1).toUpperCase();
@@ -51,18 +44,7 @@ function closeEdit() {
 /* อัปเดตเครื่องหมายถูกของรหัสผ่านใหม่ และเปิด/ปิดปุ่มบันทึก */
 function updateForm() {
   const withPassword = $('with-password').checked;
-  const password = $('new-password').value;
-  const confirm = $('confirm-password').value;
-  let passwordOk = true;
-
-  for (const rule of RULES) {
-    const met = rule.test(password, confirm);
-    if (!met) passwordOk = false;
-    let mark = icon(met ? 'checkCircle' : 'queue', 12, 'auth__ruleIcon');
-    if (!met) mark = mark.replaceAll('<path ', '<path stroke-dasharray="3 3" ');
-    $(rule.id).className = 'auth__rule' + (met ? ' auth__rule--met' : '');
-    $(rule.id).innerHTML = mark + rule.text;
-  }
+  const passwordOk = renderPasswordRules($('new-password').value, $('confirm-password').value);
 
   const changed =
     $('new-username').value.trim() !== user.username || $('new-email').value.trim() !== user.email || withPassword;

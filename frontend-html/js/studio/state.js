@@ -36,6 +36,7 @@ let color = 'green';
 let busy = false;
 let comparing = false;
 let showMask = false;
+let session = 0; // เพิ่มทุกครั้งที่เปลี่ยน/ปิดภาพ — ผลของเครื่องมือที่ค้างจากภาพเก่าจะถูกทิ้ง
 
 /* blur ต้องเป็นเลขคี่ในช่วง 3–51 ไม่งั้น OpenCV ฝั่ง backend จะ error */
 function oddKernel(value) {
@@ -60,10 +61,12 @@ function versionDetail(version) {
 
 /* เพิ่มเวอร์ชันใหม่ท้ายแถบ แล้วเลือกให้เลย */
 async function addVersion(version) {
+  const mySession = session;
   // อ่านขนาดภาพไว้แสดงในคำบรรยาย
   const image = new Image();
   image.src = version.url;
   await image.decode().catch(() => {});
+  if (mySession !== session) return URL.revokeObjectURL(version.url); // เปลี่ยนภาพระหว่างรอ
   version.width = image.naturalWidth;
   version.height = image.naturalHeight;
   versions.push(version);
@@ -78,16 +81,27 @@ function selectVersion(version) {
   render();
 }
 
+/* ล้างเวอร์ชันทั้งหมด และคืนหน่วยความจำของภาพเหล่านั้น */
+function clearVersions() {
+  session += 1;
+  busy = false;
+  for (const version of versions) {
+    URL.revokeObjectURL(version.url);
+    if (version.mask) URL.revokeObjectURL(version.mask.url);
+  }
+  versions = [];
+  current = null;
+}
+
 /* เริ่มใหม่ด้วยภาพใหม่ (ล้างเวอร์ชันเก่าทั้งหมด) */
 function startWith(blob, label) {
-  versions = [];
+  clearVersions();
   sourceLabel = label;
   addVersion({ blob, url: URL.createObjectURL(blob), tool: null, detail: null, parent: null });
 }
 
 /* ปิดภาพ กลับไปหน้าเลือกภาพ */
 function closeImage() {
-  versions = [];
-  current = null;
+  clearVersions();
   render();
 }

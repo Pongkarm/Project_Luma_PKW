@@ -76,7 +76,6 @@ async function start() {
   $('studio-media').addEventListener('click', () => {
     if (!comparing && current) openViewer(showMask && current.mask ? current.mask.url : current.url, $('studio-caption').textContent);
   });
-  $('save-link').addEventListener('click', () => toast('บันทึกภาพลงเครื่องแล้ว'));
   $('use-source-button').addEventListener('click', (event) => sendToGenerate(current.blob, {}, event.currentTarget));
 
   // ผลของท่าทาง / ตัดฉาก
@@ -98,11 +97,8 @@ async function start() {
   render();
 
   // เปิดมาจากปุ่ม "แต่งต่อในสตูดิโอ" ในหน้าสร้างภาพ
-  const handoff = sessionStorage.getItem('luma.studio-handoff');
-  if (handoff) {
-    sessionStorage.removeItem('luma.studio-handoff');
-    openRun(JSON.parse(handoff).runId);
-  }
+  const handoff = takeSessionJson('luma.studio-handoff');
+  if (handoff && handoff.runId) openRun(handoff.runId);
   loadRecent();
 }
 

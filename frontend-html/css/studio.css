@@ -328,15 +328,6 @@
   opacity: 0.5;
 }
 
-.quickbar__note {
-  font-size: var(--fs-xs);
-  color: var(--ink-3);
-}
-
-.quickbar__note--error {
-  color: var(--fail);
-}
-
 /* ── small pieces of the page and panel ─────────────────────────────── */
 .studio-subtitle {
   font-size: var(--fs-xs);

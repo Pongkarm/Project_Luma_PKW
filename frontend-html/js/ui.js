@@ -32,6 +32,21 @@ function formatDate(iso) {
   return new Date(iso).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
+/*
+ * อ่านข้อมูลที่หน้าอื่นฝากไว้ใน sessionStorage แล้วลบทิ้ง (ใช้ได้ครั้งเดียว)
+ * คืนค่า null ถ้าไม่มี หรือข้อมูลเสีย
+ */
+function takeSessionJson(key) {
+  const raw = sessionStorage.getItem(key);
+  if (!raw) return null;
+  sessionStorage.removeItem(key);
+  try {
+    return JSON.parse(raw);
+  } catch (ignored) {
+    return null;
+  }
+}
+
 /* วินาที → "1:05" */
 function formatClock(seconds) {
   const s = Math.max(0, Math.floor(seconds));
@@ -68,12 +83,27 @@ function wasCancelled(run) {
   return run.status === 'failed' && run.error_message === CANCELLED_MESSAGE;
 }
 
+/* ข้อมูลแสดงผลของสถานะ — สถานะที่ไม่รู้จัก (เช่น backend เพิ่มใหม่) แสดงเหมือน "รอคิว" */
+function statusInfo(status) {
+  return STATUS[status] || STATUS.pending;
+}
+
+/* วงกลมเส้นประ — ใช้กับ "รอคิว" และเงื่อนไขรหัสผ่านที่ยังไม่ผ่าน */
+function dashedCircle(size, className = '') {
+  return icon('queue', size, className).replaceAll('<path ', '<path stroke-dasharray="3 3" ');
+}
+
+/* ไอคอนของสถานะงาน: รอคิว = วงกลมเส้นประ, กำลังสร้าง = ลูกศรหมุน */
+function statusIcon(status, size) {
+  if (status === 'processing') return icon('refresh', size, 'spin');
+  if (status === 'pending' || !STATUS[status]) return dashedCircle(size);
+  return icon(statusInfo(status).icon, size);
+}
+
 /* ป้ายสถานะ เช่น ✓ เสร็จแล้ว (สีต่างกันตามสถานะ) */
 function statusChip(status) {
-  const info = STATUS[status] || STATUS.pending;
-  let svg = icon(info.icon, 12, status === 'processing' ? 'spin' : '');
-  if (status === 'pending') svg = svg.replaceAll('<path ', '<path stroke-dasharray="3 3" ');
-  return '<span class="status status--' + status + '">' + svg + info.text + '</span>';
+  const known = STATUS[status] ? status : 'pending';
+  return '<span class="status status--' + known + '">' + statusIcon(known, 12) + statusInfo(known).text + '</span>';
 }
 
 /* ---------- กล่องแจ้งเตือน ---------- */

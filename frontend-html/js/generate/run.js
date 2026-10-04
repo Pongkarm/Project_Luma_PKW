@@ -67,6 +67,7 @@ function releaseImages() {
   runImageUrl = null;
   runImageBlob = null;
   quick = null;
+  quickBusy = null;
 }
 
 /* เริ่มติดตามงาน: ล้างของเก่า, เริ่มนาฬิกานับเวลา, แล้วเริ่มถามสถานะ */
@@ -76,19 +77,26 @@ function watchRun(newRun) {
   run = newRun;
   progress = null;
   stalled = false;
-  watchStartedAt = Date.now();
-  clockTimer = setInterval(() => {
-    const clock = $('run-clock');
-    if (clock) clock.textContent = formatClock((Date.now() - watchStartedAt) / 1000);
-  }, 1000);
+  startClock();
   updateView();
   markActiveThumb();
   if (isFinished(run)) onFinished();
   else poll();
 }
 
-/* หยุดถามสถานะและหยุดนาฬิกา */
+/* เริ่มนาฬิกานับเวลาตั้งแต่ตอนนี้ (ตัวเลข "ผ่านไป 0:12" ใต้แถบความคืบหน้า) */
+function startClock() {
+  clearInterval(clockTimer);
+  watchStartedAt = Date.now();
+  clockTimer = setInterval(() => {
+    const clock = $('run-clock');
+    if (clock) clock.textContent = formatClock((Date.now() - watchStartedAt) / 1000);
+  }, 1000);
+}
+
+/* หยุดถามสถานะและหยุดนาฬิกา — คำตอบของรอบที่ส่งไปแล้วจะถูกทิ้ง (ดู watchToken) */
 function stopWatching() {
+  watchToken += 1;
   clearTimeout(pollTimer);
   clearInterval(clockTimer);
 }
@@ -99,17 +107,18 @@ function stopWatching() {
  *  - เกิน 5 นาทีแล้วยังไม่เสร็จ → หยุดถาม และบอกผู้ใช้ตรง ๆ
  */
 async function poll() {
+  const token = watchToken;
   const runId = run.id;
   try {
     const latest = await apiRequest('/generations/' + runId);
-    if (!run || runId !== run.id) return; // ผู้ใช้ปิดงานนี้ไปแล้ว
+    if (token !== watchToken) return; // ผู้ใช้หยุด/ปิด/เปลี่ยนงานไปแล้ว
     run = latest;
     if (!isFinished(run)) {
       progress = await apiRequest('/generations/' + runId + '/progress').catch(() => null);
-      if (!run || runId !== run.id) return;
+      if (token !== watchToken) return;
     }
   } catch (error) {
-    if (!run || runId !== run.id) return;
+    if (token !== watchToken) return;
     // เน็ตสะดุด — ลองใหม่รอบหน้า
   }
 
@@ -213,12 +222,11 @@ function onStageClick(event) {
   if (action === 'retry') closeRun();
   if (action === 'check') {
     stalled = false;
-    watchStartedAt = Date.now();
+    startClock();
     renderStage();
     poll();
   }
   if (action === 'view' && (quick || runImageUrl)) openViewer(quick ? quick.url : runImageUrl, run.prompt);
-  if (action === 'save') toast('บันทึกภาพลงเครื่องแล้ว');
   if (action === 'use-source') useAsSource(target);
   if (action === 'delete') deleteRun();
   if (action === 'original') {

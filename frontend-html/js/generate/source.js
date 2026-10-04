@@ -61,7 +61,7 @@ function setSource(newSource, previewUrl) {
   $('output-size-hint').textContent =
     out.width === source.width && out.height === source.height
       ? 'ขนาดเท่าภาพที่อัปโหลด'
-      : 'ย่อ/ขยายจาก ' + source.width + ' × ' + source.height + ' ให้พอดีกับระบบ (256–768)';
+      : 'ย่อ/ขยายจาก ' + source.width + ' × ' + source.height + ' ให้พอดีกับระบบ (' + LIMITS.size.min + '–' + LIMITS.size.max + ')';
   $('output-size-field').hidden = mode === 'txt2img';
 
   saveDraft();
@@ -85,10 +85,8 @@ function removeSource() {
  * รูปแบบ: { mode, source: {url,width,height,name}, maskPath?, invertMask? }
  */
 async function takeHandoff() {
-  const raw = sessionStorage.getItem('luma.handoff');
-  if (!raw) return;
-  sessionStorage.removeItem('luma.handoff');
-  const handoff = JSON.parse(raw);
+  const handoff = takeSessionJson('luma.handoff');
+  if (!handoff || !handoff.source) return;
 
   closeRun();
   setMode(handoff.mode || 'img2img');

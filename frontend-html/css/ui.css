@@ -118,10 +118,6 @@
   flex: none;
 }
 
-.btn--disabled-visual:disabled {
-  opacity: 1;
-}
-
 .icobtn {
   width: 28px;
   height: 28px;
@@ -147,11 +143,6 @@
 .icobtn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
-}
-
-.icobtn--lg {
-  width: 34px;
-  height: 34px;
 }
 
 /* ── fields ──────────────────────────────────────────────────────────── */
@@ -246,14 +237,6 @@
   transform: translateY(-50%);
   color: var(--ink-3);
   pointer-events: none;
-}
-
-.field__error {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-6);
-  font-size: var(--fs-sm);
-  color: var(--fail);
 }
 
 .field__hint {
@@ -421,14 +404,6 @@
 }
 
 /* A value that only reaches the engine in direct mode. See README. */
-.modedot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--accent-dot);
-  display: inline-block;
-  flex: none;
-}
 
 /* ── messages ────────────────────────────────────────────────────────── */
 .alert {
@@ -516,17 +491,6 @@
   background: var(--accent-wash);
   color: var(--accent-text);
   transform: scale(1.005);
-}
-
-.drop--busy,
-.drop--error {
-  border-style: solid;
-  cursor: default;
-}
-
-.drop--error {
-  border-color: var(--fail);
-  background: var(--fail-wash);
 }
 
 /* ── misc ────────────────────────────────────────────────────────────── */
@@ -633,10 +597,6 @@
   box-shadow: var(--shadow-card);
 }
 
-.card--flat {
-  box-shadow: none;
-}
-
 .card--interactive {
   cursor: pointer;
   transition:
@@ -689,7 +649,6 @@
   transform: translateY(0.5px);
 }
 
-
 /* ── motion ──────────────────────────────────────────────────────────── */
 
 /*
@@ -736,7 +695,6 @@
 
 /* Dropzone: the border alone was easy to miss mid-drag. */
 
-
 /* ── toast ───────────────────────────────────────────────────────────── */
 .toasts {
   position: fixed;
@@ -769,14 +727,6 @@
 }
 
 /* Marks an advanced value that has been moved off its default. */
-.dot-changed {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--running);
-  display: inline-block;
-  flex: none;
-}
 
 /* ── full-size viewer ────────────────────────────────────────────────── */
 

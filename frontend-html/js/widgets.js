@@ -20,6 +20,31 @@ function setupPasswordToggles() {
   }
 }
 
+/* ---------- เงื่อนไขรหัสผ่าน (หน้าสมัครสมาชิก และหน้าบัญชี) ---------- */
+
+/* backend ไม่ได้บังคับ เราตั้งเองเพื่อความปลอดภัย — id คือ <li> ที่แสดงเงื่อนไขนั้นในหน้า */
+const PASSWORD_RULES = [
+  { id: 'rule-length', text: 'อย่างน้อย 8 ตัวอักษร', test: (pw) => pw.length >= 8 },
+  { id: 'rule-variety', text: 'มีตัวเลขหรือสัญลักษณ์', test: (pw) => /[^A-Za-z]/.test(pw) },
+  { id: 'rule-match', text: 'ตรงกันแล้ว', test: (pw, confirm) => pw.length > 0 && pw === confirm },
+];
+
+/*
+ * วาดรายการเงื่อนไข: ผ่าน = วงกลมติ๊กถูก, ยังไม่ผ่าน = วงกลมเส้นประ
+ * คืนค่า true เมื่อผ่านครบทุกข้อ
+ */
+function renderPasswordRules(password, confirm) {
+  let allMet = true;
+  for (const rule of PASSWORD_RULES) {
+    const met = rule.test(password, confirm);
+    if (!met) allMet = false;
+    const element = $(rule.id);
+    element.className = 'auth__rule' + (met ? ' auth__rule--met' : '');
+    element.innerHTML = (met ? icon('checkCircle', 12, 'auth__ruleIcon') : dashedCircle(12, 'auth__ruleIcon')) + rule.text;
+  }
+  return allMet;
+}
+
 /* ---------- หน้าต่างยืนยัน และหน้าต่างดูภาพเต็ม ---------- */
 
 /*

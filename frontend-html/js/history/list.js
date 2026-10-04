@@ -9,7 +9,7 @@
  *   main.js    เริ่มทำงาน: ผูกปุ่มทั้งหมด
  */
 
-const PAGE_SIZE = 24;
+const PAGE_SIZE = PAGE_SIZES.history;
 let page = 1;
 let runs = []; // งานในหน้าที่แสดงอยู่
 let selected = null; // งานที่เปิดดูรายละเอียด
@@ -66,11 +66,10 @@ function cardHtml(run) {
     const text = wasCancelled(run) ? 'คุณหยุดงานนี้ไว้' : run.error_message || 'ระบบสร้างภาพนี้ไม่สำเร็จ';
     media = icon('xCircle', 18) + '<span class="runcard__error">' + escapeHtml(text.slice(0, 70)) + '</span>';
   } else {
-    const spinner = run.status === 'processing' ? icon('refresh', 18, 'spin') : icon('queue', 18).replaceAll('<path ', '<path stroke-dasharray="3 3" ');
-    media = spinner + '<div class="track track--card"><div class="track__indeterminate"></div></div>';
+    media = statusIcon(run.status, 18) + '<div class="track track--card"><div class="track__indeterminate"></div></div>';
   }
   return (
-    '<div class="card card--interactive runcard" role="button" tabindex="0" data-id="' + run.id + '" aria-current="' + Boolean(selected && selected.id === run.id) + '">' +
+    '<div class="card card--interactive runcard" role="button" tabindex="0" data-id="' + escapeHtml(run.id) + '" aria-current="' + Boolean(selected && selected.id === run.id) + '">' +
     '<div class="runcard__media" id="media-' + run.id + '">' + media + '<span class="runcard__badge">' + statusChip(run.status) + '</span></div>' +
     '<div class="runcard__body"><span class="runcard__prompt">' + escapeHtml(run.prompt) + '</span>' +
     '<span class="mono text-tiny">' + run.task_type + ' · ' + run.width + '×' + run.height + '</span></div></div>'

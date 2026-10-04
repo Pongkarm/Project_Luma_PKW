@@ -69,7 +69,7 @@ function renderStage() {
     if (progress && progress.live && progress.total_queued > 1 && progress.queue_position > 0) {
       queue = mono('คิวที่ ' + progress.queue_position + ' จาก ' + progress.total_queued);
     }
-    stage.innerHTML = note(frame + icon('queue', 22).replaceAll('<path ', '<path stroke-dasharray="3 3" '), 'รอ GPU ว่าง',
+    stage.innerHTML = note(frame + statusIcon('pending', 22), 'รอ GPU ว่าง',
       'ระบบสร้างได้ทีละงาน งานของคุณจะเริ่มทันทีที่ว่าง', queue + mono(formatClock(elapsed), 'run-clock') + cancelButton);
     return;
   }
@@ -83,7 +83,7 @@ function renderStage() {
     const steps = live && progress.step != null && progress.total_steps
       ? 'ขั้นที่ ' + progress.step + ' จาก ' + progress.total_steps + ' · '
       : 'ผ่านไป ';
-    stage.innerHTML = note(frame + icon('refresh', 22, 'spin'), 'กำลังสร้างภาพ',
+    stage.innerHTML = note(frame + statusIcon('processing', 22), 'กำลังสร้างภาพ',
       'ปกติใช้เวลา 30–40 วินาที ออกจากหน้านี้ได้ งานยังทำต่อ',
       bar + mono(steps + '<span id="run-clock">' + formatClock(elapsed) + '</span>') + cancelButton);
     return;
@@ -142,7 +142,9 @@ function renderResult() {
     '<div class="result__bar">' +
     '<span class="result__meta">' + run.width + ' × ' + run.height + ' · ' + run.steps + ' steps · cfg ' + run.cfg_scale + ' · ' + duration + editedName + '</span>' +
     '<div class="inline gap-8">' +
-    '<a class="btn btn--sm btn--secondary" data-action="save" href="' + (shown || '#') + '" download="luma-' + run.id.slice(0, 8) + (quick ? '-' + quick.tool : '') + '.png">' + icon('download', 14) + 'บันทึกภาพ</a>' +
+    (shown
+      ? '<a class="btn btn--sm btn--secondary" href="' + shown + '" download="luma-' + run.id.slice(0, 8) + (quick ? '-' + quick.tool : '') + '.png">' + icon('download', 14) + 'บันทึกภาพ</a>'
+      : '') +
     '<button type="button" class="btn btn--secondary btn--sm" data-action="use-source">ใช้ภาพนี้เป็นต้นฉบับ</button>' +
     '<button type="button" class="btn btn--danger btn--sm" data-action="delete">' + icon('trash', 14) + 'ลบ</button>' +
     '</div></div>' +
@@ -169,6 +171,8 @@ async function applyQuick(tool, color) {
     renderResult();
     return;
   }
+  const runId = run.id; // จำไว้ เผื่อผู้ใช้เปิดงานอื่นระหว่างรอ
+  const isSameRun = () => run && run.id === runId;
   quickBusy = tool;
   renderResult();
   try {
@@ -177,12 +181,15 @@ async function applyQuick(tool, color) {
     if (tool === 'color-splash') fields.target_color = color;
     const result = await apiUpload('/api/tools/' + tool, runImageBlob, 'source.png', fields);
     const blob = await apiBlob(toServerPath(result.result_image_url));
+    if (!isSameRun()) return; // เปลี่ยนไปดูงานอื่นแล้ว — ทิ้งผลนี้
     if (quick) URL.revokeObjectURL(quick.url); // ภาพที่แต่งก่อนหน้าไม่ใช้แล้ว
     quick = { tool, color, blob, url: URL.createObjectURL(blob), landmarks: result.landmarks || [] };
   } catch (error) {
-    toast('แต่งภาพไม่สำเร็จ: ' + error.message);
+    if (isSameRun()) toast('แต่งภาพไม่สำเร็จ: ' + error.message);
   } finally {
-    quickBusy = null;
-    if (run && run.status === 'completed') renderResult();
+    if (isSameRun()) {
+      quickBusy = null;
+      if (run.status === 'completed') renderResult();
+    }
   }
 }

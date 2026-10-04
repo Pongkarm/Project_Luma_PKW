@@ -58,7 +58,7 @@ function notice(iconName, title, body, action = '') {
 /* backend ไม่ตอบ — ให้กดลองใหม่ได้ */
 function unavailable(error) {
   return notice('alert', 'The admin service did not answer', escapeHtml(error.message),
-    '<button type="button" class="btn btn--secondary" onclick="location.reload()">' + icon('refresh', 14) + 'Try again</button>');
+    '<button type="button" class="btn btn--secondary" data-reload>' + icon('refresh', 14) + 'Try again</button>');
 }
 
 /* ---------- เปลี่ยนหน้าย่อย ---------- */
@@ -84,6 +84,11 @@ function hashParams() {
 }
 
 /* ---------- เริ่มทำงาน ---------- */
+
+/* ปุ่ม "Try again" ของ unavailable() — ผูกที่ document เพราะปุ่มถูกสร้างใหม่ได้ทุกเมื่อ */
+document.addEventListener('click', (event) => {
+  if (event.target.closest('[data-reload]')) location.reload();
+});
 
 /* เริ่มทำงาน: ถามสิทธิ์จาก GET /admin/me ก่อน ถ้าไม่มีสิทธิ์แสดงข้อความแทน */
 async function start() {

@@ -57,12 +57,6 @@
   gap: var(--sp-12);
 }
 
-.topbar__divider {
-  width: 1px;
-  height: 20px;
-  background: var(--line);
-}
-
 /* Status belongs in a status bar. It used to sit at the bottom of the rail,
    where it was both easy to miss and gone the moment the rail collapsed. */
 .status-pill {
@@ -276,31 +270,6 @@
   height: 20px;
 }
 
-.rail__preset {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-8);
-  height: 30px;
-  padding: 0 var(--sp-10);
-  border: none;
-  border-radius: var(--r);
-  background: transparent;
-  color: var(--ink-3);
-  font-size: var(--fs-xs);
-  text-align: left;
-  cursor: pointer;
-  width: 100%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  transition: background-color var(--dur-base) ease, color var(--dur-base) ease;
-}
-
-.rail__preset:hover {
-  background: var(--panel-2);
-  color: var(--ink);
-}
-
 .rail__collapse {
   display: flex;
   align-items: center;
@@ -319,12 +288,6 @@
 .rail__collapse:hover {
   color: var(--ink);
   border-color: var(--line-strong);
-}
-
-.rail__nav {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
 }
 
 .rail__link {
@@ -366,18 +329,6 @@
 
 .rail__link--minor:not([aria-current='page']) .rail__label {
   font-weight: 400;
-}
-
-.rail__foot {
-  display: none;
-}
-
-.rail__engine {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-8);
-  font-size: var(--fs-xs);
-  color: var(--ink-3);
 }
 
 .dot {
@@ -628,9 +579,7 @@
 
 .rail[data-collapsed='true'] .rail__label,
 .rail[data-collapsed='true'] .rail__count,
-.rail[data-collapsed='true'] .rail__sectionLabel,
-.rail[data-collapsed='true'] .rail__preset,
-.rail[data-collapsed='true'] .rail__foot {
+.rail[data-collapsed='true'] .rail__sectionLabel {
   display: none;
 }
 
@@ -705,9 +654,7 @@
 
   .rail__label,
   .rail__count,
-  .rail__foot,
   .rail__sectionLabel,
-  .rail__preset,
   .rail__collapse {
     display: none;
   }
@@ -992,11 +939,6 @@
   align-items: flex-start;
 }
 
-.auth__featureIcon {
-  color: var(--accent-text);
-  margin-top: var(--sp-2);
-}
-
 .auth__featureName {
   font-size: var(--fs-md);
   font-weight: 600;
@@ -1163,27 +1105,6 @@
   animation-delay: var(--dur-quick);
 }
 
-.auth__error {
-  animation: auth-rise var(--dur-slow) ease both;
-}
-
-.authpage {
-  min-height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--sp-32) var(--sp-24);
-  background: var(--bg);
-}
-
-.authcard {
-  width: 100%;
-  max-width: 360px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-16);
-}
-
 .centered-note {
   display: flex;
   flex-direction: column;
@@ -1197,23 +1118,8 @@
  * A placeholder thumb while the strip loads. It reserves the row's height so
  * the workspace below does not jump once the images arrive.
  */
-.thumb--loading {
-  cursor: default;
-  pointer-events: none;
-}
 
 /* The strip failed to load — say so in its own row rather than disappearing. */
-.runstrip__note {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-8);
-  min-height: 64px;
-  padding: 0 var(--sp-12);
-  border: 1px dashed var(--line);
-  border-radius: var(--r);
-  color: var(--ink-3);
-  font-size: var(--fs-xs);
-}
 
 .linklike {
   font: inherit;
@@ -1333,14 +1239,6 @@
 .adm__head h1 {
   font-size: var(--fs-2xl);
   margin: 0;
-}
-
-.adm-boot {
-  display: grid;
-  place-items: center;
-  min-height: 100dvh;
-  color: var(--ink-3);
-  font-size: var(--fs-base);
 }
 
 .adm-notice {
@@ -1816,7 +1714,6 @@
   }
 }
 
-
 /*
  * The drawer enters from the edge it is docked to.
  *
@@ -1839,7 +1736,6 @@
     opacity: 1;
   }
 }
-
 
 /*
  * Admin management on a phone.
@@ -1865,7 +1761,6 @@
     font-size: var(--fs-base);
   }
 
-  .adm-admins-table,
   .adm-desktoponly + .adm-tablewrap,
   .adm-desktoponly ~ .adm-act {
     display: none;

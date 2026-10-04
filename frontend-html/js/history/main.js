@@ -39,7 +39,6 @@ async function start() {
       toast('คัดลอกไม่ได้ในเบราว์เซอร์นี้');
     }
   });
-  $('detail-save').addEventListener('click', () => toast('บันทึกภาพลงเครื่องแล้ว'));
   $('detail-studio').addEventListener('click', () => {
     sessionStorage.setItem('luma.studio-handoff', JSON.stringify({ runId: selected.id }));
     location.href = 'studio.html';

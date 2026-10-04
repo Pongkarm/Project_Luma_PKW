@@ -7,6 +7,13 @@
  *  - ตอนส่ง แปลงเป็นภาพขาวดำ: ขาว = วาดใหม่, ดำ = คงไว้ (รูปแบบที่ AI ต้องการ)
  */
 
+const UNDO_BUDGET_BYTES = 200 * 1024 * 1024; // หน่วยความจำรวมที่ยอมให้ปุ่มย้อนกลับใช้
+
+/* สีพู่กัน = สีหลักของธีม (ส้ม) อ่านจาก CSS เพื่อให้ตรงกับธีมเสมอ */
+function brushColor() {
+  return getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#e0a458';
+}
+
 const MaskEditor = {
   canvas: null,
   ctx: null,
@@ -16,6 +23,7 @@ const MaskEditor = {
   lastPoint: null,
   undoStack: [], // ภาพก่อนหน้า ไว้สำหรับปุ่มย้อนกลับ
   redoStack: [], // ภาพที่ย้อนกลับไป ไว้สำหรับปุ่มทำซ้ำ
+  painted: 0, // สัดส่วนพื้นที่ที่ระบาย 0–1 — คำนวณใหม่เฉพาะตอน mask เปลี่ยน
   onChange: null, // ฟังก์ชันที่เรียกทุกครั้งที่ภาพ mask เปลี่ยน
 
   /* เริ่มใช้งานกับ canvas ที่กำหนด */
@@ -57,7 +65,9 @@ const MaskEditor = {
     this.changed();
   },
 
+  /* mask เปลี่ยน → นับพื้นที่ที่ระบายใหม่ แล้วแจ้งหน้าเว็บ */
   changed() {
+    this.painted = this.measure();
     if (this.onChange) this.onChange();
   },
 
@@ -78,8 +88,8 @@ const MaskEditor = {
 
   paintLine(from, to) {
     const ctx = this.ctx;
-    // สีเดียวกับสีหลักของธีม (ส้ม) — ยางลบ = ลบพิกเซลออกให้โปร่งใส
-    const color = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#e0a458';
+    // ยางลบ = ลบพิกเซลออกให้โปร่งใส
+    const color = brushColor();
     ctx.globalCompositeOperation = this.mode === 'eraser' ? 'destination-out' : 'source-over';
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
@@ -102,9 +112,16 @@ const MaskEditor = {
     return this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
   },
 
+  /*
+   * จำภาพก่อนระบายไว้สำหรับปุ่มย้อนกลับ
+   * แต่ละขั้นเก็บภาพทั้ง canvas (ภาพ 4096×4096 = 64 MB ต่อขั้น) จึงจำกัดรวมไม่เกินราว 200 MB:
+   * ภาพ 768×768 ย้อนได้ 30 ขั้น, ภาพ 4096×4096 ย้อนได้ 3 ขั้น
+   */
   saveUndo() {
     this.undoStack.push(this.snapshot());
-    if (this.undoStack.length > 30) this.undoStack.shift(); // เก็บแค่ 30 ขั้น กันหน่วยความจำเต็ม
+    const bytesPerStep = this.canvas.width * this.canvas.height * 4;
+    const maxSteps = Math.max(3, Math.min(30, Math.floor(UNDO_BUDGET_BYTES / bytesPerStep)));
+    while (this.undoStack.length > maxSteps) this.undoStack.shift();
     this.redoStack = [];
   },
 
@@ -130,21 +147,33 @@ const MaskEditor = {
     this.changed();
   },
 
-  /* สัดส่วนพื้นที่ที่ระบาย 0–1 (นับทุก 4 พิกเซลเพื่อความเร็ว) */
-  coverage() {
+  /*
+   * นับสัดส่วนพื้นที่ที่ระบาย 0–1
+   * ย่อ canvas ให้ด้านยาวเหลือ 256 พิกเซลก่อนนับ — อ่านภาพเต็ม 4096×4096 ทุกครั้งจะช้ามาก
+   */
+  measure() {
     if (!this.canvas.width) return 0;
-    const pixels = this.snapshot().data;
+    const scale = Math.min(1, 256 / Math.max(this.canvas.width, this.canvas.height));
+    const small = document.createElement('canvas');
+    small.width = Math.max(1, Math.round(this.canvas.width * scale));
+    small.height = Math.max(1, Math.round(this.canvas.height * scale));
+    const ctx = small.getContext('2d');
+    ctx.drawImage(this.canvas, 0, 0, small.width, small.height);
+    const pixels = ctx.getImageData(0, 0, small.width, small.height).data;
     let painted = 0;
-    let total = 0;
-    for (let i = 3; i < pixels.length; i += 16) {
-      total += 1;
+    for (let i = 3; i < pixels.length; i += 4) {
       if (pixels[i] > 0) painted += 1;
     }
-    return total ? painted / total : 0;
+    return painted / (pixels.length / 4);
+  },
+
+  /* สัดส่วนที่ระบายล่าสุด (เรียกบ่อยได้ ไม่ต้องนับใหม่) */
+  coverage() {
+    return this.painted;
   },
 
   hasMask() {
-    return this.coverage() > 0;
+    return this.painted > 0;
   },
 
   /* สร้างไฟล์ PNG ขาวดำ: ขาว = ส่วนที่ระบาย, ดำ = ส่วนที่เหลือ */
@@ -176,7 +205,7 @@ const MaskEditor = {
     const tempCtx = temp.getContext('2d');
     tempCtx.drawImage(image, 0, 0, temp.width, temp.height);
 
-    const color = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#e0a458';
+    const color = brushColor();
     const [r, g, b] = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
 
     const data = tempCtx.getImageData(0, 0, temp.width, temp.height);

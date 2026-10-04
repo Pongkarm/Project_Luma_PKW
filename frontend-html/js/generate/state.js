@@ -30,12 +30,12 @@ let quick = null; // ผลของ "แต่งด่วน" ที่แส�
 let quickBusy = null; // ชื่อเครื่องมือที่กำลังทำงาน
 let watchStartedAt = 0;
 let pollTimer = null;
+let watchToken = 0; // เพิ่มทุกครั้งที่หยุดติดตามงาน — คำตอบที่ค้างจากรอบเก่าจะถูกทิ้ง
 let clockTimer = null;
 let stalled = false;
 let uploading = false;
 let submitting = false;
 
-const DRAFT_KEY = 'luma.html.draft';
 const POLL_GIVE_UP_MS = 5 * 60 * 1000; // backend ไม่ตัดงานที่ค้างให้เอง เราจึงเลิกถามเองหลัง 5 นาที
 
 /* ชื่อและข้อความของแต่ละโหมด */
