@@ -1,89 +1,110 @@
 # 🎨 LUMA: Distributed AI Image Generation Platform
 
-[![Python](https://img.shields.io/badge/Python-3.10-blue.svg)](https://python.org)
+[![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg)](https://fastapi.tiangolo.com)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-336791.svg)](https://www.postgresql.org)
-[![Pytest](https://img.shields.io/badge/Tests-51%20Passed-brightgreen.svg)](https://pytest.org)
-[![Coverage](https://img.shields.io/badge/Coverage-90%25-success.svg)](https://coverage.readthedocs.io)
+[![Architecture](https://img.shields.io/badge/Architecture-3--Node%20Distributed-orange.svg)](#-1-architecture-overview-สถาปัตยกรรมระบบ)
+[![Tests](https://img.shields.io/badge/Tests-Full%20Multi--Node%20Passed-brightgreen.svg)](#-6-testing--quality-assurance)
+[![Safety](https://img.shields.io/badge/Safety-5--Layer%20Guard%20%2B%20LoRA%20Compat-success.svg)](#-4-model--lora-architecture-compatibility-ระบบตรวจจับความเข้ากันได้)
 
-**LUMA** เป็นระบบประมวลผลและสร้างภาพด้วยปัญญาประดิษฐ์ (AI Image Generation Platform) ที่ถูกออกแบบด้วยสถาปัตยกรรมแบบ **Distributed Computing** รองรับการสร้างภาพแบบ Multi-Modal ทั้ง **Text-to-Image (txt2img)**, **Image-to-Image (img2img)**, และ **Canvas Inpainting**
+**LUMA** เป็นแพลตฟอร์มสร้างและตัดต่อภาพด้วยปัญญาประดิษฐ์ระดับสตูดิโอ (AI Studio & Image Generation Platform) ที่ออกแบบด้วยสถาปัตยกรรม **Distributed Computing 3 โหนด** รองรับการสร้างภาพแบบ Multi-Modal ทั้ง **Text-to-Image (txt2img)**, **Image-to-Image (img2img)**, และ **Canvas Inpainting** พร้อมเครื่องมือประมวลผลภาพขั้นสูงในตัว
 
 ---
 
-## 🏛️ 1. Architecture Overview (สถาปัตยกรรมระบบ)
+## 🏛️ 1. Architecture Overview (สถาปัตยกรรมระบบ 3 โหนด)
 
-ระบบแบ่งออกเป็น 3 Nodes อิสระ เชื่อมต่อกันผ่าน Local Area Network (LAN):
+ระบบทำงานร่วมกันผ่าน Local Area Network (LAN) โดยแยกหน้าที่กันอย่างเด็ดขาดตามหลักการ Separation of Concerns:
 
 ```mermaid
 graph TD
-    User([👤 User / Browser])
+    User([👤 User / Web Browser])
     
     subgraph PC1 ["Node 1: Frontend (192.168.1.10)"]
-        UI[Bootstrap 5 + Canvas Inpaint Tool]
+        UI["Modern Web Studio (HTML5 / Vanilla JS)<br/>Canvas Inpainting • GrabCut • Pose Detection"]
     end
 
-    subgraph PC2 ["Node 2: Backend (192.168.1.20:8000)"]
-        API[FastAPI Backend Engine]
-        DB[(PostgreSQL Database)]
-        Storage[Local File Storage: uploads/ & outputs/]
-        Security[JWT + Bcrypt + 5-Layer Image Validation]
+    subgraph PC2 ["Node 2: Backend Core (192.168.1.20:8000)"]
+        API["FastAPI Core Engine & API Gateway"]
+        DB[("Database: PostgreSQL / SQLite")]
+        Storage["Local File Storage: uploads/ & outputs/"]
+        Security["JWT Auth • Role-based Access • 5-Layer Security"]
     end
 
-    subgraph PC3 ["Node 3: AI Inference Engine (192.168.1.30:7860)"]
-        AIEngine[FastAPI AI Wrapper]
-        SD[Stable Diffusion / WebUI Forge RTX 3070]
-        LoRA[LoRA Registry & Checkpoint Loader]
+    subgraph PC3 ["Node 3: AI Inference Server (192.168.1.30:7860)"]
+        AIEngine["FastAPI AI Engine (Port 7860)"]
+        SD["Stable Diffusion WebUI Forge (RTX 3070 8GB)"]
+        LoRA["LoRA Registry & Compatibility Guard"]
     end
 
-    User -->|"HTTP / HTTPS"| UI
+    User -->|"HTTP"| UI
     UI -->|"REST API + JWT"| API
     API -->|"SQLAlchemy ORM"| DB
     API -->|"Atomic File I/O"| Storage
-    API -->|"Direct (Sync) OR Callback (Webhook)"| AIEngine
-    AIEngine -->|"Inference Execution"| SD
-    AIEngine -->|"X-LUMA-INTERNAL-SECRET Callback"| API
+    API -->|"Async Webhook Dispatch"| AIEngine
+    AIEngine -->|"Forge API (:7861)"| SD
+    AIEngine -->|"Webhook Callback (X-LUMA-INTERNAL-SECRET)"| API
 ```
 
 ---
 
-## 🔄 2. Dual-Mode Inference Strategy
+## 🔄 2. Dual-Mode Inference Strategy (กลยุทธ์การเชื่อมโยงระบบ AI)
 
-ระบบรองรับการทำงานกับ AI Node ใน 2 รูปแบบ สลับได้ง่ายๆ ผ่านการตั้งค่า `AI_MODE` ใน `.env`:
+Backend รองรับการทำงานร่วมกับ AI Node ใน 2 รูปแบบ สลับได้ผ่านตัวแปรสภาพแวดล้อม `AI_MODE`:
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Client as Frontend (PC1)
     participant Backend as Backend Engine (PC2)
-    participant DB as PostgreSQL
+    participant DB as Database
     participant AI as AI Node (PC3)
 
-    alt Mode A: Direct Mode (Synchronous)
+    alt โหมด A: Direct Mode (Synchronous — สำหรับทดสอบบนเครื่องเดี่ยว)
         Client->>Backend: POST /generations (Prompt, Settings)
-        Backend->>DB: Record Task (status=pending)
+        Backend->>DB: บันทึกสถานะงาน (status=pending)
         Backend->>AI: POST /generate (Prompt, Resolution)
-        AI-->>Backend: Return Base64 PNG Image
-        Backend->>Backend: Save outputs/{id}.png
-        Backend->>DB: Update status=completed
+        AI-->>Backend: ส่งภาพผลลัพธ์กลับมาทันที (Base64 WebP/PNG)
+        Backend->>Backend: บันทึกภาพลง Disk (outputs/{id}.webp)
+        Backend->>DB: อัปเดตสถานะงาน (status=completed)
         Client->>Backend: GET /generations/{id}/image
-        Backend-->>Client: 200 OK (PNG File)
-    else Mode B: Distributed Callback Mode (Asynchronous Webhook)
+        Backend-->>Client: 200 OK (ไฟล์ภาพ)
+    else โหมด B: Distributed Callback Mode (Asynchronous — ใช้งานจริงข้ามเครื่อง)
         Client->>Backend: POST /generations (Prompt)
-        Backend->>DB: Record Task (status=pending)
+        Backend->>DB: บันทึกสถานะงาน (status=pending)
         Backend->>AI: POST /ai/generate (task_id, callback_url)
-        AI-->>Backend: 202 Accepted (Enqueued)
-        Note over AI: GPU Inferences on RTX 3070...
-        AI->>Backend: POST /api/callback (X-LUMA-INTERNAL-SECRET, Base64 Image)
-        Backend->>Backend: Atomic Save outputs/{id}.png
-        Backend->>DB: Update status=completed
-        Client->>Backend: GET /generations/{id} (Polling status)
+        AI-->>Backend: ตอบรับ 202 Accepted ทันที (เข้า FIFO Queue)
+        Note over AI: GPU รันบน RTX 3070 พร้อม Watchdog 120s...
+        AI->>Backend: POST /api/callback (Secret Token, ภาพผลลัพธ์ WebP)
+        Backend->>Backend: บันทึกภาพแบบ Atomic Write
+        Backend->>DB: อัปเดตสถานะงาน (status=completed)
+        Client->>Backend: โพลล์สถานะ GET /generations/{id}
         Backend-->>Client: 200 OK (status: completed)
     end
 ```
 
 ---
 
-## 🗄️ 3. Database Schema (Entity-Relationship)
+## 🧠 3. Model & LoRA Architecture Compatibility (ระบบตรวจสอบความเข้ากันได้)
+
+เนื่องจาก LoRA Adapter แต่ละตัวถูกเทรนขึ้นมาสำหรับ Base Model เฉพาะตระกูล หากนำ LoRA ข้ามรุ่นไปผสม (เช่น นำ LoRA ของ Illustrious XL ไปใช้กับ SD 1.5) ภาพที่ได้จะแตกลายและเกิด Artifacts ผิดเพี้ยน LUMA จึงมีระบบป้องกัน 2 ชั้น (**Defense-in-Depth**):
+
+### ตารางจำแนกตระกูลโมเดล (Model Family Matrix)
+
+| ตระกูลสถาปัตยกรรม (Family) | ตัวอย่าง Checkpoint Model | LoRA Adapter ที่รองรับ |
+| :--- | :--- | :--- |
+| **`sd15`** (Stable Diffusion 1.5) | `counterfeitV30_v30.safetensors` | `tachi-e`, `niji_and_midj_mix217` |
+| **`illustrious_xl`** (Illustrious XL) | `novaAnimeXL_ilV190.safetensors` | `SousouNoFrieren`, `Char-Frieren-IL-V1`, `himmel` |
+| **`pony_xl`** (Pony XL) | `prefectPonyXL_v6.safetensors` | `[Artstyle] SomethingWeird_Geekpower [PDXL]` |
+
+### กลไกการป้องกัน 2 ระดับ:
+1. **Frontend Level (UI Filter & Auto-Reset)**:
+   * หน้าเว็บจะกรอง Dropdown ของ LoRA ให้แสดงเฉพาะตัวที่ตรงกับ Base Model ที่เลือก
+   * หากผู้ใช้สลับโมเดลแล้ว LoRA เดิมเข้ากันไม่ได้ ระบบจะรีเซ็ตกลับเป็น `"ไม่ใช้"` และบันทึก Draft อัตโนมัติ ป้องกันความสับสนของผู้ใช้
+2. **AI Server Level (Auto-skip Safety Guard)**:
+   * กรณีมีคำขอยิงข้ามตระกูลส่งตรงมาทาง API ตัว Server จะไม่ทำให้ Request ล่ม (ไม่ Throw Error 500) แต่จะ **Auto-skip** ตัดแท็ก LoRA นั้นออก พร้อมบันทึก Warning Log เพื่อให้งานสร้างภาพยังคงดำเนินต่อไปได้อย่างปลอดภัย (**Zero Breaking Change**)
+
+---
+
+## 🗄️ 4. Database Schema (โครงสร้างฐานข้อมูล)
 
 ```mermaid
 erDiagram
@@ -105,14 +126,14 @@ erDiagram
         string model_name "SD Checkpoint model"
         jsonb lora_config "LoRA weights and triggers"
         string sampler_name "Sampling algorithm"
-        int steps "Inference steps (1-150)"
-        float cfg_scale "CFG scale (0-30)"
+        int steps "Inference steps (1-50)"
+        float cfg_scale "CFG scale (1.0-20.0)"
         bigint seed "Random seed"
-        int width "Width in px"
-        int height "Height in px"
+        int width "Width in px (256-768)"
+        int height "Height in px (256-768)"
         string source_image_path "Uploaded base image"
         string mask_image_path "Uploaded inpaint mask"
-        float denoising_strength "img2img strength (0.0-1.0)"
+        float denoising_strength "img2img strength (0.05-1.0)"
         string output_path "Path to generated image"
         string status "pending | processing | completed | failed"
         text error_message "Error diagnostics"
@@ -124,76 +145,61 @@ erDiagram
 
 ---
 
-## 🛡️ 4. Five-Layer Image Security Validation
+## 🛡️ 5. Five-Layer Image Security Validation (ระบบความปลอดภัย 5 ชั้น)
 
-| Layer | Validation Type | Defense Purpose |
+เพื่อป้องกันการโจมตีทางไซเบอร์และการส่งไฟล์อันตรายเข้าสู่ GPU ระบบมีระบบคัดกรองไฟล์ภาพที่เข้มงวด 5 ระดับ:
+
+| ลำดับชั้น (Layer) | การตรวจสอบ (Validation Type) | วัตถุประสงค์ในการป้องกัน (Defense Purpose) |
 |---|---|---|
-| **Layer 1** | Content-Type Header | กรองเบื้องต้นเฉพาะ `image/png`, `image/jpeg`, `image/webp` |
-| **Layer 2** | File Size Limit (10MB) | ป้องกัน DoS จากไฟล์ขนาดใหญ่ (HTTP 413) |
-| **Layer 3** | Magic Bytes Inspection | ตรวจสอบ Header ไบนารีแท้ ป้องกันมัลแวร์ที่ปลอมนามสกุล (HTTP 422) |
-| **Layer 4** | Decompression Bomb Defense | จำกัด `Image.MAX_IMAGE_PIXELS = 16M` (4096x4096px) ตาม OWASP |
-| **Layer 5** | EXIF Stripping & Atomic Write | ลบพิกัด GPS/Metadata เพื่อความเป็นส่วนตัว และบันทึกแบบ Atomic |
+| **Layer 1** | Content-Type Header Check | กรองเบื้องต้นเฉพาะ `image/png`, `image/jpeg`, `image/webp` |
+| **Layer 2** | File Size Bound (10MB Limit) | ป้องกัน DoS จากไฟล์ขนาดยักษ์ (ตอบกลับ HTTP 413) |
+| **Layer 3** | Magic Bytes Deep Inspection | ตรวจสอบ Header ไบนารีแท้จริง ป้องกันมัลแวร์ที่เปลี่ยนนามสกุลไฟล์หลอก (HTTP 422) |
+| **Layer 4** | Decompression Bomb Defense | ควบคุม `Image.MAX_IMAGE_PIXELS = 16M` (4096×4096px) ตามมาตรฐาน OWASP |
+| **Layer 5** | EXIF Stripping & Atomic Write | ลบพิกัด GPS/ข้อมูลส่วนบุคคลออกจากภาพ และบันทึกไฟล์แบบ Atomic ป้องกันไฟล์เสียหาย |
 
 ---
 
-## 🧪 5. Testing & Quality Assurance (51 Tests, 90% Coverage)
+## 🧪 6. Testing & Quality Assurance (ผลการทดสอบเต็มระบบ)
 
-```text
-================================ tests coverage ================================
-Name                         Stmts   Miss  Cover
-------------------------------------------------
-app/api/auth.py                 34      1    97%
-app/api/callback.py             23      1    96%
-app/api/generation.py           32      1    97%
-app/api/upload.py               22      0   100% ⭐
-app/core/config.py              19      0   100% ⭐
-app/core/security.py            53      7    87%
-app/db/database.py              11      0   100% ⭐
-app/models/__init__.py          42      0   100% ⭐
-app/schemas/generation.py       75      1    99%
-app/schemas/token.py             4      0   100% ⭐
-app/schemas/user.py             22      0   100% ⭐
-app/services/generation.py     216     41    81%
-app/services/upload.py          73     10    86%
-------------------------------------------------
-TOTAL                          630     62    90% 🏆
-======================== 51 passed in 8.57s ========================
+ระบบผ่านการทดสอบแบบอัตโนมัติ (Automated Tests) ครบถ้วนทุกชั้นสถาปัตยกรรม:
+
+* **Node 1 Frontend (`frontend-html`)**: ผ่านการทดสอบ **14/14 Tests** ครอบคลุมการคำนวณขนาดภาพ, กฎรหัสผ่าน, และการกรอง LoRA ตามตระกูลโมเดล
+* **Node 2 Backend Core (`backend_node`)**: ผ่านการทดสอบ **83+ Integration Tests** ครอบคลุม Auth, Permissions, Upload Security, และ Webhook Idempotency
+* **Node 3 AI Inference Node (`Project_Luma_PKW`)**: ผ่านการทดสอบ **17/17 Tests** ครอบคลุม GPU Monitor, Queue FIFO, Safety Bounds, และ Auto-skip Guard
+* **Multi-Node Full Pipeline (`test_multi_node_e2e.py`)**: ผ่านการทดสอบจำลองเชื่อมโยง 3 โหนดพร้อมกันแบบครบวงจร
+
+---
+
+## 🚀 7. Quick Start Guide (วิธีเปิดใช้งานระบบ)
+
+### รัน Node 3: AI Inference Server (พอร์ต 7860)
+```powershell
+# ในโฟลเดอร์ Project_Luma_PKW
+python -m uvicorn ai_server.server:app --host 0.0.0.0 --port 7860
 ```
 
----
-
-## 🚀 6. Quick Start Guide
-
-### วิธีที่ 1: รันผ่าน Local Python Virtualenv
-```bash
-# 1. ติดตั้ง Dependencies
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
-# 2. รัน Mock AI Server (Port 8001)
-python mock_ai_server.py
-
-# 3. รัน Backend API (Port 8000)
+### รัน Node 2: Backend Core API (พอร์ต 8000)
+```powershell
+# ในโฟลเดอร์ backend_node
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-
-# 4. สั่งรัน Automated Tests
-pytest --cov=app --cov-report=term-missing
 ```
 
-### วิธีที่ 2: รันผ่าน Docker Compose
+### รัน Node 1: Web Frontend (พอร์ต 5500)
 ```bash
-docker-compose up --build
+# ในโฟลเดอร์ frontend_node/frontend-html
+python -m http.server 5500
+# เปิดเบราว์เซอร์ไปที่ http://localhost:5500
 ```
 
 ---
 
-## 🎬 7. Live Demonstration Flow (สำหรับนำเสนออาจารย์)
+## 🎬 8. Live Demonstration Flow (ลำดับการนำเสนอโปรเจกต์)
 
-1. **เปิด Swagger UI:** ไปที่ `http://localhost:8000/docs`
-2. **Register & Login:** สมัครสมาชิกและล็อกอินรับ Token
-3. **Check Profile:** เรียก `GET /auth/me` แสดงยอด `total_generations: 0`
-4. **Live Demo 1 (txt2img):** สั่งสร้างภาพด้วย Prompt $\rightarrow$ เรียก `GET /generations/{id}/image` ดูภาพที่สร้างเสร็จ
-5. **Live Demo 2 (img2img):** อัปโหลดภาพผ่าน `POST /uploads` $\rightarrow$ สั่ง `task_type="img2img"` $\rightarrow$ แสดงภาพ Before/After
-6. **Live Demo 3 (Distributed Callback):** แสดงการทำงานแบบ Asynchronous Webhook
-7. **Show Test Results:** รัน `pytest` แสดงผล 51/51 Tests ผ่าน 100% (Coverage 90%)
+1. **เปิดหน้าเว็บสตูดิโอ:** ไปที่ `http://localhost:5500` และล็อกอินเข้าสู่ระบบ
+2. **ทดสอบ Model & LoRA Filtering:**
+   * เลือกโมเดล **Counterfeit v3.0 (SD 1.5)** ➔ สังเกตว่าช่อง LoRA จะแสดงเฉพาะ Tachi-e และ Niji Mix
+   * สลับไปเลือก **Nova Anime XL** ➔ สังเกตว่าตัวเลือก LoRA เปลี่ยนเป็น Frieren และ Himmel ทันที
+3. **ทดสอบสร้างภาพ (txt2img):** กรอก Prompt ➔ กดสร้างภาพ ➔ สังเกต Task Queue บน AI Server รับงานและประมวลผล
+4. **ทดสอบ Inpainting & Image Edit:** อัปโหลดภาพต้นฉบับ ➔ ระบาย Mask สีบนแคนวาส ➔ สั่ง Inpaint แปลงวัตถุเฉพาะจุด
+5. **ทดสอบเครื่องมือสตูดิโอ (Studio Tools):** ทดสอบการตรวจจับท่าทาง (Pose Detection) และการตัดพื้นหลัง (GrabCut)
+6. **แสดงผลความปลอดภัยและการทดสอบ:** รันคำสั่งทดสอบ `python -m unittest ai_server.tests.test_server` แสดงความสมบูรณ์ของระบบ
