@@ -1,5 +1,22 @@
 /*
  * studio/tools.js — เรียกเครื่องมือของ backend และรับ/ส่งภาพกับหน้าอื่น
+ *
+ * ฟังก์ชันในไฟล์นี้:
+ *   applyTool()        ส่งภาพเวอร์ชันปัจจุบันไปเครื่องมือ → ได้เวอร์ชันใหม่
+ *   sendToGenerate()   อัปโหลดภาพแล้วส่งต่อไปหน้าสร้างภาพ
+ *   sendCutout()       ส่งภาพ + mask ของตัดฉากไปวาดฉากหลัง/ตัวแบบใหม่
+ *   openFile()         เปิดภาพจากเครื่อง
+ *   openRun()          เปิดภาพผลลัพธ์ของงานที่สร้างไว้
+ *   loadRecent()       แสดงภาพที่สร้างเสร็จล่าสุดให้กดเปิด
+ *
+ * เชื่อมกับ:
+ *   ใช้ของ     api.js (apiUpload, apiBlob, apiImageUrl, apiRequest, toServerPath),
+ *              state.js (addVersion, startWith, session, ...), view.js (render),
+ *              config.js (LIMITS, PAGE_SIZES), ui.js ($, escapeHtml, showAlert, toast)
+ *   ถูกใช้โดย  main.js
+ *   backend    POST /api/tools/{tool} · GET ภาพผลของเครื่องมือ · POST /uploads
+ *              · GET /generations · GET /generations/{id}/image
+ *   หน้าอื่น   ฝากข้อมูลไว้ที่ sessionStorage คีย์ luma.handoff ให้ generate/source.js รับ
  */
 
 /* ---------- ใช้เครื่องมือ ---------- */

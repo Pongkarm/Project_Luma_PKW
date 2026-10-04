@@ -2,6 +2,21 @@
  * generate/settings.js — แผงตั้งค่าด้านขวา
  *
  * เติมรายชื่อโมเดล/สไตล์, ปุ่มขนาดภาพ 1:1 2:3 3:2, แถบเลื่อนต่าง ๆ
+ *
+ * ฟังก์ชันในไฟล์นี้:
+ *   fillSelect()          เติมตัวเลือกใน <select>
+ *   loadModels()          ขอรายชื่อโมเดลและ LoRA จากเครื่อง AI (ใช้รายชื่อสำรองถ้าไม่ได้)
+ *   drawSizePresets()     วาดปุ่มขนาด 1:1 / 2:3 / 3:2 / กำหนดเอง
+ *   setupForm()           ผูกแถบเลื่อน ปุ่มพับ/กาง ปุ่มขนาด และตัวนับตัวอักษร
+ *   setSize() / onSizeChanged()   เปลี่ยนขนาดภาพ แล้วอัปเดตปุ่มและร่าง
+ *   paintWidth, paintHeight, ...  ฟังก์ชันวาดแถบเลื่อนใหม่ (ได้จาก bindSlider)
+ *
+ * เชื่อมกับ:
+ *   ใช้ของ     config.js (LIMITS, DEFAULT_SIZE, SIZE_PRESETS, FALLBACK_*, SAMPLERS),
+ *              widgets.js (bindSlider, bindDisclosure), state.js (snapSize, ratioText),
+ *              draft.js (saveDraft, updateFooter), api.js (apiRequest), ui.js ($, escapeHtml)
+ *   ถูกใช้โดย  main.js (setupForm, loadModels, drawSizePresets), draft.js (paint*)
+ *   backend    GET /api/models
  */
 
 /* เติมตัวเลือกใน <select> จากรายการ { value, text } */

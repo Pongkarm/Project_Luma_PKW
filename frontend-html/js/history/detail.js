@@ -1,5 +1,19 @@
 /*
  * history/detail.js — แผงรายละเอียดของงานที่เลือก (ด้านขวา)
+ *
+ * ฟังก์ชันในไฟล์นี้:
+ *   fact()             หนึ่งช่องในตารางค่าของงาน
+ *   select()           เปิดแผงรายละเอียดของงาน (ข้อความก่อน ภาพตามมา)
+ *   closeDetail()      ปิดแผงรายละเอียด
+ *   reuseSettings()    เขียนค่าของงานนี้ลงร่างของหน้าสร้างภาพ แล้วเปิดหน้านั้น
+ *   deleteSelected()   ลบงาน (ถามยืนยันก่อน)
+ *
+ * เชื่อมกับ:
+ *   ใช้ของ     list.js (selected, imageUrls, loadPage), api.js (apiRequest, apiImageUrl),
+ *              widgets.js (confirmDialog), layout.js (refreshUser), config.js (DRAFT_KEY), ui.js
+ *   ถูกใช้โดย  main.js
+ *   backend    GET /generations/{id}/image · GET /uploads/{ไฟล์} · DELETE /generations/{id}
+ *   หน้าอื่น   "ใช้ค่าเดิม" เขียนลง localStorage คีย์ DRAFT_KEY ให้ generate/draft.js อ่าน
  */
 
 /* หนึ่งช่องในตารางค่าของงาน: ชื่อ + ค่า */

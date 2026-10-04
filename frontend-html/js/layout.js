@@ -13,6 +13,20 @@
  *     </div>
  *     <nav class="tabbar" id="tabbar"></nav>
  *   </div>
+ *
+ * ฟังก์ชันในไฟล์นี้:
+ *   currentTheme() / setTheme() / toggleTheme()   ธีมมืด/สว่าง
+ *   signOut()                ออกจากระบบ (ลบ token ในเครื่อง)
+ *   requireLogin()           ตรวจล็อกอิน + วาดโครงหน้า + โหลดข้อมูลผู้ใช้ — ทุกหน้าที่ต้องล็อกอินเรียกเป็นอย่างแรก
+ *   updateUserCount() / refreshUser()   ชื่อผู้ใช้และจำนวนงานบนแถบบน
+ *   drawShell() / railLink() วาดแถบบน เมนูซ้าย และแถบล่างบนมือถือ
+ *   checkEngine()            ไฟสถานะ backend บนแถบบน
+ *   checkAdminLink()         แสดงเมนูแผงแอดมินเฉพาะบัญชีที่มีสิทธิ์
+ *
+ * เชื่อมกับ:
+ *   ใช้ของ     api.js (apiRequest, getToken, setToken), ui.js ($, toast), icons.js (icon)
+ *   ถูกใช้โดย  generate, studio, history, account (main.js ของแต่ละหน้าเรียก requireLogin)
+ *   backend    GET /auth/me · GET /api/status · GET /admin/me
  */
 
 /* ---------- ธีม ---------- */

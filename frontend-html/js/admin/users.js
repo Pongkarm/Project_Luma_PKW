@@ -2,6 +2,16 @@
  * admin/users.js — รายชื่อผู้ใช้ ค้นหา/กรอง และแผงรายละเอียดของแต่ละคน
  *
  * ปิด/เปิดบัญชีต้องพิมพ์เหตุผล ซึ่ง backend เก็บลง audit log ทุกครั้ง
+ *
+ * ฟังก์ชันในไฟล์นี้:
+ *   drawUsers()           ช่องค้นหา/ตัวกรอง (เก็บค่าไว้ใน # ของที่อยู่เว็บ)
+ *   loadUsers()           ดึงรายชื่อตามตัวกรอง แล้ววาดตาราง
+ *   openDrawer()          แผงรายละเอียดของผู้ใช้หนึ่งคน
+ *   drawStatusControl()   ปุ่มปิด/เปิดบัญชี (ต้องพิมพ์เหตุผล)
+ *
+ * เชื่อมกับ:
+ *   ใช้ของ     main.js (main, header, me, hashParams, ...), api.js (apiRequest), ui.js, icons.js
+ *   backend    GET /admin/users · GET /admin/users/{id} · PATCH /admin/users/{id}/status
  */
 
 let usersOnPage = [];

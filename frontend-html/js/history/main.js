@@ -1,5 +1,14 @@
 /*
  * history/main.js — เริ่มทำงานหน้าประวัติ: ผูกปุ่มทั้งหมด แล้วโหลดหน้าแรก
+ *
+ * ฟังก์ชันในไฟล์นี้:
+ *   start()      ผูกปุ่ม โหลดหน้าแรก แล้วเปิดงานตาม ?id= ถ้ามี
+ *
+ * เชื่อมกับ:
+ *   ใช้ของ     layout.js (requireLogin), list.js, detail.js, widgets.js (openViewer), api.js, ui.js
+ *   backend    GET /generations/{id} (เมื่อเปิดด้วย ?id= ของงานที่ไม่อยู่ในหน้าแรก)
+ *   หน้าอื่น   "แต่งในสตูดิโอ" ฝาก runId ไว้ที่ sessionStorage คีย์ luma.studio-handoff
+ *              · "ดูความคืบหน้า" เปิด generate.html?run=<id>
  */
 
 /* เริ่มทำงาน: ผูกปุ่ม โหลดหน้าแรก แล้วเปิดงานตาม ?id= ถ้ามี */

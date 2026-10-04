@@ -3,6 +3,16 @@
  * 1) ตรวจรหัสผ่านในเบราว์เซอร์ก่อน (แสดงเป็นรายการติ๊กถูก)
  * 2) POST /auth/register
  * 3) สมัครสำเร็จแล้วล็อกอินให้อัตโนมัติ
+ *
+ * ฟังก์ชันในไฟล์นี้:
+ *   updateRules()      ติ๊กเงื่อนไขรหัสผ่าน และเปิด/ปิดปุ่มสมัคร
+ *   (โค้ดที่เหลือรันทันทีตอนโหลด: ผูกฟอร์มสมัคร)
+ *
+ * เชื่อมกับ:
+ *   ใช้ของ     api.js (apiRequest, getToken, setToken), ui.js ($, showAlert),
+ *              widgets.js (renderPasswordRules, setupPasswordToggles)
+ *   backend    POST /auth/register → POST /auth/login
+ *   ไปต่อที่   generate.html เมื่อสมัครสำเร็จ
  */
 
 if (getToken()) location.href = 'generate.html';

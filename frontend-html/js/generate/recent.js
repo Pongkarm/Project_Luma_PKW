@@ -2,6 +2,17 @@
  * generate/recent.js — แถบ "สร้างล่าสุด" ด้านล่าง
  *
  * 12 งานล่าสุด กดแล้วเปิดงานนั้นตรงกลาง
+ *
+ * ฟังก์ชันในไฟล์นี้:
+ *   loadRecent()        ดึงงานล่าสุดแล้ววาดแถบด้านล่าง (โหลดภาพย่อทีละภาพ)
+ *   markActiveThumb()   ไฮไลต์ภาพย่อของงานที่เปิดอยู่
+ *   openRecent()        เปิดงานจากแถบล่าง (หรือจาก generate.html?run=id)
+ *
+ * เชื่อมกับ:
+ *   ใช้ของ     api.js (apiRequest, apiImageUrl), run.js (watchRun), stage.js (updateView),
+ *              ui.js (statusIcon, statusInfo, escapeHtml, toast), config.js (PAGE_SIZES)
+ *   ถูกใช้โดย  main.js, run.js (หลังส่ง/จบ/ลบงาน)
+ *   backend    GET /generations?page=1&page_size=12 · GET /generations/{id} · GET /generations/{id}/image
  */
 
 const thumbUrls = {}; // จำภาพที่โหลดแล้ว จะได้ไม่ต้องโหลดซ้ำ

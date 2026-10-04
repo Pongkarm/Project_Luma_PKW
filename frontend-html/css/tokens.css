@@ -1,9 +1,10 @@
 /*
- * LUMA design tokens.
+ * tokens.css — ค่ากลางของการออกแบบ: สี ตัวอักษร ระยะห่าง ความโค้งมุม ความเร็วแอนิเมชัน
  *
- * Dark is the primary experience, so it is the default. Light redefines the
- * same names and nothing else; no component knows which theme it is in.
- * `data-theme` on <html> is written by the preferences store.
+ * ทุกไฟล์ CSS อื่นใช้ค่าจากที่นี่ผ่าน var(--ชื่อ) เช่น var(--accent) เปลี่ยนสีทั้งเว็บได้ที่ไฟล์นี้ไฟล์เดียว
+ * ธีมมืดเป็นค่าเริ่มต้น ธีมสว่าง ([data-theme='light']) กำหนดชื่อเดิมใหม่ด้วยค่าอื่น
+ * ค่า data-theme บน <html> ตั้งโดย js/theme.js (ตอนโหลด) และ js/layout.js (ตอนกดสลับ)
+ * mask.js อ่าน --accent มาเป็นสีพู่กัน
  */
 :root {
   color-scheme: dark;

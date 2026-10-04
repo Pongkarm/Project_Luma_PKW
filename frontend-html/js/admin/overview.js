@@ -1,5 +1,12 @@
 /*
  * admin/overview.js — หน้าภาพรวม (GET /admin/stats)
+ *
+ * ฟังก์ชันในไฟล์นี้:
+ *   drawOverview()     ตัวเลขสรุป 6 ช่อง + สาเหตุที่ล้มเหลว + กราฟจำนวนงานต่อวัน
+ *
+ * เชื่อมกับ:
+ *   ใช้ของ     main.js (main, header, skeleton, unavailable), api.js (apiRequest), ui.js (escapeHtml)
+ *   backend    GET /admin/stats?days=14
  */
 
 /* ตัวเลขสรุป 6 ช่อง (กดเพื่อดูรายละเอียดได้) + สาเหตุที่ล้มเหลว + กราฟจำนวนงานต่อวัน */

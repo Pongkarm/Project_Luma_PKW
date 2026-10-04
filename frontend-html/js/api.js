@@ -6,6 +6,23 @@
  *    แล้วแนบไปกับทุกคำขอในหัว Authorization: Bearer <token>
  *  - ถ้า backend ตอบ 401 แปลว่า token หมดอายุ → ลบ token แล้วพาไปหน้าล็อกอิน
  *  - ทุกข้อผิดพลาดถูกแปลงเป็นข้อความภาษาไทยที่อ่านเข้าใจได้
+ *
+ * ฟังก์ชันในไฟล์นี้:
+ *   getToken() / setToken()   อ่าน / เก็บ / ลบ token ใน localStorage
+ *   authHeaders()             หัว Authorization ของคำขอ (ว่างถ้ายังไม่ล็อกอิน)
+ *   ApiError                  error ที่มี status ติดมา ให้หน้าเว็บตัดสินใจต่อได้
+ *   errorMessage()            รหัส HTTP → ข้อความภาษาไทย
+ *   readDetail()              อ่าน detail ของ FastAPI ทั้งแบบข้อความและแบบรายการ
+ *   handleUnauthorized()      token ใช้ไม่ได้ → ลบ แล้วพาไปหน้าล็อกอิน
+ *   apiRequest()              ส่งคำขอ JSON / ฟอร์ม แล้วคืน JSON ที่ตอบกลับ
+ *   apiUpload()               อัปโหลดไฟล์ (multipart) พร้อมแจ้งความคืบหน้า
+ *   apiBlob() / apiImageUrl() ดึงภาพที่ต้องล็อกอินก่อนดู แล้วคืนเป็น Blob / URL
+ *   toServerPath()            ตัด URL เต็มจาก backend เหลือแค่ path
+ *
+ * เชื่อมกับ:
+ *   ใช้ของ     config.js (API_BASE_URL)
+ *   ถูกใช้โดย  ทุกหน้า — ไม่มีไฟล์อื่นเรียก fetch เอง
+ *   backend    ทุก endpoint ผ่านไฟล์นี้ ดูรายชื่อ endpoint ได้ที่หัวไฟล์ของแต่ละหน้า
  */
 
 const TOKEN_KEY = 'luma.token';

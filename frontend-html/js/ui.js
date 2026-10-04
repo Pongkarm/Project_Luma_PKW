@@ -4,6 +4,20 @@
  *  - $(id), escapeHtml(), จัดรูปแบบวันที่/เวลา/ขนาดไฟล์
  *  - สถานะงาน (รอคิว / กำลังสร้าง / เสร็จแล้ว / ไม่สำเร็จ) และป้ายสถานะ
  *  - กล่องแจ้งเตือน (showAlert) และข้อความเด้งมุมจอ (toast)
+ *
+ * ฟังก์ชันในไฟล์นี้:
+ *   $()                      หา element จาก id
+ *   escapeHtml()             กันข้อความกลายเป็น HTML (ใช้ทุกครั้งก่อนใส่ innerHTML)
+ *   formatDate() / formatClock() / formatBytes()   จัดรูปแบบวันที่ เวลา ขนาดไฟล์
+ *   takeSessionJson()        อ่านข้อมูลที่หน้าอื่นฝากไว้ใน sessionStorage (ครั้งเดียว)
+ *   STATUS, statusInfo()     ชื่อและไอคอนของสถานะงาน 4 แบบ
+ *   isFinished() / wasCancelled()   งานจบแล้วหรือยัง / ถูกผู้ใช้กดหยุดหรือไม่
+ *   dashedCircle() / statusIcon() / statusChip()    ไอคอนและป้ายสถานะ
+ *   showAlert() / toast()    กล่องแจ้งเตือน และข้อความเด้งมุมจอ
+ *
+ * เชื่อมกับ:
+ *   ใช้ของ     icons.js (icon)
+ *   ถูกใช้โดย  ทุกหน้า
  */
 
 /* ---------- ฟังก์ชันช่วย ---------- */
@@ -71,7 +85,6 @@ const STATUS = {
   failed: { text: 'ไม่สำเร็จ', icon: 'xCircle' },
 };
 
-const TASK_TEXT = { txt2img: 'สร้างจากข้อความ', img2img: 'สร้างจากภาพ', inpaint: 'แก้เฉพาะจุด' };
 
 /* งานจบแล้วหรือยัง (สำเร็จหรือล้มเหลว) */
 function isFinished(run) {

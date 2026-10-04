@@ -1,6 +1,8 @@
 /*
- * The studio: /studio and the quick-edit bar under a finished result.
- * Loaded after layout.css, whose .result, .thumb and .controls it builds on.
+ * studio.css — หน้าสตูดิโอ และแถบ "แต่งด่วน" ใต้ภาพผลลัพธ์ในหน้าสร้างภาพ
+ *
+ * โหลดหลัง layout.css เพราะต่อยอดจาก .result .thumb .controls ในไฟล์นั้น
+ * ใช้ใน studio.html และ generate.html
  */
 
 /* ── studio ──────────────────────────────────────────────────────────── */

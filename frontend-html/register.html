@@ -2,6 +2,12 @@
 <html lang="th" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      หน้าสมัครบัญชี
+      ฟอร์มชื่อผู้ใช้ อีเมล รหัสผ่าน + รายการเงื่อนไขรหัสผ่านที่ติ๊กถูกเมื่อผ่าน
+      สคริปต์: config → icons → api → ui → widgets → layout → register.js
+      backend: POST /auth/register → POST /auth/login → ไป generate.html
+    -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' http: https:; object-src 'none'; base-uri 'self'" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="data:," />
@@ -80,7 +86,7 @@
                   </div>
                 </div>
 
-                <!-- เงื่อนไขรหัสผ่าน: ติ๊กถูกเมื่อผ่าน (register.js อัปเดตให้ทุกครั้งที่พิมพ์) -->
+                <!-- เงื่อนไขรหัสผ่าน: ติ๊กถูกเมื่อผ่าน (js/register.js + widgets.js อัปเดตให้ทุกครั้งที่พิมพ์) -->
                 <div class="auth__rules">
                   <span class="auth__rule" id="rule-length">อย่างน้อย 8 ตัวอักษร</span>
                   <span class="auth__rule" id="rule-variety">มีตัวเลขหรือสัญลักษณ์</span>

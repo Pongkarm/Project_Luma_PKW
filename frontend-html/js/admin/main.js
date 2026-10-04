@@ -14,6 +14,18 @@
  *   users.js     ตารางผู้ใช้ + แผงรายละเอียด + ปิด/เปิดบัญชี
  *   audit.js     บันทึกการกระทำ (และหน้า Activity ที่ยังไม่ได้ทำ)
  *   admins.js    ให้/ถอนสิทธิ์ผู้ดูแล
+ *
+ * ฟังก์ชันในไฟล์นี้:
+ *   sections() / allowedSections()   รายการหน้าย่อย และหน้าที่สิทธิ์ของเราเปิดได้
+ *   main() / header() / skeleton() / notice() / unavailable()   ฟังก์ชันวาดที่ทุกหน้าย่อยใช้
+ *   route()              อ่าน # ท้ายที่อยู่เว็บ แล้ววาดเมนูกับหน้าย่อยนั้น
+ *   hashParams()         ค่าตัวกรองที่ต่อท้าย # (เช่น #users?status=disabled)
+ *   start()              ถามสิทธิ์จาก backend แล้วเปิดแผง
+ *
+ * เชื่อมกับ:
+ *   ใช้ของ     api.js (apiRequest, getToken), ui.js ($, escapeHtml), icons.js (icon)
+ *              และ drawOverview / drawUsers / drawActivity / drawAudit / drawAdmins จากไฟล์อื่นในโฟลเดอร์
+ *   backend    GET /admin/me
  */
 
 let me = null; // สิทธิ์ของเรา จาก GET /admin/me

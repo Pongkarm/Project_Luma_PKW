@@ -2,6 +2,13 @@
 <html lang="th" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      หน้าประวัติ — งานทั้งหมดของผู้ใช้ ทีละ 24 งาน (ใหม่สุดก่อน)
+      ตรงกลาง: การ์ดงาน + ปุ่มเปลี่ยนหน้า | ขวา: รายละเอียดงานที่เลือก + ปุ่มบันทึก/แต่ง/ใช้ค่าเดิม/ลบ
+      เปิดงานตรง ๆ ได้ด้วย history.html?id=<id ของงาน>
+      สคริปต์: ไฟล์กลาง 6 ไฟล์ → js/history/list → detail → main
+      backend: GET /generations · GET /generations/{id}/image · GET /uploads/{ไฟล์} · DELETE /generations/{id}
+    -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' http: https:; object-src 'none'; base-uri 'self'" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="data:," />
@@ -42,7 +49,7 @@
 
               <div class="pad-16" id="history-alert" hidden></div>
 
-              <!-- การ์ดของแต่ละงาน — history.js เติมให้ -->
+              <!-- การ์ดของแต่ละงาน — js/history/list.js เติมให้ -->
               <div class="grid-runs" id="grid"></div>
 
               <!-- ยังไม่มีงาน -->

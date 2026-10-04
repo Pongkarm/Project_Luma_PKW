@@ -7,6 +7,19 @@
  *   list.js    การ์ดงานทีละหน้า  ← ไฟล์นี้
  *   detail.js  แผงรายละเอียดด้านขวา + ปุ่มบันทึก/แต่ง/ใช้ค่าเดิม/ลบ
  *   main.js    เริ่มทำงาน: ผูกปุ่มทั้งหมด
+ *
+ * ข้อมูลและฟังก์ชันในไฟล์นี้:
+ *   page, runs, selected, selectedImageUrl, imageUrls   สถานะกลางของหน้า
+ *   loadPage()        ดึงงานหน้าปัจจุบัน แล้ววาดการ์ด (หน้าว่างจะถอยกลับหนึ่งหน้า)
+ *   drawCards()       วาดการ์ดทั้งหมด แล้วค่อย ๆ โหลดภาพ
+ *   cardHtml()        HTML ของการ์ดหนึ่งใบ
+ *   loadCardImage()   ดึงภาพของการ์ดด้วย token
+ *
+ * เชื่อมกับ:
+ *   ใช้ของ     api.js (apiRequest, apiImageUrl), ui.js (statusChip, statusIcon, escapeHtml, ...),
+ *              config.js (PAGE_SIZES)
+ *   ถูกใช้โดย  main.js, detail.js (loadPage หลังลบ)
+ *   backend    GET /generations?page=..&page_size=24 · GET /generations/{id}/image
  */
 
 const PAGE_SIZE = PAGE_SIZES.history;

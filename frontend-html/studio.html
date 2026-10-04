@@ -2,6 +2,13 @@
 <html lang="th" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      หน้าสตูดิโอ — แต่งภาพด้วยเครื่องมือ 4 อย่างของ backend (ไม่ใช้ AI สร้างภาพ)
+      ลายเส้น · เน้นสี · ท่าทาง (33 จุด) · ตัดฉาก (ได้ mask ไปวาดฉากหลังใหม่ต่อได้)
+      โครงหน้า: ตรงกลาง: ภาพ + เทียบก่อน/หลัง + แถบเวอร์ชัน | ขวา: เลือกเครื่องมือ + ผลของท่าทาง/ตัดฉาก
+      สคริปต์: ไฟล์กลาง 6 ไฟล์ → js/studio/state → view → tools → main
+      backend: POST /api/tools/{tool} · POST /uploads (ส่งต่อไปหน้าสร้างภาพ) · /generations (ภาพที่เคยสร้าง)
+    -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' http: https:; object-src 'none'; base-uri 'self'" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="data:," />

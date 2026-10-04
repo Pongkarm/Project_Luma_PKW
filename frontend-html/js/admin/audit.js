@@ -1,5 +1,14 @@
 /*
  * admin/audit.js — บันทึกการกระทำของแอดมิน (GET /admin/audit) และหน้า Activity
+ *
+ * ฟังก์ชันในไฟล์นี้:
+ *   drawActivity()     หน้า Activity (ยังไม่ได้ทำ แสดงข้อความแจ้งไว้)
+ *   drawAudit()        บันทึกการกระทำ 100 รายการล่าสุด เขียนเป็นประโยค
+ *   VERBS              คำกริยาของแต่ละการกระทำ
+ *
+ * เชื่อมกับ:
+ *   ใช้ของ     main.js (main, header, me, notice, skeleton, unavailable), api.js (apiRequest), ui.js
+ *   backend    GET /admin/audit?page=1&page_size=100
  */
 
 /* ---------- Activity (ยังไม่ได้ทำ เหมือนเวอร์ชัน React) ---------- */

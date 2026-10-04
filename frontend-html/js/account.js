@@ -3,6 +3,20 @@
  *  - แสดงข้อมูลจาก GET /auth/me
  *  - แก้ชื่อผู้ใช้ / อีเมล / รหัสผ่าน ด้วย PATCH /auth/me (ต้องใส่รหัสผ่านปัจจุบันเสมอ)
  *  - เลือกธีม และออกจากระบบ
+ *
+ * ฟังก์ชันในไฟล์นี้:
+ *   drawProfile()               เติมการ์ดโปรไฟล์
+ *   openEdit() / closeEdit()    สลับระหว่างการ์ดโปรไฟล์กับฟอร์มแก้ไข
+ *   updateForm()                ตรวจฟอร์ม และเปิด/ปิดปุ่มบันทึก
+ *   saveProfile()               ส่งเฉพาะค่าที่เปลี่ยนไปที่ backend
+ *   drawThemeTabs()             ไฮไลต์ปุ่มธีมที่ใช้อยู่
+ *   start()                     เริ่มทำงานหน้า
+ *
+ * เชื่อมกับ:
+ *   ใช้ของ     layout.js (requireLogin, setTheme, currentTheme, signOut, updateUserCount),
+ *              api.js (apiRequest), widgets.js (renderPasswordRules, setupPasswordToggles),
+ *              ui.js ($, formatDate, showAlert, toast), config.js (API_BASE_URL)
+ *   backend    GET /auth/me (ผ่าน requireLogin) · PATCH /auth/me
  */
 
 let user = null;

@@ -2,6 +2,19 @@
  * generate/draft.js — โหมด, ร่างที่กรอกไว้, และปุ่มสร้างภาพ
  *
  * ร่างเก็บใน localStorage (คีย์ luma.html.draft) รีเฟรชหน้าแล้ว prompt ไม่หาย
+ *
+ * ฟังก์ชันในไฟล์นี้:
+ *   saveDraft() / loadDraft()   จด/คืนค่าทุกช่องในแผงขวา (loadDraft โหลดภาพต้นฉบับกลับมาด้วย)
+ *   setMode()                   เปลี่ยนโหมด และสลับช่องที่แสดง
+ *   blocker()                   เหตุผลที่ยังกดสร้างไม่ได้ (หรือ null ถ้าพร้อม)
+ *   updateFooter()              อัปเดตปุ่มสร้างภาพ และคำใบ้ขนาดที่จะได้
+ *
+ * เชื่อมกับ:
+ *   ใช้ของ     state.js (mode, source, outputSize, MODE_TEXT), settings.js (paint*),
+ *              source.js (setSource), stage.js (updateView), mask.js (MaskEditor.hasMask),
+ *              config.js (DRAFT_KEY, LIMITS), api.js (apiImageUrl), ui.js ($)
+ *   ถูกใช้โดย  เกือบทุกไฟล์ใน generate/ (เรียก updateFooter/saveDraft หลังมีอะไรเปลี่ยน)
+ *   หน้าอื่น   history/detail.js เขียนร่างลงคีย์เดียวกันตอนกด "ใช้ค่าเดิม"
  */
 
 /* ---------- บันทึกร่าง (prompt ไม่หายเมื่อรีเฟรชหน้า) ---------- */

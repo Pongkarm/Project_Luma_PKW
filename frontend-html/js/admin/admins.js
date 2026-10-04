@@ -1,5 +1,12 @@
 /*
  * admin/admins.js — ผู้มีสิทธิ์ดูแลระบบ: เปลี่ยน/ถอน/ให้สิทธิ์ (เฉพาะ owner)
+ *
+ * ฟังก์ชันในไฟล์นี้:
+ *   drawAdmins()       ตารางผู้มีสิทธิ์ + เปลี่ยน/ถอนสิทธิ์ + ฟอร์มให้สิทธิ์คนใหม่
+ *
+ * เชื่อมกับ:
+ *   ใช้ของ     main.js (main, header, me, ROLES, skeleton, unavailable), api.js (apiRequest), ui.js, icons.js
+ *   backend    GET /admin/roles · GET /admin/users · POST /admin/roles · DELETE /admin/roles/{id}
  */
 
 /* ตารางผู้มีสิทธิ์ + ฟอร์มให้สิทธิ์ใหม่ (โหลดรายชื่อสิทธิ์และผู้ใช้พร้อมกัน) */

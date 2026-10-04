@@ -5,6 +5,15 @@
  *  1) ใน HTML:  <i data-icon="generate" data-size="16"></i>
  *     ไฟล์นี้จะเปลี่ยนแท็ก <i> เป็นรูป SVG ให้เองตอนโหลดหน้า
  *  2) ใน JavaScript:  element.innerHTML = icon('trash', 14) + ' ลบ';
+ *
+ * ฟังก์ชันในไฟล์นี้:
+ *   ICON_PATHS      เส้น SVG ของไอคอนแต่ละตัว (ชื่อ → รายการ path)
+ *   icon()          คืนโค้ด <svg> ของไอคอนเป็นข้อความ
+ *   renderIcons()   เปลี่ยนแท็ก <i data-icon> ในหน้าเป็น SVG (รันเองตอนหน้าโหลดเสร็จ)
+ *
+ * เชื่อมกับ:
+ *   ไม่ใช้ของไฟล์อื่น
+ *   ถูกใช้โดย  เกือบทุกไฟล์ที่วาดปุ่มหรือสถานะ (ui.js, widgets.js, layout.js, หน้าต่าง ๆ)
  */
 
 const ICON_PATHS = {

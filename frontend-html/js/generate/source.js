@@ -2,6 +2,21 @@
  * generate/source.js — ภาพต้นฉบับ (โหมดจากภาพ / แก้เฉพาะจุด)
  *
  * ภาพถูกอัปโหลดไป POST /uploads ทันทีที่เลือก งานสร้างภาพจะอ้างถึง url ที่ได้กลับมา
+ *
+ * ฟังก์ชันในไฟล์นี้:
+ *   uploadSource()      ตรวจชนิด/ขนาดไฟล์ แล้วอัปโหลดพร้อมแถบความคืบหน้า
+ *   resetDropZone()     คืนข้อความเดิมของกล่องลากวาง
+ *   setSource()         ตั้งภาพต้นฉบับ และเตรียมพื้นที่ระบาย mask ให้ขนาดเท่าภาพ
+ *   removeSource()      เอาภาพต้นฉบับออก
+ *   takeHandoff()       รับภาพ (และ mask) ที่หน้าประวัติ/สตูดิโอส่งมา
+ *
+ * เชื่อมกับ:
+ *   ใช้ของ     api.js (apiUpload, apiImageUrl), mask.js (MaskEditor.resize, loadMask),
+ *              state.js (source, fitToEngine), draft.js (setMode, saveDraft, updateFooter),
+ *              stage.js (updateView), run.js (closeRun), ui.js ($, showAlert, takeSessionJson)
+ *   ถูกใช้โดย  main.js (ปุ่มเลือกไฟล์/ลากวาง), run.js (ใช้ผลลัพธ์เป็นต้นฉบับ), draft.js
+ *   backend    POST /uploads · GET /uploads/{ไฟล์} (โหลดตัวอย่างกลับมา)
+ *   หน้าอื่น   studio/tools.js ฝากข้อมูลไว้ที่ sessionStorage คีย์ luma.handoff
  */
 
 /* ตรวจไฟล์ในเบราว์เซอร์ก่อน (ชนิด/ขนาด) แล้วอัปโหลดพร้อมแถบความคืบหน้าในกล่องลากวาง */

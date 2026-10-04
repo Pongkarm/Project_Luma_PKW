@@ -2,6 +2,13 @@
 <html lang="th" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      หน้าสร้างภาพ — หน้าหลักของระบบ
+      3 โหมด: สร้างจากข้อความ (txt2img) · สร้างจากภาพ (img2img) · แก้เฉพาะจุด (inpaint)
+      โครงหน้า: แถบบน + เมนูซ้าย (layout.js) | ตรงกลาง: ภาพ / ที่ระบาย mask + แถบงานล่าสุด | ขวา: แผงตั้งค่า
+      สคริปต์: ไฟล์กลาง 6 ไฟล์ → mask.js → js/generate/* (main.js ท้ายสุด) — แผนผังอยู่ที่หัว js/generate/state.js
+      backend: /api/models · /uploads · /generations (ส่งงาน ถามสถานะ ดึงภาพ หยุด ลบ) · /api/tools (แต่งด่วน)
+    -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' http: https:; object-src 'none'; base-uri 'self'" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="data:," />
@@ -38,7 +45,7 @@
                 </button>
               </div>
 
-              <!-- เนื้อหากลางจอ: ว่าง / กำลังสร้าง / ผลลัพธ์ — generate.js เติมให้ -->
+              <!-- เนื้อหากลางจอ: ว่าง / กำลังสร้าง / ผลลัพธ์ — js/generate/stage.js เติมให้ -->
               <div class="stage" id="stage"></div>
 
               <!-- แถบงานล่าสุด -->

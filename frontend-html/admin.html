@@ -2,6 +2,13 @@
 <html lang="th" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      แผงแอดมิน (ข้อความภาษาอังกฤษ) — เห็นเฉพาะบัญชีที่มีสิทธิ์ reviewer / admin / owner
+      หน้าย่อยเลือกด้วย #: #overview · #users · #activity · #audit · #admins
+      backend เป็นคนตรวจสิทธิ์จริง หน้าเว็บแค่ซ่อนส่วนที่สิทธิ์ของเราใช้ไม่ได้
+      สคริปต์: ไฟล์กลาง 6 ไฟล์ → js/admin/overview · users · audit · admins → main (ท้ายสุด)
+      backend: /admin/me · /admin/stats · /admin/users · /admin/audit · /admin/roles
+    -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' http: https:; object-src 'none'; base-uri 'self'" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="data:," />
@@ -20,7 +27,7 @@
       <div class="adm-notice" id="admin-blocked" hidden></div>
 
       <div class="adm" id="admin-app" hidden>
-        <!-- เมนูซ้ายของแผงแอดมิน (admin.js เติมรายการตามสิทธิ์) -->
+        <!-- เมนูซ้ายของแผงแอดมิน (js/admin/main.js เติมรายการตามสิทธิ์) -->
         <nav class="adm__rail" aria-label="Admin sections">
           <a class="adm__brand" href="generate.html" title="กลับไปหน้าสร้างภาพ">LUMA<span>ADMIN</span></a>
           <div class="adm__nav" id="admin-nav"></div>

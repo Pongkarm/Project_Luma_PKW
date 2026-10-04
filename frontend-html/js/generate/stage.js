@@ -3,6 +3,19 @@
  *
  * วาดตามสถานะของงาน: ว่าง → รอคิว → กำลังสร้าง → เสร็จ (หรือ ล้มเหลว / หยุด / ค้างนาน)
  * ทุกครั้งที่สถานะเปลี่ยน เรียก renderStage() ให้วาดใหม่ทั้งกล่อง
+ *
+ * ฟังก์ชันในไฟล์นี้:
+ *   updateView()        เลือกว่าจะแสดงพื้นที่ภาพ หรือที่ระบาย mask
+ *   renderStage()       วาดตรงกลางตามสถานะ: ว่าง / รอคิว / กำลังสร้าง / ล้มเหลว / หยุด / ค้างนาน
+ *   renderResult()      ภาพผลลัพธ์ + แถบปุ่ม + แถบแต่งด่วน
+ *   applyQuick()        ใช้เครื่องมือแต่งด่วนกับภาพผลลัพธ์ (ไม่สร้างงานใหม่)
+ *   QUICK_TOOLS         ชื่อเครื่องมือแต่งด่วน 4 อย่าง
+ *
+ * เชื่อมกับ:
+ *   ใช้ของ     state.js (run, progress, quick, ...), api.js (apiUpload, apiBlob, toServerPath),
+ *              ui.js (statusChip, statusIcon, escapeHtml, toast), icons.js (icon)
+ *   ถูกใช้โดย  run.js (หลังสถานะเปลี่ยน), draft.js / source.js / recent.js (updateView)
+ *   backend    POST /api/tools/{sketch|color-splash|pose|remove-bg} แล้วดึงภาพผลด้วย GET
  */
 
 /* ---------- ตรงกลาง: เลือกว่าจะแสดงอะไร ---------- */

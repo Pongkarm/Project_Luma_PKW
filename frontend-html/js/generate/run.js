@@ -2,6 +2,27 @@
  * generate/run.js — ส่งงานและติดตามงาน
  *
  * submit() → POST /generations → watchRun() → poll() ซ้ำจนเสร็จ → onFinished() โหลดภาพ
+ *
+ * ฟังก์ชันในไฟล์นี้:
+ *   buildRequest()        รวมค่าจากฟอร์มเป็นข้อมูลที่ backend ต้องการ
+ *   submit()              กดสร้างภาพ (อัปโหลด mask ก่อนถ้าเป็นโหมดแก้เฉพาะจุด)
+ *   watchRun()            เริ่มติดตามงาน
+ *   startClock() / stopWatching()   นาฬิกานับเวลา / หยุดติดตาม
+ *   poll()                ถามสถานะซ้ำจนเสร็จ (2 วิ → 5 วิ → เลิกหลัง 5 นาที)
+ *   onFinished()          งานจบ: โหลดภาพผลลัพธ์ อัปเดตแถบล่างและจำนวนงาน
+ *   releaseImages()       คืนหน่วยความจำของภาพที่เลิกแสดง
+ *   closeRun() / cancelRun() / deleteRun()   ปิด / หยุด / ลบงาน
+ *   useAsSource()         เอาภาพผลลัพธ์ไปเป็นต้นฉบับของงานถัดไป
+ *   onStageClick()        รับคลิกทุกปุ่มในพื้นที่ตรงกลาง
+ *
+ * เชื่อมกับ:
+ *   ใช้ของ     api.js (apiRequest, apiUpload, apiBlob), mask.js (exportMask), stage.js (render*),
+ *              draft.js, source.js (setSource), recent.js (loadRecent), layout.js (refreshUser),
+ *              widgets.js (confirmDialog, openViewer), ui.js
+ *   ถูกใช้โดย  main.js (ปุ่มสร้างภาพ, ⌘↵), recent.js (watchRun)
+ *   backend    POST /uploads (mask) · POST /generations · GET /generations/{id}
+ *              · GET /generations/{id}/progress · GET /generations/{id}/image
+ *              · POST /generations/{id}/cancel · DELETE /generations/{id}
  */
 
 /* รวมค่าจากฟอร์มเป็นข้อมูลที่ backend ต้องการ (ดู GenerationRequest ของ backend) */

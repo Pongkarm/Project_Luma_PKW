@@ -4,6 +4,19 @@
  *  - ปุ่มรูปตาในช่องรหัสผ่าน
  *  - หน้าต่างยืนยัน (confirmDialog) และหน้าต่างดูภาพเต็มจอ (openViewer)
  *  - แถบเลื่อนคู่ช่องตัวเลข (bindSlider) และปุ่มพับ/กาง (bindDisclosure)
+ *
+ * ฟังก์ชันในไฟล์นี้:
+ *   setupPasswordToggles()   ปุ่มรูปตา แสดง/ซ่อนรหัสผ่าน
+ *   PASSWORD_RULES           เงื่อนไขรหัสผ่าน 3 ข้อ
+ *   renderPasswordRules()    วาดรายการติ๊กถูก คืนค่า true เมื่อผ่านครบ
+ *   confirmDialog()          หน้าต่างถามยืนยัน (คืน Promise true/false)
+ *   openViewer()             ดูภาพขนาดเต็มจอ
+ *   bindSlider()             ผูกแถบเลื่อนกับช่องตัวเลข
+ *   bindDisclosure()         ปุ่มพับ/กาง และจำสถานะไว้
+ *
+ * เชื่อมกับ:
+ *   ใช้ของ     ui.js ($, escapeHtml, dashedCircle), icons.js (icon)
+ *   ถูกใช้โดย  login, register, account (รหัสผ่าน) · generate, studio, history (หน้าต่าง/แถบเลื่อน)
  */
 
 /* ปุ่มรูปตาในช่องรหัสผ่าน: กดเพื่อแสดง/ซ่อนรหัส */

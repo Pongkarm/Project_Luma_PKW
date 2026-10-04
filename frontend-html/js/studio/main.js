@@ -1,5 +1,14 @@
 /*
  * studio/main.js — เริ่มทำงานหน้าสตูดิโอ: ผูกปุ่มทั้งหมดเข้ากับฟังก์ชัน
+ *
+ * ฟังก์ชันในไฟล์นี้:
+ *   start()      ผูกปุ่มทั้งหมด แล้วเปิดภาพที่ส่งมาจากหน้าอื่น (ถ้ามี)
+ *
+ * เชื่อมกับ:
+ *   ใช้ของ     layout.js (requireLogin), tools.js, view.js, state.js,
+ *              widgets.js (bindSlider, openViewer), ui.js ($, takeSessionJson, toast)
+ *   หน้าอื่น   รับ runId จาก sessionStorage คีย์ luma.studio-handoff
+ *              (ฝากโดย generate/run.js และ history/main.js)
  */
 
 /* เริ่มทำงาน: ผูกปุ่มทั้งหมด แล้วเปิดภาพที่ส่งมาจากหน้าอื่น (ถ้ามี) */

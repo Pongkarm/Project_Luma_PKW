@@ -4,6 +4,22 @@
  * ถ้า backend ย้ายเครื่องหรือ IP เปลี่ยน ให้แก้ API_BASE_URL บรรทัดเดียว
  *   backend ในเครื่องตัวเอง:  http://localhost:8000
  *   backend ของเพื่อน:        http://<IP ของเครื่องเพื่อน>:8000
+ *
+ * ค่าในไฟล์นี้:
+ *   API_BASE_URL          ที่อยู่ backend (ทุกคำขอใน api.js ต่อท้ายจากค่านี้)
+ *   LIMITS                ขอบเขตของ prompt, steps, CFG, denoise, ขนาดภาพ, ไฟล์อัปโหลด
+ *   DEFAULT_SIZE          ขนาดภาพตั้งต้น 768 × 768
+ *   PAGE_SIZES            จำนวนงานที่ขอต่อครั้ง (แถบล่าสุด, สตูดิโอ, หน้าประวัติ)
+ *   DRAFT_KEY             คีย์ของร่างหน้าสร้างภาพใน localStorage
+ *   SIZE_PRESETS          ปุ่มขนาด 1:1 · 2:3 · 3:2
+ *   FALLBACK_CHECKPOINTS  รายชื่อโมเดลสำรอง เมื่อถามเครื่อง AI ไม่ได้
+ *   FALLBACK_LORAS        รายชื่อสไตล์ (LoRA) สำรอง
+ *   SAMPLERS              วิธีสุ่มที่เลือกได้
+ *
+ * เชื่อมกับ:
+ *   โหลดเป็นไฟล์แรกของทุกหน้า ไม่ใช้ของไฟล์อื่น
+ *   ถูกใช้โดย  api.js, generate/*, studio/*, history/*
+ *   ชุดทดสอบ (tests/lib.mjs) แทนค่า API_BASE_URL ระหว่างทางให้ชี้ไป backend ของการทดสอบ
  */
 const API_BASE_URL = 'http://localhost:8000';
 
