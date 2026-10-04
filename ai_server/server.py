@@ -47,7 +47,7 @@ from ai_server.utils.image_utils import (
     enforce_max_resolution
 )
 from ai_server.services.queue_manager import task_queue
-from ai_server.services.prompt_builder import build_prompt_with_lora, LORA_REGISTRY
+from ai_server.services.prompt_builder import build_prompt_with_lora, LORA_REGISTRY, detect_model_family
 from ai_server.services.forge_client import (
     is_forge_online, 
     run_txt2img, 
@@ -265,8 +265,8 @@ def handle_txt2img_inference(data: dict) -> tuple[str, int]:
     lora_id = extract_primary_lora(data)
     model_name = data.get("model_name") or data.get("model") or AIConfig.DEFAULT_MODEL
     
-    # แทรก LoRA Syntax และ Trigger Word ลงใน Prompt
-    enriched_prompt, lora_tag = build_prompt_with_lora(raw_prompt, lora_id)
+    # แทรก LoRA Syntax และ Trigger Word ลงใน Prompt (พร้อมตรวจสอบ Model-LoRA Compatibility Guard)
+    enriched_prompt, lora_tag = build_prompt_with_lora(raw_prompt, lora_id, model_name=model_name)
     print(f"[PROMPT ENRICHED] Raw: '{raw_prompt}' -> Enriched: '{enriched_prompt}' (LoRA: {lora_id})")
 
     # 1. รันบน GPU จริงผ่าน Forge API
@@ -322,7 +322,7 @@ def handle_edit_inference(data: dict) -> tuple[str, int]:
     model_name = data.get("model_name") or data.get("model") or AIConfig.DEFAULT_MODEL
     mode = (data.get("mode") or ("inpaint" if mask_b64 else "img2img")).lower()
 
-    enriched_prompt, lora_tag = build_prompt_with_lora(raw_prompt, lora_id)
+    enriched_prompt, lora_tag = build_prompt_with_lora(raw_prompt, lora_id, model_name=model_name)
     print(f"[EDIT PROMPT ENRICHED] Mode: '{mode}' | Raw: '{raw_prompt}' -> Enriched: '{enriched_prompt}' (LoRA: {lora_id})")
 
     # 1. รันบน GPU จริง
@@ -560,17 +560,23 @@ async def list_available_models():
                 checkpoints.append({
                     "id": f,
                     "name": f.replace(".safetensors", "").replace(".ckpt", ""),
-                    "path": os.path.join(AIConfig.CHECKPOINTS_DIR, f)
+                    "path": os.path.join(AIConfig.CHECKPOINTS_DIR, f),
+                    "family": detect_model_family(f)
                 })
 
     # สแกน LoRA Adapters (.safetensors)
     if os.path.exists(AIConfig.LORA_DIR):
         for f in os.listdir(AIConfig.LORA_DIR):
             if f.endswith(".safetensors"):
+                lora_cfg = LORA_REGISTRY.get(f, {})
+                lora_family = lora_cfg.get("family")
+                if not lora_family or lora_family == "unknown":
+                    lora_family = detect_model_family(f)
                 loras.append({
                     "id": f,
                     "name": f.replace(".safetensors", ""),
-                    "path": os.path.join(AIConfig.LORA_DIR, f)
+                    "path": os.path.join(AIConfig.LORA_DIR, f),
+                    "family": lora_family
                 })
 
     return {
