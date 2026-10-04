@@ -1,6 +1,7 @@
 /*
  * extra.css — ส่วนเสริมเล็ก ๆ ของเวอร์ชัน HTML
- * ไฟล์ CSS อื่นในโฟลเดอร์นี้คัดลอกมาจากเวอร์ชัน React ตรง ๆ (frontend/src/shared/styles/)
+ * ไฟล์ CSS อื่นในโฟลเดอร์นี้คัดลอกมาจากเวอร์ชัน React เดิม (frontend/src/shared/styles/ ใน commit 0a78911)
+ * แล้วตัด class ที่ไม่ได้ใช้ออก
  */
 
 /* ให้แอตทริบิวต์ hidden ซ่อนได้จริงเสมอ แม้ class อื่นจะกำหนด display ไว้ */
