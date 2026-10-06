@@ -103,8 +103,18 @@ graph TD
 
 ระบบออกแบบการป้องกันเป็นชั้น (Defense-in-Depth):
 
-1. **Gateway IP Whitelist (DevOps Access Protection):**
-   * เส้นทาง `http://172.20.10.9/dashboard` จำกัดสิทธิ์ให้เข้าถึงได้เฉพาะเครื่อง Nginx เท่านั้น (`172.20.10.9` และ `localhost`) ป้องกันผู้อื่นแอบเข้าดูข้อมูลระบบ
+1. **Network-Level LAN Isolation (เข้าได้เฉพาะวงแลนเดียวกัน):**
+   * กำหนดให้ Nginx รับการเชื่อมต่อผ่านชื่อโดเมน `http://luma.local` และอนุญาตเฉพาะอุปกรณ์ที่อยู่ในวงแลน (`172.20.10.0/24`) เท่านั้น หากมีการเข้าถึงจากเครือข่ายภายนอก จะถูกบล็อกด้วย HTTP 403 Forbidden ทันที
+   ```nginx
+   server_name luma.local www.luma.local 172.20.10.9 localhost;
+
+   allow 127.0.0.1;
+   allow ::1;
+   allow 172.20.10.0/24;    # Subnet วงแลนโปรเจกต์
+   deny all;                # ปฏิเสธการเข้าถึงจากภายนอก
+   ```
+2. **Gateway IP Whitelist (DevOps Access Protection):**
+   * เส้นทาง `http://luma.local/dashboard` จำกัดสิทธิ์ให้เข้าถึงได้เฉพาะเครื่อง Nginx เท่านั้น (`172.20.10.9` และ `localhost`) ป้องกันเพื่อนในวงแลนแอบเข้าดูข้อมูลระบบ
    ```nginx
    location ~* ^/dashboard(\.html)?$ {
        allow 127.0.0.1;
@@ -115,14 +125,17 @@ graph TD
        try_files /dashboard.html =404;
    }
    ```
-2. **Reverse Proxy Masking & CORS Elimination:**
-   * ผู้ใช้เข้าถึงระบบผ่าน `172.20.10.9:80` เพียงพอร์ตเดียว ทำให้ทั้งหน้าเว็บและ API อยู่บน Origin เดียวกัน ไม่เกิดปัญหา CORS ข้ามโดเมน
-3. **Five-Layer Image Security Validation (Backend):**
+3. **Reverse Proxy Masking & CORS Elimination:**
+   * ผู้ใช้เข้าถึงระบบผ่าน `http://luma.local` (พอร์ต 80) เพียงจุดเดียว ทำให้ทั้งหน้าเว็บและ API อยู่บน Origin เดียวกัน ไม่เกิดปัญหา CORS ข้ามโดเมน
+4. **Five-Layer Image Security Validation (Backend):**
    * ตรวจสอบ Content-Type, จำกัดขนาดไฟล์ (10MB), ตรวจสอบ Magic Bytes, ป้องกัน Decompression Bomb (OWASP standard), และตัด EXIF metadata ก่อนบันทึกไฟล์แบบ Atomic
 
 ---
 
 ## 🚀 5. คู่มือการใช้งานสำหรับ DevOps (DevOps Quickstart)
+
+### 0) การตั้งชื่อ Domain (รันครั้งแรกบนเครื่อง Windows)
+คลิกขวาที่ไฟล์ **`nginx\setup_domain.bat`** แล้วเลือก **"Run as administrator"** (จะผูกชื่อ `luma.local` เข้ากับ IP `172.20.10.9` ให้ทันที)
 
 ### 1) การเปิด Nginx Gateway
 ดับเบิลคลิกไฟล์:
