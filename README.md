@@ -1,199 +1,187 @@
 # 🎨 LUMA: Distributed AI Image Generation Platform
 
-[![Python](https://img.shields.io/badge/Python-3.10-blue.svg)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg)](https://fastapi.tiangolo.com)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-336791.svg)](https://www.postgresql.org)
-[![Pytest](https://img.shields.io/badge/Tests-51%20Passed-brightgreen.svg)](https://pytest.org)
-[![Coverage](https://img.shields.io/badge/Coverage-90%25-success.svg)](https://coverage.readthedocs.io)
+[![Branch: devops](https://img.shields.io/badge/Branch-devops-orange.svg?logo=git)](https://github.com/Pongkarm/Project_Luma_PKW/tree/devops)
+[![Nginx Gateway](https://img.shields.io/badge/Nginx%20Gateway-Port%2080-009639.svg?logo=nginx)](http://172.20.10.9)
+[![QA Tests](https://img.shields.io/badge/QA%20Tests-12%2F12%20Passed%20(100%25)-brightgreen.svg)](nginx/test_distributed_system.py)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com)
+[![Python](https://img.shields.io/badge/Python-3.10-blue.svg?logo=python)](https://python.org)
+[![Backup System](https://img.shields.io/badge/Backup-Automated%20SHA--256-blueviolet.svg)](nginx/backup_system.py)
 
-**LUMA** เป็นระบบประมวลผลและสร้างภาพด้วยปัญญาประดิษฐ์ (AI Image Generation Platform) ที่ถูกออกแบบด้วยสถาปัตยกรรมแบบ **Distributed Computing** รองรับการสร้างภาพแบบ Multi-Modal ทั้ง **Text-to-Image (txt2img)**, **Image-to-Image (img2img)**, และ **Canvas Inpainting**
+**LUMA** เป็นระบบประมวลผลและสร้างภาพด้วยปัญญาประดิษฐ์ (AI Image Generation Platform) ที่ออกแบบด้วยสถาปัตยกรรมแบบ **Distributed Computing (ระบบประมวลผลแบบกระจายศูนย์)** รองรับการสร้างภาพทั้ง **Text-to-Image (txt2img)**, **Image-to-Image (img2img)**, และ **Canvas Inpainting**
+
+> 📌 **สำหรับ Branch `devops`:** สาขานี้เน้นการทำงานของ **คนที่ 4: QA / DevOps** รับผิดชอบสถาปัตยกรรมเครือข่ายด่านหน้า (Nginx Reverse Proxy Gateway), ระบบตรวจสอบและมอนิเตอร์ริ่ง (DevOps Health Dashboard), การทดสอบระบบทั้ง 4 เครื่อง (Automated QA Test Suite), ระบบสำรองข้อมูล (Automated Backup & Archive) และคู่มือการดูแลระบบ (DevOps Manual)
 
 ---
 
-## 🏛️ 1. Architecture Overview (สถาปัตยกรรมระบบ)
+## 🏛️ 1. Architecture Overview (สถาปัตยกรรมระบบ 4 เครื่อง)
 
-ระบบแบ่งออกเป็น 3 Nodes อิสระ เชื่อมต่อกันผ่าน Local Area Network (LAN):
+ระบบแบ่งแยกหน้าที่การทำงานอย่างชัดเจนออกเป็น **4 Physical Nodes** เชื่อมต่อกันผ่านเครือข่ายวงแลน (Local Area Network):
 
 ```mermaid
 graph TD
     User([👤 User / Browser])
-    
-    subgraph PC1 ["Node 1: Frontend (192.168.1.10)"]
-        UI[Bootstrap 5 + Canvas Inpaint Tool]
+
+    subgraph Node1 ["Node 1: Nginx Gateway & DevOps (172.20.10.9:80) ⭐"]
+        Nginx[Nginx Reverse Proxy]
+        AccessLog[Live Traffic Logger with Upstream IP]
+        Dashboard[DevOps Monitoring Dashboard: /dashboard]
+        QATest[Automated QA Suite: 12 Test Cases]
+        Backup[Automated Backup & SHA-256 System]
     end
 
-    subgraph PC2 ["Node 2: Backend (192.168.1.20:8000)"]
+    subgraph Node2 ["Node 2: Frontend Web Client (172.20.10.8:5500)"]
+        UI[Web UI: HTML5 + Bootstrap 5 + Canvas Inpaint]
+    end
+
+    subgraph Node3 ["Node 3: Backend & Database (172.20.10.6:8000)"]
         API[FastAPI Backend Engine]
-        DB[(PostgreSQL Database)]
-        Storage[Local File Storage: uploads/ & outputs/]
+        DB[(SQLite / PostgreSQL Database)]
         Security[JWT + Bcrypt + 5-Layer Image Validation]
+        Storage[Storage: uploads/ & outputs/]
     end
 
-    subgraph PC3 ["Node 3: AI Inference Engine (192.168.1.30:7860)"]
-        AIEngine[FastAPI AI Wrapper]
+    subgraph Node4 ["Node 4: AI Inference Engine (172.20.10.3:7860)"]
         SD[Stable Diffusion / WebUI Forge RTX 3070]
         LoRA[LoRA Registry & Checkpoint Loader]
     end
 
-    User -->|HTTP / HTTPS| UI
-    UI -->|REST API + JWT| API
-    API -->|SQLAlchemy ORM| DB
-    API -->|Atomic File I/O| Storage
-    API -->|Direct (Sync) OR Callback (Webhook)| AIEngine
-    AIEngine -->|Inference Execution| SD
-    AIEngine -->|X-LUMA-INTERNAL-SECRET Callback| API
+    User -->|HTTP Port 80| Nginx
+    Nginx -->|Reverse Proxy / -> 172.20.10.8:5500| UI
+    Nginx -->|Reverse Proxy /api/, /auth, /generations| API
+    API -->|Direct / Callback Inference| SD
+    SD -->|Webhook / Callback| API
 ```
 
----
+### ตารางแจกแจงอุปกรณ์และพอร์ตในเครือข่าย (Network & Hardware Matrix)
 
-## 🔄 2. Dual-Mode Inference Strategy
-
-ระบบรองรับการทำงานกับ AI Node ใน 2 รูปแบบ สลับได้ง่ายๆ ผ่านการตั้งค่า `AI_MODE` ใน `.env`:
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Client as Frontend (PC1)
-    participant Backend as Backend Engine (PC2)
-    participant DB as PostgreSQL
-    participant AI as AI Node (PC3)
-
-    alt Mode A: Direct Mode (Synchronous)
-        Client->>Backend: POST /generations (Prompt, Settings)
-        Backend->>DB: Record Task (status=pending)
-        Backend->>AI: POST /generate (Prompt, Resolution)
-        AI-->>Backend: Return Base64 PNG Image
-        Backend->>Backend: Save outputs/{id}.png
-        Backend->>DB: Update status=completed
-        Client->>Backend: GET /generations/{id}/image
-        Backend-->>Client: 200 OK (PNG File)
-    else Mode B: Distributed Callback Mode (Asynchronous Webhook)
-        Client->>Backend: POST /generations (Prompt)
-        Backend->>DB: Record Task (status=pending)
-        Backend->>AI: POST /ai/generate (task_id, callback_url)
-        AI-->>Backend: 202 Accepted (Enqueued)
-        Note over AI: GPU Inferences on RTX 3070...
-        AI->>Backend: POST /api/callback (X-LUMA-INTERNAL-SECRET, Base64 Image)
-        Backend->>Backend: Atomic Save outputs/{id}.png
-        Backend->>DB: Update status=completed
-        Client->>Backend: GET /generations/{id} (Polling status)
-        Backend-->>Client: 200 OK (status: completed)
-    end
-```
+| Node | เครื่อง / บทบาท | ผู้รับผิดชอบ | ระบบปฏิบัติการ | IP Address | Port | หน้าที่หลัก |
+| :---: | :--- | :---: | :---: | :---: | :---: | :--- |
+| **1** | **Nginx Gateway & DevOps** | **คนที่ 4 (QA / DevOps)** | Windows | `172.20.10.9` | `80` | จุดรับ Traffic จุดเดียว (Single Entry Point), Reverse Proxy กระจายงาน, Realtime Log, Monitoring Dashboard, QA Testing, Backup |
+| **2** | **Frontend Client** | คนที่ 1 | macOS | `172.20.10.8` | `5500` | บริการหน้าเว็บ UI, Canvas Inpainting Tool, Responsive Dashboard |
+| **3** | **Backend & Database** | คนที่ 2 | macOS | `172.20.10.6` | `8000` | จัดการ Authentication, บันทึก Task คิว, ฐานข้อมูล, จัดเก็บรูปภาพ |
+| **4** | **AI Inference Engine** | คนที่ 3 | Windows | `172.20.10.3` | `7860` | ประมวลผลโมเดล Stable Diffusion ด้วย GPU Nvidia RTX 3070 |
 
 ---
 
-## 🗄️ 3. Database Schema (Entity-Relationship)
+## 🛠️ 2. ผลงานและหน้าที่ความรับผิดชอบ (คนที่ 4: QA / DevOps Deliverables)
 
-```mermaid
-erDiagram
-    USERS ||--o{ GENERATIONS : owns
-    USERS {
-        uuid id PK "gen_random_uuid()"
-        string username "Unique, Indexed"
-        string email "Unique, Indexed"
-        string password_hash "Bcrypt Encrypted"
-        boolean is_active "Default: True"
-        timestamp created_at "Server Default: NOW()"
-    }
-    GENERATIONS {
-        uuid id PK "gen_random_uuid()"
-        uuid user_id FK "References users(id)"
-        string task_type "txt2img | img2img | inpaint"
-        text prompt "User prompt"
-        text negative_prompt "Negative keywords"
-        string model_name "SD Checkpoint model"
-        jsonb lora_config "LoRA weights and triggers"
-        string sampler_name "Sampling algorithm"
-        int steps "Inference steps (1-150)"
-        float cfg_scale "CFG scale (0-30)"
-        bigint seed "Random seed"
-        int width "Width in px"
-        int height "Height in px"
-        string source_image_path "Uploaded base image"
-        string mask_image_path "Uploaded inpaint mask"
-        float denoising_strength "img2img strength (0.0-1.0)"
-        string output_path "Path to generated image"
-        string status "pending | processing | completed | failed"
-        text error_message "Error diagnostics"
-        float duration_seconds "Processing duration"
-        timestamp created_at "Created timestamp"
-        timestamp completed_at "Completed timestamp"
-    }
-```
+| เสาหลัก | รายการ | ไฟล์ที่เกี่ยวข้อง | คำอธิบาย |
+|---|---|---|---|
+| 🌐 **Gateway & Proxy** | Nginx Reverse Proxy | [`nginx/conf/nginx.conf`](nginx/conf/nginx.conf) | จุดรวมศูนย์พอร์ต 80 เชื่อมต่อ Frontend (`:5500`) และ Backend (`:8000`) ป้องกันปัญหา CORS พร้อมระบุ Upstream ใน Log |
+| 🚀 **Automation Launcher** | One-Click Scripts | [`nginx/run_nginx_with_logs.bat`](nginx/run_nginx_with_logs.bat)<br>[`nginx/stop_nginx.bat`](nginx/stop_nginx.bat) | รัน Nginx พร้อมหน้าต่างสตรีม Log สด แสดง IP ต้นทางและปลายทางที่ส่งต่อ |
+| 🧪 **QA Testing Suite** | ระบบทดสอบอัตโนมัติ 12 Tests | [`nginx/test_distributed_system.py`](nginx/test_distributed_system.py)<br>[`nginx/run_tests.bat`](nginx/run_tests.bat) | ทดสอบการเชื่อมต่อและความพร้อมของทั้ง 4 โหนดแบบ End-to-End ครอบคลุม Routing, Data Ingestion, Image Validation และ Security |
+| 📊 **DevOps Dashboard** | ระบบตรวจวัดสถานะเรียลไทม์ | [`nginx/html/dashboard.html`](nginx/html/dashboard.html) | มอนิเตอร์ Health Status ของทั้ง 4 โหนด อัปเดตอัตโนมัติทุก 5 วินาที พร้อมระบบจำกัดสิทธิ์ (IP Whitelist เข้าได้เฉพาะเครื่อง Nginx) |
+| 💾 **Backup System** | ระบบสำรองข้อมูลอัตโนมัติ | [`nginx/backup_system.py`](nginx/backup_system.py)<br>[`nginx/run_backup.bat`](nginx/run_backup.bat) | สำรอง Config, Web Assets, Source Code เป็น Zip Archive พร้อมคำนวณ Checksum SHA-256 และ System Health Snapshot |
+| 📖 **Documentation** | คู่มือปฏิบัติการ DevOps ฉบับสมบูรณ์ | [`nginx/DEVOPS_MANUAL.md`](nginx/DEVOPS_MANUAL.md) | คู่มือการติดตั้ง, การทดสอบ, การแก้ปัญหา (Troubleshooting) และแผนการกู้คืนระบบ |
 
 ---
 
-## 🛡️ 4. Five-Layer Image Security Validation
+## 🧪 3. สรุปผลการทดสอบระบบ (QA Verification Matrix — 12/12 Passed)
 
-| Layer | Validation Type | Defense Purpose |
-|---|---|---|
-| **Layer 1** | Content-Type Header | กรองเบื้องต้นเฉพาะ `image/png`, `image/jpeg`, `image/webp` |
-| **Layer 2** | File Size Limit (10MB) | ป้องกัน DoS จากไฟล์ขนาดใหญ่ (HTTP 413) |
-| **Layer 3** | Magic Bytes Inspection | ตรวจสอบ Header ไบนารีแท้ ป้องกันมัลแวร์ที่ปลอมนามสกุล (HTTP 422) |
-| **Layer 4** | Decompression Bomb Defense | จำกัด `Image.MAX_IMAGE_PIXELS = 16M` (4096x4096px) ตาม OWASP |
-| **Layer 5** | EXIF Stripping & Atomic Write | ลบพิกัด GPS/Metadata เพื่อความเป็นส่วนตัว และบันทึกแบบ Atomic |
+ชุดทดสอบ [`nginx/test_distributed_system.py`](nginx/test_distributed_system.py) ทำการทดสอบอัตโนมัติ 12 รายการครอบคลุมทุกโหนด:
+
+| ลำดับ | รายการทดสอบ | โหนดเป้าหมาย | คาดหวัง | ผลการทดสอบ |
+| :---: | :--- | :---: | :---: | :---: |
+| **01** | Gateway Health Check | Node 1 (`172.20.10.9:80`) | HTTP 200 / HTML | ✅ **PASS** |
+| **02** | Gateway Reverse Proxy: Frontend Routing | Node 1 -> Node 2 | Forward to Frontend | ✅ **PASS** |
+| **03** | Gateway Reverse Proxy: Backend API Routing | Node 1 -> Node 3 | Forward to Backend | ✅ **PASS** |
+| **04** | Direct Connection: Frontend Node | Node 2 (`172.20.10.8:5500`) | HTTP 200 | ✅ **PASS** |
+| **05** | Direct Connection: Backend Node | Node 3 (`172.20.10.6:8000`) | HTTP 200 / `{"status":"ok"}` | ✅ **PASS** |
+| **06** | Direct Connection: AI Node | Node 4 (`172.20.10.3:7860`) | HTTP 200 / JSON | ✅ **PASS** |
+| **07** | Backend OpenAPI Documentation | Node 3 / Node 1 | HTTP 200 / OpenAPI Spec | ✅ **PASS** |
+| **08** | End-to-End User Authentication Flow | Node 1 (`/api/auth/login`) | HTTP 200 / Token Validation | ✅ **PASS** |
+| **09** | Image Upload & Ingestion Validation | Node 1 (`/api/uploads`) | HTTP 200 / MIME Checked | ✅ **PASS** |
+| **10** | End-to-End Image Generation Dispatch | Node 1 (`/api/generations`) | HTTP 200 / 202 Accepted | ✅ **PASS** |
+| **11** | Backend Multi-Layer Security Defense | Node 1 (`/api/uploads`) | Reject invalid file (HTTP 422) | ✅ **PASS** |
+| **12** | DevOps Monitoring Dashboard Access | Node 1 (`/dashboard`) | HTTP 200 / Dashboard UI | ✅ **PASS** |
+
+> 🏆 **อัตราความสำเร็จ (Pass Rate): 100% (12 ผ่าน / 0 ไม่ผ่าน)**
 
 ---
 
-## 🧪 5. Testing & Quality Assurance (51 Tests, 90% Coverage)
+## 🔒 4. สถาปัตยกรรมความปลอดภัย (Security & Access Control)
 
+ระบบออกแบบการป้องกันเป็นชั้น (Defense-in-Depth):
+
+1. **Gateway IP Whitelist (DevOps Access Protection):**
+   * เส้นทาง `http://172.20.10.9/dashboard` จำกัดสิทธิ์ให้เข้าถึงได้เฉพาะเครื่อง Nginx เท่านั้น (`172.20.10.9` และ `localhost`) ป้องกันผู้อื่นแอบเข้าดูข้อมูลระบบ
+   ```nginx
+   location ~* ^/dashboard(\.html)?$ {
+       allow 127.0.0.1;
+       allow ::1;
+       allow 172.20.10.9;
+       deny all;
+       root html;
+       try_files /dashboard.html =404;
+   }
+   ```
+2. **Reverse Proxy Masking & CORS Elimination:**
+   * ผู้ใช้เข้าถึงระบบผ่าน `172.20.10.9:80` เพียงพอร์ตเดียว ทำให้ทั้งหน้าเว็บและ API อยู่บน Origin เดียวกัน ไม่เกิดปัญหา CORS ข้ามโดเมน
+3. **Five-Layer Image Security Validation (Backend):**
+   * ตรวจสอบ Content-Type, จำกัดขนาดไฟล์ (10MB), ตรวจสอบ Magic Bytes, ป้องกัน Decompression Bomb (OWASP standard), และตัด EXIF metadata ก่อนบันทึกไฟล์แบบ Atomic
+
+---
+
+## 🚀 5. คู่มือการใช้งานสำหรับ DevOps (DevOps Quickstart)
+
+### 1) การเปิด Nginx Gateway
+ดับเบิลคลิกไฟล์:
 ```text
-================================ tests coverage ================================
-Name                         Stmts   Miss  Cover
-------------------------------------------------
-app/api/auth.py                 34      1    97%
-app/api/callback.py             23      1    96%
-app/api/generation.py           32      1    97%
-app/api/upload.py               22      0   100% ⭐
-app/core/config.py              19      0   100% ⭐
-app/core/security.py            53      7    87%
-app/db/database.py              11      0   100% ⭐
-app/models/__init__.py          42      0   100% ⭐
-app/schemas/generation.py       75      1    99%
-app/schemas/token.py             4      0   100% ⭐
-app/schemas/user.py             22      0   100% ⭐
-app/services/generation.py     216     41    81%
-app/services/upload.py          73     10    86%
-------------------------------------------------
-TOTAL                          630     62    90% 🏆
-======================== 51 passed in 8.57s ========================
+nginx\run_nginx_with_logs.bat
+```
+*ระบบจะเปิด Nginx บนพอร์ต 80 และเริ่มสตรีม Log การส่งต่อข้อมูลแบบเรียลไทม์ทันที*
+
+### 2) การสั่งรันชุดทดสอบ QA อัตโนมัติ (12 Test Cases)
+ดับเบิลคลิกไฟล์:
+```text
+nginx\run_tests.bat
+```
+หรือรันผ่าน PowerShell:
+```powershell
+python nginx/test_distributed_system.py
+```
+
+### 3) การเข้าดู DevOps Health Dashboard
+เปิด Browser บนเครื่อง Nginx ไปที่:
+```text
+http://localhost/dashboard
+หรือ
+http://172.20.10.9/dashboard
+```
+
+### 4) การสำรองข้อมูลระบบ (Automated Backup)
+ดับเบิลคลิกไฟล์:
+```text
+nginx\run_backup.bat
+```
+หรือรันผ่าน PowerShell:
+```powershell
+python nginx/backup_system.py
+```
+*ไฟล์สำรองข้อมูลจะถูกสร้างไว้ในโฟลเดอร์ `nginx/backups/LUMA_BACKUP_*.zip` พร้อมพิมพ์ค่า SHA-256 Checksum*
+
+### 5) การปิด Nginx Gateway
+ดับเบิลคลิกไฟล์:
+```text
+nginx\stop_nginx.bat
 ```
 
 ---
 
-## 🚀 6. Quick Start Guide
+## 🎬 6. ลำดับขั้นตอนการนำเสนอสด (Live Demonstration Flow)
 
-### วิธีที่ 1: รันผ่าน Local Python Virtualenv
-```bash
-# 1. ติดตั้ง Dependencies
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
-# 2. รัน Mock AI Server (Port 8001)
-python mock_ai_server.py
-
-# 3. รัน Backend API (Port 8000)
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-
-# 4. สั่งรัน Automated Tests
-pytest --cov=app --cov-report=term-missing
-```
-
-### วิธีที่ 2: รันผ่าน Docker Compose
-```bash
-docker-compose up --build
-```
+1. **เปิด Nginx Console:** ดับเบิลคลิก `nginx/run_nginx_with_logs.bat` แสดงหน้าต่าง Live Access Logs
+2. **เข้าใช้งานระบบผ่าน Gateway:** เปิดเบราว์เซอร์ไปที่ `http://172.20.10.9/` โชว์ว่าสามารถโหลดหน้าเว็บจาก Node 2 (`172.20.10.8:5500`) ได้อย่างราบรื่น
+3. **ทดสอบสร้างภาพ:** สั่งประมวลผลภาพ โชว์ Nginx Access Log ที่แสดงการส่งต่อ Traffic ไปยัง Backend (`172.20.10.6:8000`)
+4. **เปิด DevOps Monitoring Dashboard:** ไปที่ `http://172.20.10.9/dashboard` แสดงสถานะความพร้อมของทั้ง 4 โหนด และทดสอบเปิดจากเครื่องอื่นเพื่อโชว์ HTTP 403 Forbidden (Security Whitelist)
+5. **รัน QA Automated Verification:** ดับเบิลคลิก `nginx/run_tests.bat` โชว์ผลการทดสอบผ่าน 12/12 Tests (100% Pass)
+6. **รัน Automated Backup:** ดับเบิลคลิก `nginx/run_backup.bat` แสดงการสร้างไฟล์สำรองข้อมูล Zip และคำนวณ Checksum SHA-256 สำเร็จ
 
 ---
 
-## 🎬 7. Live Demonstration Flow (สำหรับนำเสนออาจารย์)
+## 👥 ทีมผู้จัดทำ (Distributed Systems Project)
 
-1. **เปิด Swagger UI:** ไปที่ `http://localhost:8000/docs`
-2. **Register & Login:** สมัครสมาชิกและล็อกอินรับ Token
-3. **Check Profile:** เรียก `GET /auth/me` แสดงยอด `total_generations: 0`
-4. **Live Demo 1 (txt2img):** สั่งสร้างภาพด้วย Prompt $\rightarrow$ เรียก `GET /generations/{id}/image` ดูภาพที่สร้างเสร็จ
-5. **Live Demo 2 (img2img):** อัปโหลดภาพผ่าน `POST /uploads` $\rightarrow$ สั่ง `task_type="img2img"` $\rightarrow$ แสดงภาพ Before/After
-6. **Live Demo 3 (Distributed Callback):** แสดงการทำงานแบบ Asynchronous Webhook
-7. **Show Test Results:** รัน `pytest` แสดงผล 51/51 Tests ผ่าน 100% (Coverage 90%)
+* **คนที่ 1 (Frontend):** Web UI, Responsive Design, Canvas Inpainting (`172.20.10.8:5500`)
+* **คนที่ 2 (Backend & Database):** FastAPI Engine, Authentication, Storage, Database (`172.20.10.6:8000`)
+* **คนที่ 3 (AI Engine):** Stable Diffusion Pipeline, GPU Acceleration RTX 3070 (`172.20.10.3:7860`)
+* **คนที่ 4 (QA / DevOps):** Nginx Gateway, Automated Testing Suite, Monitoring Dashboard, Backup & Security (`172.20.10.9:80`)
