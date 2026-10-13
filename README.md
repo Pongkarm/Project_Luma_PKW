@@ -104,9 +104,9 @@ graph TD
 ระบบออกแบบการป้องกันเป็นชั้น (Defense-in-Depth):
 
 1. **Network-Level LAN Isolation (เข้าได้เฉพาะวงแลนเดียวกัน):**
-   * กำหนดให้ Nginx รับการเชื่อมต่อผ่านชื่อโดเมน `http://luma.local` และอนุญาตเฉพาะอุปกรณ์ที่อยู่ในวงแลน (`10.23.130.0/24` และ `172.20.10.0/24`) เท่านั้น หากมีการเข้าถึงจากเครือข่ายภายนอก จะถูกบล็อกด้วย HTTP 403 Forbidden ทันที
+   * กำหนดให้ Nginx รับการเชื่อมต่อผ่าน Gateway IP `10.23.130.212` และอนุญาตเฉพาะอุปกรณ์ที่อยู่ในวงแลน (`10.23.130.0/24` และ `172.20.10.0/24`) เท่านั้น หากมีการเข้าถึงจากเครือข่ายภายนอก จะถูกบล็อกด้วย HTTP 403 Forbidden ทันที
    ```nginx
-   server_name luma.local www.luma.local 10.23.130.212 172.20.10.9 localhost;
+   server_name 10.23.130.212 172.20.10.9 localhost _;
 
    allow 127.0.0.1;
    allow ::1;
@@ -115,7 +115,7 @@ graph TD
    deny all;                # ปฏิเสธการเข้าถึงจากภายนอก
    ```
 2. **Gateway IP Whitelist (DevOps Access Protection):**
-   * เส้นทาง `http://luma.local/dashboard` จำกัดสิทธิ์ให้เข้าถึงได้เฉพาะเครื่อง Nginx เท่านั้น (`10.23.130.212`, `172.20.10.9` และ `localhost`) ป้องกันเพื่อนในวงแลนแอบเข้าดูข้อมูลระบบ
+   * เส้นทาง `http://10.23.130.212/dashboard` จำกัดสิทธิ์ให้เข้าถึงได้เฉพาะเครื่อง Nginx เท่านั้น (`10.23.130.212`, `172.20.10.9` และ `localhost`) ป้องกันเพื่อนในวงแลนแอบเข้าดูข้อมูลระบบ
    ```nginx
    location ~* ^/dashboard(\.html)?$ {
        allow 127.0.0.1;
@@ -128,16 +128,13 @@ graph TD
    }
    ```
 3. **Reverse Proxy Masking & CORS Elimination:**
-   * ผู้ใช้เข้าถึงระบบผ่าน `http://luma.local` (พอร์ต 80) เพียงจุดเดียว ทำให้ทั้งหน้าเว็บและ API อยู่บน Origin เดียวกัน ไม่เกิดปัญหา CORS ข้ามโดเมน
+   * ผู้ใช้เข้าถึงระบบผ่าน `http://10.23.130.212` (พอร์ต 80) เพียงจุดเดียว ทำให้ทั้งหน้าเว็บและ API อยู่บน Origin เดียวกัน ไม่เกิดปัญหา CORS ข้ามโดเมน
 4. **Five-Layer Image Security Validation (Backend):**
    * ตรวจสอบ Content-Type, จำกัดขนาดไฟล์ (10MB), ตรวจสอบ Magic Bytes, ป้องกัน Decompression Bomb (OWASP standard), และตัด EXIF metadata ก่อนบันทึกไฟล์แบบ Atomic
 
 ---
 
 ## 🚀 5. คู่มือการใช้งานสำหรับ DevOps (DevOps Quickstart)
-
-### 0) การตั้งชื่อ Domain (รันครั้งแรกบนเครื่อง Windows)
-คลิกขวาที่ไฟล์ **`nginx\setup_domain.bat`** แล้วเลือก **"Run as administrator"** (จะผูกชื่อ `luma.local` เข้ากับ IP `10.23.130.212` ให้อัตโนมัติ)
 
 ### 1) การเปิด Nginx Gateway
 ดับเบิลคลิกไฟล์:
@@ -146,7 +143,7 @@ nginx\run_nginx_with_logs.bat
 ```
 *ระบบจะเปิด Nginx บนพอร์ต 80 และเริ่มสตรีม Log การส่งต่อข้อมูลแบบเรียลไทม์ทันที*
 
-### 2) การสั่งรันชุดทดสอบ QA อัตโนมัติ (12 Test Cases)
+### 2) การสั่งรันชุดทดสอบ QA อัตโนมัติ (16 Test Cases)
 ดับเบิลคลิกไฟล์:
 ```text
 nginx\run_tests.bat
@@ -162,8 +159,6 @@ python nginx/test_distributed_system.py
 http://localhost/dashboard
 หรือ
 http://10.23.130.212/dashboard
-หรือ
-http://luma.local/dashboard
 ```
 
 ### 4) การสำรองข้อมูลระบบ (Automated Backup)
@@ -188,10 +183,10 @@ nginx\stop_nginx.bat
 ## 🎬 6. ลำดับขั้นตอนการนำเสนอสด (Live Demonstration Flow)
 
 1. **เปิด Nginx Console:** ดับเบิลคลิก `nginx/run_nginx_with_logs.bat` แสดงหน้าต่าง Live Access Logs
-2. **เข้าใช้งานระบบผ่าน Gateway:** เปิดเบราว์เซอร์ไปที่ `http://luma.local/` (หรือ `http://10.23.130.212/`) โชว์ว่าสามารถโหลดหน้าเว็บจาก Node 2 (`10.23.130.6:5500`) ได้อย่างราบรื่น
+2. **เข้าใช้งานระบบผ่าน Gateway:** เปิดเบราว์เซอร์ไปที่ `http://10.23.130.212/` โชว์ว่าสามารถโหลดหน้าเว็บจาก Node 2 (`10.23.130.6:5500`) ได้อย่างราบรื่น
 3. **ทดสอบสร้างภาพ:** สั่งประมวลผลภาพ โชว์ Nginx Access Log ที่แสดงการส่งต่อ Traffic ไปยัง Backend (`10.23.130.9:8000`)
-4. **เปิด DevOps Monitoring Dashboard:** ไปที่ `http://luma.local/dashboard` แสดงสถานะความพร้อมของทั้ง 4 โหนด และทดสอบเปิดจากเครื่องอื่นเพื่อโชว์ HTTP 403 Forbidden (Security Whitelist)
-5. **รัน QA Automated Verification:** ดับเบิลคลิก `nginx/run_tests.bat` โชว์ผลการทดสอบผ่าน 12/12 Tests (100% Pass)
+4. **เปิด DevOps Monitoring Dashboard:** ไปที่ `http://10.23.130.212/dashboard` แสดงสถานะความพร้อมของทั้ง 4 โหนด และทดสอบเปิดจากเครื่องอื่นเพื่อโชว์ HTTP 403 Forbidden (Security Whitelist)
+5. **รัน QA Automated Verification:** ดับเบิลคลิก `nginx/run_tests.bat` โชว์ผลการทดสอบผ่าน 100% Pass
 6. **รัน Automated Backup:** ดับเบิลคลิก `nginx/run_backup.bat` แสดงการสร้างไฟล์สำรองข้อมูล Zip และคำนวณ Checksum SHA-256 สำเร็จ
 
 ---
