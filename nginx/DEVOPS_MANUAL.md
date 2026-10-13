@@ -21,7 +21,7 @@
             │ (Reverse Proxy Web)                 │ (Reverse Proxy API)
             ▼                                     ▼
    [Node 2] Frontend                     [Node 3] Backend
-    (macOS: 10.23.130.138:5500)           (macOS: 10.23.130.9:8000)
+    (macOS: 10.23.130.6:5500)             (macOS: 10.23.130.9:8000)
     - Web UI (HTML/CSS/JS)                - FastAPI & SQLite Database
                                                   │
                                                   ▼ (Internal Inference Call)
@@ -35,7 +35,7 @@
 | Node | เครื่อง / บทบาท | ระบบปฏิบัติการ | IP Address | Port | หน้าที่หลัก |
 | :---: | :--- | :---: | :---: | :---: | :--- |
 | **1** | **Nginx Gateway (ด่านหน้า)** | Windows | `10.23.130.212` / `172.20.10.9` | `80` | จุดรับ Traffic รวม, ทำ Reverse Proxy, คัดกรองความปลอดภัย, ดูดซับ CORS |
-| **2** | **Frontend Client** | macOS | `10.23.130.138` | `5500` | ให้บริการหน้าเว็บ HTML5, CSS3, JavaScript (ไม่เปิดรับ Browser ตรง) |
+| **2** | **Frontend Client** | macOS | `10.23.130.6` | `5500` | ให้บริการหน้าเว็บ HTML5, CSS3, JavaScript (ไม่เปิดรับ Browser ตรง) |
 | **3** | **Backend & Database** | macOS | `10.23.130.9` | `8000` | ประมวลผล Business Logic, ระบบสมาชิก, บันทึกฐานข้อมูล SQLite |
 | **4** | **AI Inference Node** | Windows | `10.23.130.112` | `7860` | ประมวลผลโมเดล AI ด้วย GPU RTX 3070 (เสร็จแล้วส่งรูปกลับให้ Backend) |
 

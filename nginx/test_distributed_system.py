@@ -3,7 +3,7 @@ LUMA Distributed System - End-to-End Verification Test Suite
 ทดสอบการเชื่อมต่อและความพร้อมใช้งานของสถาปัตยกรรม Distributed System ทั้ง 4 เครื่อง
 ตามสไลด์ของอาจารย์:
   Node 1: Nginx Gateway (Windows: 10.23.130.212:80)
-  Node 2: Frontend (macOS: 10.23.130.138:5500)
+  Node 2: Frontend (macOS: 10.23.130.6:5500)
   Node 3: Backend (macOS: 10.23.130.9:8000)
   Node 4: AI Server (Windows: 10.23.130.112:7860)
 """
@@ -29,7 +29,7 @@ BOLD = "\033[1m"
 RESET = "\033[0m"
 
 NGINX_IP = "10.23.130.212"
-FRONTEND_IP = "10.23.130.138"
+FRONTEND_IP = "10.23.130.6"
 BACKEND_IP = "10.23.130.9"
 AI_IP = "10.23.130.112"
 

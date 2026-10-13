@@ -29,7 +29,7 @@ graph TD
         Backup[Automated Backup & SHA-256 System]
     end
 
-    subgraph Node2 ["Node 2: Frontend Web Client (10.23.130.138:5500)"]
+    subgraph Node2 ["Node 2: Frontend Web Client (10.23.130.6:5500)"]
         UI[Web UI: HTML5 + Bootstrap 5 + Canvas Inpaint]
     end
 
@@ -46,7 +46,7 @@ graph TD
     end
 
     User -->|HTTP Port 80| Nginx
-    Nginx -->|Reverse Proxy / -> 10.23.130.138:5500| UI
+    Nginx -->|Reverse Proxy / -> 10.23.130.6:5500| UI
     Nginx -->|Reverse Proxy /api/, /auth, /generations| API
     API -->|Direct / Callback Inference| SD
     SD -->|Webhook / Callback| API
@@ -57,7 +57,7 @@ graph TD
 | Node | เครื่อง / บทบาท | ผู้รับผิดชอบ | ระบบปฏิบัติการ | IP Address | Port | หน้าที่หลัก |
 | :---: | :--- | :---: | :---: | :---: | :---: | :--- |
 | **1** | **Nginx Gateway & DevOps** | **คนที่ 4 (QA / DevOps)** | Windows | `10.23.130.212` / `172.20.10.9` | `80` | จุดรับ Traffic จุดเดียว (Single Entry Point), Reverse Proxy กระจายงาน, Realtime Log, Monitoring Dashboard, QA Testing, Backup |
-| **2** | **Frontend Client** | คนที่ 1 | macOS | `10.23.130.138` | `5500` | บริการหน้าเว็บ UI, Canvas Inpainting Tool, Responsive Dashboard |
+| **2** | **Frontend Client** | คนที่ 1 | macOS | `10.23.130.6` | `5500` | บริการหน้าเว็บ UI, Canvas Inpainting Tool, Responsive Dashboard |
 | **3** | **Backend & Database** | คนที่ 2 | macOS | `10.23.130.9` | `8000` | จัดการ Authentication, บันทึก Task คิว, ฐานข้อมูล, จัดเก็บรูปภาพ |
 | **4** | **AI Inference Engine** | คนที่ 3 | Windows | `10.23.130.112` | `7860` | ประมวลผลโมเดล Stable Diffusion ด้วย GPU Nvidia RTX 3070 |
 
@@ -85,7 +85,7 @@ graph TD
 | **01** | Gateway Health Check | Node 1 (`172.20.10.9:80`) | HTTP 200 / HTML | ✅ **PASS** |
 | **02** | Gateway Reverse Proxy: Frontend Routing | Node 1 -> Node 2 | Forward to Frontend | ✅ **PASS** |
 | **03** | Gateway Reverse Proxy: Backend API Routing | Node 1 -> Node 3 | Forward to Backend | ✅ **PASS** |
-| **04** | Direct Connection: Frontend Node | Node 2 (`10.23.130.138:5500`) | HTTP 200 | ✅ **PASS** |
+| **04** | Direct Connection: Frontend Node | Node 2 (`10.23.130.6:5500`) | HTTP 200 | ✅ **PASS** |
 | **05** | Direct Connection: Backend Node | Node 3 (`10.23.130.9:8000`) | HTTP 200 / `{"status":"ok"}` | ✅ **PASS** |
 | **06** | Direct Connection: AI Node | Node 4 (`10.23.130.112:7860`) | HTTP 200 / JSON | ✅ **PASS** |
 | **07** | Backend OpenAPI Documentation | Node 3 / Node 1 | HTTP 200 / OpenAPI Spec | ✅ **PASS** |
@@ -184,7 +184,7 @@ nginx\stop_nginx.bat
 ## 🎬 6. ลำดับขั้นตอนการนำเสนอสด (Live Demonstration Flow)
 
 1. **เปิด Nginx Console:** ดับเบิลคลิก `nginx/run_nginx_with_logs.bat` แสดงหน้าต่าง Live Access Logs
-2. **เข้าใช้งานระบบผ่าน Gateway:** เปิดเบราว์เซอร์ไปที่ `http://luma.local/` (หรือ `http://10.23.130.212/`) โชว์ว่าสามารถโหลดหน้าเว็บจาก Node 2 (`10.23.130.138:5500`) ได้อย่างราบรื่น
+2. **เข้าใช้งานระบบผ่าน Gateway:** เปิดเบราว์เซอร์ไปที่ `http://luma.local/` (หรือ `http://10.23.130.212/`) โชว์ว่าสามารถโหลดหน้าเว็บจาก Node 2 (`10.23.130.6:5500`) ได้อย่างราบรื่น
 3. **ทดสอบสร้างภาพ:** สั่งประมวลผลภาพ โชว์ Nginx Access Log ที่แสดงการส่งต่อ Traffic ไปยัง Backend (`10.23.130.9:8000`)
 4. **เปิด DevOps Monitoring Dashboard:** ไปที่ `http://luma.local/dashboard` แสดงสถานะความพร้อมของทั้ง 4 โหนด และทดสอบเปิดจากเครื่องอื่นเพื่อโชว์ HTTP 403 Forbidden (Security Whitelist)
 5. **รัน QA Automated Verification:** ดับเบิลคลิก `nginx/run_tests.bat` โชว์ผลการทดสอบผ่าน 12/12 Tests (100% Pass)
@@ -194,7 +194,7 @@ nginx\stop_nginx.bat
 
 ## 👥 ทีมผู้จัดทำ (Distributed Systems Project)
 
-* **คนที่ 1 (Frontend):** Web UI, Responsive Design, Canvas Inpainting (`10.23.130.138:5500`)
+* **คนที่ 1 (Frontend):** Web UI, Responsive Design, Canvas Inpainting (`10.23.130.6:5500`)
 * **คนที่ 2 (Backend & Database):** FastAPI Engine, Authentication, Storage, Database (`10.23.130.9:8000`)
 * **คนที่ 3 (AI Engine):** Stable Diffusion Pipeline, GPU Acceleration RTX 3070 (`10.23.130.112:7860`)
 * **คนที่ 4 (QA / DevOps):** Nginx Gateway, Automated Testing Suite, Monitoring Dashboard, Backup & Security (`10.23.130.212:80`)

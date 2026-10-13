@@ -37,7 +37,7 @@ def fetch_system_snapshot():
     snapshot = {
         "timestamp": datetime.now().isoformat(),
         "nginx_gateway": "10.23.130.212:80",
-        "frontend_node": "10.23.130.138:5500",
+        "frontend_node": "10.23.130.6:5500",
         "backend_node": "10.23.130.9:8000",
         "ai_server_node": "10.23.130.112:7860",
     }
