@@ -3,8 +3,8 @@ $ErrorActionPreference = "Continue"
 
 $NGINX_IP    = "10.23.130.212"
 $FRONTEND_IP = "10.23.130.138"
-$BACKEND_IP  = "172.20.10.6"
-$AI_IP       = "172.20.10.3"
+$BACKEND_IP  = "10.23.130.9"
+$AI_IP       = "10.23.130.112"
 
 $FRONTEND_PORT = 5500
 $BACKEND_PORT  = 8000

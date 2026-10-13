@@ -4,8 +4,8 @@ LUMA Distributed System - End-to-End Verification Test Suite
 ตามสไลด์ของอาจารย์:
   Node 1: Nginx Gateway (Windows: 10.23.130.212:80)
   Node 2: Frontend (macOS: 10.23.130.138:5500)
-  Node 3: Backend (macOS: 172.20.10.6:8000)
-  Node 4: AI Server (Windows: 172.20.10.3:7860)
+  Node 3: Backend (macOS: 10.23.130.9:8000)
+  Node 4: AI Server (Windows: 10.23.130.112:7860)
 """
 
 import sys
@@ -30,8 +30,8 @@ RESET = "\033[0m"
 
 NGINX_IP = "10.23.130.212"
 FRONTEND_IP = "10.23.130.138"
-BACKEND_IP = "172.20.10.6"
-AI_IP = "172.20.10.3"
+BACKEND_IP = "10.23.130.9"
+AI_IP = "10.23.130.112"
 
 FRONTEND_PORT = 5500
 BACKEND_PORT = 8000

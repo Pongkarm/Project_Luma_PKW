@@ -38,12 +38,12 @@ def fetch_system_snapshot():
         "timestamp": datetime.now().isoformat(),
         "nginx_gateway": "10.23.130.212:80",
         "frontend_node": "10.23.130.138:5500",
-        "backend_node": "172.20.10.6:8000",
-        "ai_server_node": "172.20.10.3:7860",
+        "backend_node": "10.23.130.9:8000",
+        "ai_server_node": "10.23.130.112:7860",
     }
     # Try fetching backend health
     try:
-        req = urllib.request.Request("http://172.20.10.6:8000/healthz", headers={"User-Agent": "LumaBackup/1.0"})
+        req = urllib.request.Request("http://10.23.130.9:8000/healthz", headers={"User-Agent": "LumaBackup/1.0"})
         with urllib.request.urlopen(req, timeout=2.0) as resp:
             snapshot["backend_health"] = json.loads(resp.read().decode("utf-8"))
     except Exception as e:
@@ -51,7 +51,7 @@ def fetch_system_snapshot():
 
     # Try fetching AI health
     try:
-        req = urllib.request.Request("http://172.20.10.3:7860/ai/health", headers={"User-Agent": "LumaBackup/1.0"})
+        req = urllib.request.Request("http://10.23.130.112:7860/ai/health", headers={"User-Agent": "LumaBackup/1.0"})
         with urllib.request.urlopen(req, timeout=2.0) as resp:
             snapshot["ai_health"] = json.loads(resp.read().decode("utf-8"))
     except Exception as e:
