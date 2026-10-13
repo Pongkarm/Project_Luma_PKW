@@ -9,30 +9,36 @@ echo.
 net session >nul 2>&1
 if %errorLevel% neq 0 (
     echo [ERROR] กรุณาคลิกขวาที่ไฟล์นี้แล้วเลือก "Run as administrator"
-    echo [ERROR] Please run this batch script as Administrator.
+    echo [ERROR] Please right-click this file and choose "Run as administrator".
     echo.
     pause
     exit /b 1
 )
 
-set HOSTS_FILE=%WINDIR%\System32\drivers\etc\hosts
 set TARGET_IP=10.23.130.212
-set DOMAIN_NAME=luma.local
 
-findstr /i "%DOMAIN_NAME%" "%HOSTS_FILE%" >nul 2>&1
+echo [INFO] กำลังอัปเดตไฟล์ hosts ให้ชี้ luma.local ไปที่ %TARGET_IP% ...
+powershell -NoProfile -Command ^
+    "$hosts = \"$env:windir\System32\drivers\etc\hosts\"; " ^
+    "$lines = (Get-Content $hosts) | Where-Object { $_ -notmatch 'luma\.local' }; " ^
+    "$lines += \"%TARGET_IP% luma.local www.luma.local\"; " ^
+    "[System.IO.File]::WriteAllLines($hosts, $lines, [System.Text.Encoding]::UTF8); "
+
 if %errorLevel% equ 0 (
-    echo [INFO] โดเมน %DOMAIN_NAME% ถูกตั้งค่าใน hosts เรียบร้อยแล้วก่อนหน้านี้
+    echo [SUCCESS] อัปเดตไฟล์ hosts สำเร็จ!
+    echo           luma.local -^> %TARGET_IP%
+    echo           www.luma.local -^> %TARGET_IP%
+    echo.
+    echo ทำการล้าง DNS Cache (ipconfig /flushdns)...
+    ipconfig /flushdns >nul
+    echo [SUCCESS] เรียบร้อยแล้ว!
 ) else (
-    echo [INFO] กำลังบันทึก %DOMAIN_NAME% เข้าสู่ %HOSTS_FILE% ...
-    echo. >> "%HOSTS_FILE%"
-    echo # LUMA Distributed System >> "%HOSTS_FILE%"
-    echo %TARGET_IP% %DOMAIN_NAME% www.%DOMAIN_NAME% >> "%HOSTS_FILE%"
-    echo [SUCCESS] เพิ่มโดเมนเรียบร้อยแล้ว: %DOMAIN_NAME% -^> %TARGET_IP%
+    echo [ERROR] เกิดข้อผิดพลาดในการเขียนไฟล์ hosts
 )
 
 echo.
 echo =====================================================================
-echo   ทดสอบการเข้าถึง: เปิดเบราว์เซอร์ไปที่ http://%DOMAIN_NAME%
+echo   ทดสอบการเข้าถึง: เปิดเบราว์เซอร์ไปที่ http://luma.local
 echo =====================================================================
 echo.
 pause
