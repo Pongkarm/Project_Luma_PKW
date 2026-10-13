@@ -36,8 +36,8 @@ def compute_sha256(filepath):
 def fetch_system_snapshot():
     snapshot = {
         "timestamp": datetime.now().isoformat(),
-        "nginx_gateway": "172.20.10.9:80",
-        "frontend_node": "172.20.10.8:5500",
+        "nginx_gateway": "10.23.130.212:80",
+        "frontend_node": "10.23.130.138:5500",
         "backend_node": "172.20.10.6:8000",
         "ai_server_node": "172.20.10.3:7860",
     }

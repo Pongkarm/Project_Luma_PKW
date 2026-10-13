@@ -16,7 +16,7 @@ if %errorLevel% neq 0 (
 )
 
 set HOSTS_FILE=%WINDIR%\System32\drivers\etc\hosts
-set TARGET_IP=172.20.10.9
+set TARGET_IP=10.23.130.212
 set DOMAIN_NAME=luma.local
 
 findstr /i "%DOMAIN_NAME%" "%HOSTS_FILE%" >nul 2>&1

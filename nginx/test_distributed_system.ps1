@@ -1,8 +1,8 @@
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $ErrorActionPreference = "Continue"
 
-$NGINX_IP    = "172.20.10.9"
-$FRONTEND_IP = "172.20.10.8"
+$NGINX_IP    = "10.23.130.212"
+$FRONTEND_IP = "10.23.130.138"
 $BACKEND_IP  = "172.20.10.6"
 $AI_IP       = "172.20.10.3"
 
