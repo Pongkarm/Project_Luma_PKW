@@ -157,10 +157,11 @@ def main():
     is_root_ok = (code == 200 and "<html" in body.lower())
     report_result("TC-08", "Nginx -> Frontend Reverse Proxy (GET /)", is_root_ok, f"HTTP {code} OK (Loaded from Frontend via Nginx Port 80)")
 
-    # TC-09: Nginx -> Frontend Page Proxy (/login.html)
-    code, body = http_get(f"http://{NGINX_IP}/login.html")
-    is_login_ok = (code == 200 and "<html" in body.lower())
-    report_result("TC-09", "Nginx -> Frontend Page Proxy (GET /login.html)", is_login_ok, f"HTTP {code} OK")
+    # TC-09: Nginx -> Frontend Page Proxy (/login.html & /admin.html)
+    code_login, body_login = http_get(f"http://{NGINX_IP}/login.html")
+    code_admin, body_admin = http_get(f"http://{NGINX_IP}/admin.html")
+    is_pages_ok = (code_login == 200 and "<html" in body_login.lower() and code_admin == 200 and "<html" in body_admin.lower())
+    report_result("TC-09", "Nginx -> Frontend Page Proxy (/login.html & /admin.html)", is_pages_ok, f"Login: HTTP {code_login}, Admin: HTTP {code_admin} OK")
 
     # TC-10: Nginx -> Backend API Proxy (/healthz)
     code, body = http_get(f"http://{NGINX_IP}/healthz")

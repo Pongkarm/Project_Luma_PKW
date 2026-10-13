@@ -155,13 +155,14 @@ try {
     Report-Result "TC-12" "Nginx -> Frontend Reverse Proxy (GET /)" $false "$($_.Exception.Message)"
 }
 
-# TC-13: Nginx -> Frontend Login Page (GET /login.html)
+# TC-13: Nginx -> Frontend Pages (GET /login.html and /admin.html)
 try {
     $gwLogin = Invoke-WebRequest -Uri "http://${NGINX_IP}/login.html" -UseBasicParsing -TimeoutSec 3 -ErrorAction Stop
-    $isOk = ($gwLogin.StatusCode -eq 200)
-    Report-Result "TC-13" "Nginx -> Frontend Page Proxy (GET /login.html)" $isOk "HTTP $($gwLogin.StatusCode) OK"
+    $gwAdmin = Invoke-WebRequest -Uri "http://${NGINX_IP}/admin.html" -UseBasicParsing -TimeoutSec 3 -ErrorAction Stop
+    $isOk = ($gwLogin.StatusCode -eq 200 -and $gwAdmin.StatusCode -eq 200)
+    Report-Result "TC-13" "Nginx -> Frontend Page Proxy (/login.html and /admin.html)" $isOk "Login: HTTP $($gwLogin.StatusCode), Admin: HTTP $($gwAdmin.StatusCode) OK"
 } catch {
-    Report-Result "TC-13" "Nginx -> Frontend Page Proxy (GET /login.html)" $false "$($_.Exception.Message)"
+    Report-Result "TC-13" "Nginx -> Frontend Page Proxy (/login.html and /admin.html)" $false "$($_.Exception.Message)"
 }
 
 # TC-14: Nginx -> Backend Health Proxy (GET /healthz)
