@@ -39,6 +39,8 @@ function render() {
   const media = $('studio-media');
   media.className = 'result__media' + (comparing ? '' : ' result__media--zoom');
   if (comparing && parent) {
+    // เทียบก่อน/หลัง: วางภาพสองภาพซ้อนกัน ภาพ "หลัง" ถูกตัดด้วย clip-path ตามค่า --split (studio.css)
+    // ช่อง range โปร่งใสวางทับทั้งภาพ ลากแล้วเปลี่ยน --split → เส้นแบ่งขยับตาม
     media.innerHTML =
       '<div class="compare" style="--split: 50%">' +
       '<img class="compare__img" src="' + parent.url + '" alt="" draggable="false" />' +

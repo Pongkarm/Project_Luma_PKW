@@ -15,6 +15,7 @@ async function drawAdmins() {
   let roles;
   let users;
   try {
+    // รายชื่อในช่อง "Choose a person" มาจากผู้ใช้ 100 คนแรกเท่านั้น ถ้าผู้ใช้เกิน 100 คนต้องเพิ่มช่องค้นหา
     [roles, users] = await Promise.all([apiRequest('/admin/roles'), apiRequest('/admin/users?page_size=100')]);
   } catch (error) {
     return main(header('Admins') + unavailable(error));
@@ -27,6 +28,8 @@ async function drawAdmins() {
   const rows = roles.map((r) => {
     const self = r.user_id === me.user_id;
     // ห้ามถอน owner คนสุดท้าย (จะไม่มีใครให้สิทธิ์คืนได้) และห้ามลดสิทธิ์ตัวเอง
+    // backend (set_admin_role) ตรวจซ้ำอีกรอบ — ที่นี่แค่ปิดปุ่มให้รู้ล่วงหน้า
+    // หมายเหตุ: หน้าเว็บล็อกแถวของตัวเองทุกกรณี ส่วน backend ห้ามเฉพาะ owner ที่ลดสิทธิ์ตัวเอง
     const locked = r.role === 'owner' && owners <= 1 ? 'The last owner cannot be removed — nobody could grant the role back.' : self ? 'You cannot lower your own role.' : '';
     const lock = locked ? ' disabled title="' + locked + '"' : '';
     return '<tr><td>' + escapeHtml(r.username) + (self ? '<span class="adm-tag">you</span>' : '') + '</td>' +
@@ -54,6 +57,12 @@ async function drawAdmins() {
     '</div></div></div>',
   );
 
+  /*
+   * ให้ / เปลี่ยน / ถอนสิทธิ์ — ใช้ร่วมกันทั้งตารางและฟอร์มด้านล่าง
+   *   role มีค่า  → POST /admin/roles (คนที่ยังไม่มีสิทธิ์ = ให้ใหม่, มีอยู่แล้ว = เปลี่ยนระดับ)
+   *   role = null → DELETE /admin/roles/{id} (ถอน)
+   * backend บันทึกทุกครั้งลง audit log แล้วเราวาดตารางใหม่จากข้อมูลจริง
+   */
   const change = async (userId, role) => {
     showAlert($('admins-alert'), '');
     try {

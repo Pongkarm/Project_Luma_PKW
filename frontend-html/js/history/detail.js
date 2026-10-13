@@ -110,6 +110,8 @@ function reuseSettings() {
     // ร่างเสีย — เขียนใหม่
   }
   Object.assign(draft, {
+    // เปิดเป็นโหมดสร้างจากข้อความเสมอ แม้งานเดิมเป็น img2img/inpaint
+    // เพราะร่างเก็บได้แค่ค่าตัวอักษร ภาพต้นฉบับและ mask ไม่ได้ติดไปด้วย
     mode: 'txt2img',
     prompt: selected.prompt,
     'negative-prompt': selected.negative_prompt || '',

@@ -109,6 +109,7 @@ async function start() {
   user = await requireLogin('account');
   drawProfile();
   setupPasswordToggles();
+  // API_BASE_URL ว่าง ('') = ส่งคำขอไปที่อยู่เดียวกับหน้าเว็บ (ผ่าน Nginx) — ช่องนี้จึงว่างเปล่าได้
   $('api-url').textContent = API_BASE_URL;
 
   $('edit-button').addEventListener('click', openEdit);

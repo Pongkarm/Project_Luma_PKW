@@ -11,9 +11,9 @@
  *   backend    GET /admin/audit?page=1&page_size=100
  */
 
-/* ---------- Activity (ยังไม่ได้ทำ เหมือนเวอร์ชัน React) ---------- */
+/* ---------- Activity (ยังไม่ได้ทำ) ---------- */
 
-/* หน้า Activity ยังไม่ได้ทำ (เหมือนเวอร์ชัน React) — แสดงข้อความแจ้งไว้ */
+/* หน้า Activity ยังไม่ได้ทำ — แสดงข้อความแจ้งไว้ (backend มี GET /admin/generations รออยู่แล้ว) */
 function drawActivity() {
   main(header('Activity') + notice('info', 'Activity is not built yet',
     'The shell, the guard and the API behind this page are in place. Signed in as ' + escapeHtml(me.username) + ' (' + me.role + ').'));
@@ -21,6 +21,11 @@ function drawActivity() {
 
 /* ---------- Audit ---------- */
 
+/*
+ * คำกริยาของแต่ละ action ที่ backend บันทึก (services/admin.py)
+ * มีแค่ปิด/เปิดบัญชี — action ของหน้า Admins (role.grant / role.change / role.revoke)
+ * ยังไม่มีในตารางนี้ จึงแสดงเป็นรหัสตรง ๆ เช่น "alice role.grant bob"
+ */
 const VERBS = { 'user.disable': 'disabled', 'user.enable': 'enabled' };
 
 /* รายการล่าสุด 100 รายการ เขียนเป็นประโยค "ใครทำอะไรกับใคร" */

@@ -66,6 +66,8 @@ async function start() {
     }
   });
 
+  // ปุ่มตรงกลาง (หยุด, ลองใหม่, ลบ, แต่งด่วน …) ถูกวาดใหม่ทุกรอบที่ถามสถานะ
+  // จึงดักคลิกที่กล่อง #stage ครั้งเดียว แล้ว onStageClick (run.js) ดู data-action ว่ากดปุ่มไหน
   $('stage').addEventListener('click', onStageClick);
   $('close-run-button').addEventListener('click', closeRun);
   $('runstrip-row').addEventListener('click', (event) => {

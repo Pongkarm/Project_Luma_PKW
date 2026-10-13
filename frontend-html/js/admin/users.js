@@ -14,6 +14,8 @@
  *   backend    GET /admin/users · GET /admin/users/{id} · PATCH /admin/users/{id}/status
  */
 
+// ผู้ใช้ในตารางตอนนี้ — แถวเก็บแค่ลำดับ (data-index) แล้วค่อยหยิบข้อมูลจากตัวแปรนี้
+// ไม่ยัดข้อมูลทั้งก้อนลงใน HTML เพราะชื่อ/อีเมลอาจมีตัวอักษรที่ทำให้ HTML พัง
 let usersOnPage = [];
 
 /* วาดช่องค้นหา/ตัวกรอง (ค่าเก็บไว้ใน # ของที่อยู่เว็บ ลิงก์ส่งต่อได้) แล้วโหลดตาราง */
@@ -63,6 +65,7 @@ async function loadUsers() {
     return;
   }
   usersOnPage = data.items;
+  // reviewer เห็นอีเมลแบบ a•••@example.com — backend ปิดบังมาให้แล้ว (mask_email) หน้าเว็บแค่บอกให้รู้
   document.querySelector('.adm__sub').textContent = data.total + ' total' + (me.role === 'reviewer' ? ' · emails partly hidden at your access level' : '');
 
   if (data.items.length === 0) {
@@ -156,6 +159,8 @@ function drawStatusControl(user, closeDrawer) {
     return;
   }
   const disabling = user.is_active;
+  // กฎเดียวกับ backend (set_user_active): ปิดบัญชีตัวเองไม่ได้ (จะล็อกตัวเองออก) และปิด owner ไม่ได้
+  // backend ตรวจจริงอีกรอบ ที่นี่แค่ปิดปุ่มพร้อมบอกเหตุผลล่วงหน้า
   const blocked = user.id === me.user_id ? 'You cannot disable your own account.' : user.admin_role === 'owner' ? 'An owner account cannot be disabled.' : null;
 
   box.innerHTML =

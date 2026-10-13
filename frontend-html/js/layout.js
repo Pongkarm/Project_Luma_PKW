@@ -145,6 +145,7 @@ function drawShell(activePage) {
     '<div class="rail__section"><span class="rail__sectionLabel">ผลงานของคุณ</span>' + railLink(history, activePage, '', 'rail-count') + '</div>' +
     '<div class="rail__spacer"></div>' +
     '<div class="rail__section">' +
+    // ลิงก์แอดมินสร้างไว้แต่ซ่อน (ใส่ id + hidden แทรกหลัง "<a ") — checkAdminLink() ค่อยเปิดถ้ามีสิทธิ์
     railLink({ id: 'admin', href: 'admin.html', text: 'แผงแอดมิน', icon: 'node' }, activePage, 'rail__link--minor').replace('<a ', '<a id="admin-rail-link" hidden ') +
     railLink(account, activePage, 'rail__link--minor') + '</div>' +
     '<button type="button" class="rail__collapse" id="rail-collapse" title="ย่อ/ขยายแถบเมนู" aria-label="ย่อ/ขยายแถบเมนู">' +
@@ -179,7 +180,11 @@ async function checkEngine() {
   }
 }
 
-/* เมนู "แผงแอดมิน" แสดงเฉพาะบัญชีที่มีสิทธิ์ (backend ตอบ 403 ถ้าไม่มี) */
+/*
+ * เมนู "แผงแอดมิน" แสดงเฉพาะบัญชีที่มีสิทธิ์ (backend ตอบ 403 ถ้าไม่มี)
+ * การซ่อนเมนูเป็นแค่ความสะดวก ไม่ใช่การป้องกัน — ต่อให้พิมพ์ admin.html เอง
+ * ทุกคำขอ /admin/* ก็ถูก backend ตรวจสิทธิ์ (require_role) อยู่ดี
+ */
 async function checkAdminLink() {
   try {
     await apiRequest('/admin/me', { quiet401: true });

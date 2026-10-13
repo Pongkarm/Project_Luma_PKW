@@ -56,6 +56,7 @@ function renderStage() {
     return;
   }
 
+  // แทนทั้ง element (outerHTML) ด้วยป้ายสถานะใหม่ แต่คง id เดิมไว้ รอบถัดไปจะหาเจอและแทนได้อีก
   $('stage-status').outerHTML = '<span id="stage-status">' + statusChip(run.status) + '</span>';
 
   const elapsed = (Date.now() - watchStartedAt) / 1000;

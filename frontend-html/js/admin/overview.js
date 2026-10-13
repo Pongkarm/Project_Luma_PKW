@@ -20,6 +20,13 @@ async function drawOverview() {
     return main(header('Overview') + unavailable(error));
   }
 
+  /*
+   * ตัวเลขแต่ละช่อง (backend คำนวณใน services/admin.py → stats):
+   *   Generated in 14d  ผู้ใช้ที่สร้างภาพอย่างน้อย 1 ครั้งใน 14 วัน (ไม่ใช่ผู้ใช้ที่ล็อกอิน)
+   *   Success           completed ÷ (completed + failed) — งานที่ยังรออยู่ไม่ถูกนับ ต่ำกว่า 90% เป็นสีเตือน
+   *   Median time       ค่ากลางของเวลาที่ใช้ เฉพาะงานที่เสร็จ (ไม่มีงานเสร็จเลย = —)
+   * figure() วาดหนึ่งช่อง ถ้าส่ง link มา ช่องนั้นกดไปหน้า Users/Activity ที่กรองไว้แล้ว
+   */
   const figure = (label, value, link, tone) => {
     const body = '<span class="adm-fig__v' + (tone ? ' adm-fig__v--' + tone : '') + '">' + value + '</span><span class="adm-fig__l">' + label + '</span>';
     return link ? '<a class="adm-fig adm-fig--link" href="' + link + '">' + body + '</a>' : '<div class="adm-fig">' + body + '</div>';
