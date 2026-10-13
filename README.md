@@ -1,8 +1,8 @@
 # 🎨 LUMA: Distributed AI Image Generation Platform
 
 [![Branch: devops](https://img.shields.io/badge/Branch-devops-orange.svg?logo=git)](https://github.com/Pongkarm/Project_Luma_PKW/tree/devops)
-[![Nginx Gateway](https://img.shields.io/badge/Nginx%20Gateway-Port%2080-009639.svg?logo=nginx)](http://172.20.10.9)
-[![QA Tests](https://img.shields.io/badge/QA%20Tests-12%2F12%20Passed%20(100%25)-brightgreen.svg)](nginx/test_distributed_system.py)
+[![Nginx Gateway](https://img.shields.io/badge/Nginx%20Gateway-Port%2080-009639.svg?logo=nginx)](http://10.23.130.212)
+[![QA Tests](https://img.shields.io/badge/QA%20Tests-16%2F16%20Passed%20(100%25)-brightgreen.svg)](nginx/test_distributed_system.py)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com)
 [![Python](https://img.shields.io/badge/Python-3.10-blue.svg?logo=python)](https://python.org)
 [![Backup System](https://img.shields.io/badge/Backup-Automated%20SHA--256-blueviolet.svg)](nginx/backup_system.py)
@@ -21,11 +21,11 @@
 graph TD
     User([👤 User / Browser])
 
-    subgraph Node1 ["Node 1: Nginx Gateway & DevOps (172.20.10.9:80) ⭐"]
+    subgraph Node1 ["Node 1: Nginx Gateway & DevOps (10.23.130.212:80) ⭐"]
         Nginx[Nginx Reverse Proxy]
         AccessLog[Live Traffic Logger with Upstream IP]
         Dashboard[DevOps Monitoring Dashboard: /dashboard]
-        QATest[Automated QA Suite: 12 Test Cases]
+        QATest[Automated QA Suite: 16 Test Cases]
         Backup[Automated Backup & SHA-256 System]
     end
 
@@ -82,7 +82,7 @@ graph TD
 
 | ลำดับ | รายการทดสอบ | โหนดเป้าหมาย | คาดหวัง | ผลการทดสอบ |
 | :---: | :--- | :---: | :---: | :---: |
-| **01** | Gateway Health Check | Node 1 (`172.20.10.9:80`) | HTTP 200 / HTML | ✅ **PASS** |
+| **01** | Gateway Health Check | Node 1 (`10.23.130.212:80`) | HTTP 200 / HTML | ✅ **PASS** |
 | **02** | Gateway Reverse Proxy: Frontend Routing | Node 1 -> Node 2 | Forward to Frontend | ✅ **PASS** |
 | **03** | Gateway Reverse Proxy: Backend API Routing | Node 1 -> Node 3 | Forward to Backend | ✅ **PASS** |
 | **04** | Direct Connection: Frontend Node | Node 2 (`10.23.130.6:5500`) | HTTP 200 | ✅ **PASS** |
@@ -95,7 +95,7 @@ graph TD
 | **11** | Backend Multi-Layer Security Defense | Node 1 (`/api/uploads`) | Reject invalid file (HTTP 422) | ✅ **PASS** |
 | **12** | DevOps Monitoring Dashboard Access | Node 1 (`/dashboard`) | HTTP 200 / Dashboard UI | ✅ **PASS** |
 
-> 🏆 **อัตราความสำเร็จ (Pass Rate): 100% (12 ผ่าน / 0 ไม่ผ่าน)**
+> 🏆 **อัตราความสำเร็จ (Pass Rate): 100% (16/16 Test Cases ใน PowerShell และ 12/12 ใน Python)**
 
 ---
 
@@ -104,21 +104,23 @@ graph TD
 ระบบออกแบบการป้องกันเป็นชั้น (Defense-in-Depth):
 
 1. **Network-Level LAN Isolation (เข้าได้เฉพาะวงแลนเดียวกัน):**
-   * กำหนดให้ Nginx รับการเชื่อมต่อผ่านชื่อโดเมน `http://luma.local` และอนุญาตเฉพาะอุปกรณ์ที่อยู่ในวงแลน (`172.20.10.0/24`) เท่านั้น หากมีการเข้าถึงจากเครือข่ายภายนอก จะถูกบล็อกด้วย HTTP 403 Forbidden ทันที
+   * กำหนดให้ Nginx รับการเชื่อมต่อผ่านชื่อโดเมน `http://luma.local` และอนุญาตเฉพาะอุปกรณ์ที่อยู่ในวงแลน (`10.23.130.0/24` และ `172.20.10.0/24`) เท่านั้น หากมีการเข้าถึงจากเครือข่ายภายนอก จะถูกบล็อกด้วย HTTP 403 Forbidden ทันที
    ```nginx
-   server_name luma.local www.luma.local 172.20.10.9 localhost;
+   server_name luma.local www.luma.local 10.23.130.212 172.20.10.9 localhost;
 
    allow 127.0.0.1;
    allow ::1;
-   allow 172.20.10.0/24;    # Subnet วงแลนโปรเจกต์
+   allow 10.23.130.0/24;    # Subnet วงแลนโปรเจกต์ปัจจุบัน
+   allow 172.20.10.0/24;    # Subnet วงแลนเดิม (เผื่อสลับเครือข่าย)
    deny all;                # ปฏิเสธการเข้าถึงจากภายนอก
    ```
 2. **Gateway IP Whitelist (DevOps Access Protection):**
-   * เส้นทาง `http://luma.local/dashboard` จำกัดสิทธิ์ให้เข้าถึงได้เฉพาะเครื่อง Nginx เท่านั้น (`172.20.10.9` และ `localhost`) ป้องกันเพื่อนในวงแลนแอบเข้าดูข้อมูลระบบ
+   * เส้นทาง `http://luma.local/dashboard` จำกัดสิทธิ์ให้เข้าถึงได้เฉพาะเครื่อง Nginx เท่านั้น (`10.23.130.212`, `172.20.10.9` และ `localhost`) ป้องกันเพื่อนในวงแลนแอบเข้าดูข้อมูลระบบ
    ```nginx
    location ~* ^/dashboard(\.html)?$ {
        allow 127.0.0.1;
        allow ::1;
+       allow 10.23.130.212;
        allow 172.20.10.9;
        deny all;
        root html;
@@ -135,7 +137,7 @@ graph TD
 ## 🚀 5. คู่มือการใช้งานสำหรับ DevOps (DevOps Quickstart)
 
 ### 0) การตั้งชื่อ Domain (รันครั้งแรกบนเครื่อง Windows)
-คลิกขวาที่ไฟล์ **`nginx\setup_domain.bat`** แล้วเลือก **"Run as administrator"** (จะผูกชื่อ `luma.local` เข้ากับ IP `172.20.10.9` ให้ทันที)
+คลิกขวาที่ไฟล์ **`nginx\setup_domain.bat`** แล้วเลือก **"Run as administrator"** (จะผูกชื่อ `luma.local` เข้ากับ IP `10.23.130.212` ให้อัตโนมัติ)
 
 ### 1) การเปิด Nginx Gateway
 ดับเบิลคลิกไฟล์:
@@ -159,7 +161,9 @@ python nginx/test_distributed_system.py
 ```text
 http://localhost/dashboard
 หรือ
-http://172.20.10.9/dashboard
+http://10.23.130.212/dashboard
+หรือ
+http://luma.local/dashboard
 ```
 
 ### 4) การสำรองข้อมูลระบบ (Automated Backup)
