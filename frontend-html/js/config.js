@@ -21,7 +21,7 @@
  *   ถูกใช้โดย  api.js, generate/*, studio/*, history/*
  *   ชุดทดสอบ (tests/lib.mjs) แทนค่า API_BASE_URL ระหว่างทางให้ชี้ไป backend ของการทดสอบ
  */
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = '';
 
 /*
  * ขอบเขตของค่าต่าง ๆ ที่ส่งไปให้ AI ได้
