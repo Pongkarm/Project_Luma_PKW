@@ -5,6 +5,7 @@
 ข้อยกเว้นเดียวคือ admin_roles ซึ่งเป็นตารางใหม่ที่ create_all() สร้างให้เอง
 """
 
+import statistics
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
@@ -248,17 +249,30 @@ def stats(db: Session, days: int = 14) -> dict:
     finished = done + failed
     success_rate = (done / finished) if finished else 0.0
 
-    median = db.execute(
-        select(
-            func.percentile_cont(0.5).within_group(Generation.duration_seconds)
-        ).where(Generation.status == "completed", Generation.created_at >= since)
-    ).scalar_one_or_none()
+    durations = [
+        d
+        for (d,) in db.execute(
+            select(Generation.duration_seconds).where(
+                Generation.status == "completed",
+                Generation.created_at >= since,
+                Generation.duration_seconds.is_not(None),
+            )
+        ).all()
+    ]
+    median = statistics.median(durations) if durations else None
+
+    # รองรับทั้ง SQLite และ PostgreSQL ในการจัดกลุ่มวัน
+    bind = db.get_bind()
+    if bind is not None and bind.dialect.name == "sqlite":
+        day_expr = func.strftime("%Y-%m-%d", Generation.created_at).label("d")
+    else:
+        day_expr = cast(func.date_trunc("day", Generation.created_at), String).label("d")
 
     per_day = [
         {"day": str(d), "total": int(n)}
         for d, n in db.execute(
             select(
-                cast(func.date_trunc("day", Generation.created_at), String).label("d"),
+                day_expr,
                 func.count(Generation.id),
             )
             .where(Generation.created_at >= since)
