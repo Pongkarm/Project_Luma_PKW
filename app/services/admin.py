@@ -219,6 +219,8 @@ def failure_groups(db: Session, since: datetime, user_id: UUID | None = None, li
 
 
 def stats(db: Session, days: int = 14) -> dict:
+    """คำนวณและสรุปข้อมูลสถิติภาพรวมของระบบ 
+    (Dashboard / System Metrics) ย้อนหลังตามจำนวนวันที่ระบุ"""
     now = datetime.now(timezone.utc)
     since = now - timedelta(days=days)
     day_ago = now - timedelta(days=1)

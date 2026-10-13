@@ -197,7 +197,9 @@ def update_me(
 
     db.commit()
     db.refresh(current_user)
-
+    
+    # นับจำนวนครั้งทั้งหมดที่ผู้ใช้นี้เคยสั่งสร้างข้อมูล (Generations)
+    #  แล้วบันทึกล็อก (Log) ลงระบบก่อนส่งข้อมูลตอบกลับผู้ใช้
     total_gens = (
         db.query(func.count(Generation.id))
         .filter(Generation.user_id == current_user.id)

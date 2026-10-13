@@ -60,7 +60,7 @@ async def save_uploaded_image(file: UploadFile) -> ImageUploadResponse:
     รับไฟล์จาก Client ผ่านกระบวนการตรวจสอบ 5 ชั้น ลบ EXIF และบันทึกลง Disk แบบ Atomic
     """
     # ──────────────────────────────────────────
-    # ชั้นที่ 1: ตรวจสอบ Content-Type Header
+    # ชั้นที่ 1: ตรวจสอบ ตรวจนามสกุลกระดาษ (Content-Type / MIME Type)
     # ──────────────────────────────────────────
     content_type = (file.content_type or "").lower()
     if content_type not in ALLOWED_MIME_TYPES:
@@ -94,7 +94,7 @@ async def save_uploaded_image(file: UploadFile) -> ImageUploadResponse:
     ext = validate_magic_bytes(content)
 
     # ──────────────────────────────────────────
-    # ชั้นที่ 4: ตรวจสอบ Decompression Bomb & Dimensions (PIL)
+    # ชั้นที่ 4: ตรวจสอบ ตรวจระเบิดบีบอัด Decompression Bomb & Dimensions (PIL)
     # ──────────────────────────────────────────
     try:
         image_stream = io.BytesIO(content)
@@ -122,6 +122,7 @@ async def save_uploaded_image(file: UploadFile) -> ImageUploadResponse:
 
     # ──────────────────────────────────────────
     # ชั้นที่ 5: ลบ EXIF Data (GPS / Privacy) & Atomic Write
+    #รูปถ่ายจากมือถือมักจะแอบฝัง "พิกัด GPS บ้านของลูกค้า"
     # ──────────────────────────────────────────
     file_id = uuid.uuid4()
     filename = f"{file_id}{ext}"

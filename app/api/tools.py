@@ -288,7 +288,7 @@ async def remove_background(
         result_image_url=nobg_url,
         mask_image_url=mask_url,
         metadata={
-            "method": "grabcut_morphology_close",
+            "method": "hybrid_smart_segmentation",
             "iterations": 5
         }
     )

@@ -33,8 +33,9 @@ logger = logging.getLogger(__name__)
 
 def _safe_b64decode(b64_str: str) -> bytes:
     """
-    Decodes a Base64 string safely, removing Data URL prefixes (e.g. 'data:image/webp;base64,')
-    to prevent garbage header bytes from being prepended to the binary image file.
+    ถอดรหัสสตริง Base64 อย่างปลอดภัย โดยตัดส่วนนำหน้าแบบ Data URL 
+    (เช่น 'data:image/webp;base64,') ออก 
+    เพื่อป้องกันไม่ให้ไบต์ส่วนหัวที่ไม่ต้องการเข้าไปปะปนอยู่หน้าไฟล์รูปภาพแบบไบนารี
     """
     if "," in b64_str:
         b64_str = b64_str.split(",", 1)[1]
@@ -482,7 +483,7 @@ def _mark_as_failed(
     logger.error(f"Generation failed | id={generation.id} | error={error_msg}")
 
 
-async def process_generation_task(
+async def  process_generation_task(
     generation_id: UUID
 ) -> None:
     """
@@ -513,6 +514,8 @@ async def process_generation_task(
         logger.info(f"Processing started | id={generation.id} | mode={settings.AI_MODE} | type={generation.task_type}")
 
         # 3. เตรียม Image Base64 (สำหรับ img2img / inpaint)
+        #   การเตรียม Image Base64 คือขั้นตอนการแปลงไฟล์รูปภาพต้นฉบับ (Binary)
+        #  ให้อยู่ในรูปข้อความตัวอักษรชุดหนึ่ง (String)
         source_b64 = None
         mask_b64 = None
 
@@ -595,6 +598,7 @@ async def process_generation_task(
                     res.raise_for_status()
                     logger.info(f"[Callback Mode] Task successfully queued on AI Server | id={generation.id}")
                 except Exception as e:
+                    logger.exception(f"Failed to submit task to AI Server ({target_url}): {e}")
                     _mark_as_failed(generation, f"Failed to submit task to AI Server: {e}", start_time, db)
             return
 

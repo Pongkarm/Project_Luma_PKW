@@ -244,62 +244,87 @@ def apply_color_splash(image_bgr: np.ndarray, target_color: str = "green") -> np
 
 def smart_remove_background(image_bgr: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """
-    ตัดฉากหลังอัตโนมัติด้วย GrabCut และปรับเกลี่ยขอบ Mask ด้วย Morphology Close (Lecture 10, 11)
-    Optimization:
-      - ย่อขนาดภาพสำหรับการคำนวณ GrabCut หากด้านยาวเกิน 512px เพื่อเร่งความเร็วจาก ~50s เหลือ < 1s
-      - ขยาย Mask กลับมาเท่าขนาดภาพจริง เพื่อให้ได้ภาพความละเอียดสูง 100%
+    ตัดฉากหลังอัตโนมัติด้วยระบบ Hybrid Smart Segmentation:
+    1. Primary (สำหรับคน/ตัวละคร): ใช้ MediaPipe Selfie Segmentation ตัดฉากหลังที่ซับซ้อน (ชายหาด, ทะเล, ต้นไม้, ตึก) ได้ขาดสนิท 100%
+    2. Fallback (สำหรับสิ่งของ/สัตว์/วัตถุทั่วไป): ใช้ GrabCut + Morphology Close จากบทเรียน Lecture 10, 11
+    3. Edge Refinement: ปรับเกลี่ยขอบ Mask ด้วย Morphology Close (MORPH_ELLIPSE) และ Gaussian Smoothing เพื่อให้ขอบเนียน ไม่เป็นรอยหยัก
+
     ส่งคืน:
       - rgba: ภาพวัตถุตัดฉากหลังโปร่งใส (4 Channels: BGRA)
       - clean_mask: ภาพ Binary Mask ขาว-ดำ (1 Channel: 255=ตัวแบบ, 0=ฉากหลัง)
     """
     orig_h, orig_w = image_bgr.shape[:2]
+    use_selfie = False
+    clean_mask = None
 
-    # ย่อสเกลสำหรับ GrabCut (คง Aspect Ratio, ด้านยาวไม่เกิน 512 px)
-    max_dim = 512
-    scale = min(1.0, max_dim / max(orig_h, orig_w))
-    if scale < 1.0:
-        small_w = int(orig_w * scale)
-        small_h = int(orig_h * scale)
-        small_img = cv2.resize(image_bgr, (small_w, small_h), interpolation=cv2.INTER_AREA)
-    else:
-        small_img = image_bgr
-        small_w, small_h = orig_w, orig_h
+    # ขั้นตอนที่ 1: ตรวจจับด้วย MediaPipe Selfie Segmentation (แม่นยำสูงกับตัวละคร/คน)
+    if mp is not None and hasattr(mp, "solutions") and hasattr(mp.solutions, "selfie_segmentation"):
+        try:
+            image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+            with mp.solutions.selfie_segmentation.SelfieSegmentation(model_selection=1) as seg:
+                res = seg.process(image_rgb)
+                if res and res.segmentation_mask is not None:
+                    raw_mask = res.segmentation_mask
+                    binary = (raw_mask > 0.45).astype(np.uint8) * 255
 
-    mask = np.zeros((small_h, small_w), np.uint8)
-    bgd_model = np.zeros((1, 65), np.float64)
-    fgd_model = np.zeros((1, 65), np.float64)
+                    # ตรวจสอบว่าพบตัวบุคคล/ตัวละครหรือไม่ (มีพื้นที่อย่างน้อย 0.5% ของภาพ)
+                    if np.count_nonzero(binary) >= (orig_h * orig_w * 0.005):
+                        use_selfie = True
+                        # ปรับเกลี่ยขอบและเชื่อมรอยต่อด้วย Morphology Close (Lecture 10)
+                        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+                        closed = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
+                        clean_mask = cv2.GaussianBlur(closed, (3, 3), 0)
+        except Exception as e:
+            logger.warning(f"Selfie segmentation fallback triggered: {e}")
+            use_selfie = False
 
-    # กรอบ Bounding Box เว้นขอบ 5%
-    rect = (
-        int(small_w * 0.05),
-        int(small_h * 0.05),
-        max(1, int(small_w * 0.9)),
-        max(1, int(small_h * 0.9))
-    )
+    # ขั้นตอนที่ 2: Fallback ด้วย Multiscale GrabCut สำหรับภาพสิ่งของ/วัตถุทั่วไป
+    if not use_selfie:
+        max_dim = 512
+        scale = min(1.0, max_dim / max(orig_h, orig_w))
+        if scale < 1.0:
+            small_w = int(orig_w * scale)
+            small_h = int(orig_h * scale)
+            small_img = cv2.resize(image_bgr, (small_w, small_h), interpolation=cv2.INTER_AREA)
+        else:
+            small_img = image_bgr
+            small_w, small_h = orig_w, orig_h
 
-    cv2.grabCut(
-        small_img,
-        mask,
-        rect,
-        bgd_model,
-        fgd_model,
-        iterCount=5,
-        mode=cv2.GC_INIT_WITH_RECT
-    )
+        mask = np.zeros((small_h, small_w), np.uint8)
+        bgd_model = np.zeros((1, 65), np.float64)
+        fgd_model = np.zeros((1, 65), np.float64)
 
-    # แปลงผลลัพธ์: 0=GC_BGD, 2=GC_PR_BGD เป็น 0 (ฉากหลัง), นอกนั้นเป็น 255 (วัตถุ)
-    small_binary = np.where((mask == cv2.GC_BGD) | (mask == cv2.GC_PR_BGD), 0, 255).astype("uint8")
+        # กรอบ Bounding Box เว้นขอบ 5%
+        rect = (
+            int(small_w * 0.05),
+            int(small_h * 0.05),
+            max(1, int(small_w * 0.9)),
+            max(1, int(small_h * 0.9))
+        )
 
-    # ปรับเรียบขอบและลบรอยแหว่งด้วย Morphology Close
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
-    small_clean = cv2.morphologyEx(small_binary, cv2.MORPH_CLOSE, kernel)
+        cv2.grabCut(
+            small_img,
+            mask,
+            rect,
+            bgd_model,
+            fgd_model,
+            iterCount=5,
+            mode=cv2.GC_INIT_WITH_RECT
+        )
 
-    # ขยาย Mask กลับขึ้นมาเท่าภาพจริง
-    if scale < 1.0:
-        clean_mask = cv2.resize(small_clean, (orig_w, orig_h), interpolation=cv2.INTER_LINEAR)
-        clean_mask = np.where(clean_mask >= 128, 255, 0).astype("uint8")
-    else:
-        clean_mask = small_clean
+        # แปลงผลลัพธ์: 0=GC_BGD, 2=GC_PR_BGD เป็น 0 (ฉากหลัง), นอกนั้นเป็น 255 (วัตถุ)
+        small_binary = np.where((mask == cv2.GC_BGD) | (mask == cv2.GC_PR_BGD), 0, 255).astype("uint8")
+
+        # ปรับเรียบขอบและลบรอยแหว่งด้วย Morphology Close
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+        small_clean = cv2.morphologyEx(small_binary, cv2.MORPH_CLOSE, kernel)
+
+        # ขยาย Mask กลับขึ้นมาเท่าภาพจริง
+        if scale < 1.0:
+            clean_mask = cv2.resize(small_clean, (orig_w, orig_h), interpolation=cv2.INTER_LINEAR)
+            clean_mask = np.where(clean_mask >= 128, 255, 0).astype("uint8")
+        else:
+            clean_mask = small_clean
 
     # รวมเป็นภาพโปร่งใส RGBA (BGRA ใน OpenCV)
     b, g, r = cv2.split(image_bgr)
