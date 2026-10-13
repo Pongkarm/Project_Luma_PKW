@@ -104,7 +104,7 @@ function renderTool() {
   $('apply-text').textContent = !current ? 'เลือกภาพก่อน' : busy ? 'กำลังใช้ ' + TOOLS[tool].name + '…' : 'ใช้ ' + TOOLS[tool].name;
   $('applies-to').hidden = !current;
   if (current) {
-    $('applies-to').innerHTML = 'ใช้กับ: ' + escapeHtml(versionName(current)) + ' <span class="mono kbd-hint">' + icon('info', 11) + ' ⌘↵</span>';
+    $('applies-to').textContent = 'ใช้กับ: ' + versionName(current);
   }
 }
 

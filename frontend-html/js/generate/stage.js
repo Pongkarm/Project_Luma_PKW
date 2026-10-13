@@ -51,8 +51,7 @@ function renderStage() {
     stage.innerHTML =
       '<div class="centered-note"><div class="empty-mark">' + icon('image', 22) + '</div>' +
       '<h2 class="heading">ยังไม่มีภาพ</h2>' +
-      '<p class="text-muted">พิมพ์สิ่งที่อยากได้ทางขวา แล้วกดสร้างภาพ ค่าอื่นตั้งไว้ให้พร้อมใช้แล้ว</p>' +
-      '<span class="kbd">⌘ + ↵</span></div>';
+      '<p class="text-muted">พิมพ์สิ่งที่อยากได้ทางขวา แล้วกดสร้างภาพ ค่าอื่นตั้งไว้ให้พร้อมใช้แล้ว</p></div>';
     return;
   }
 

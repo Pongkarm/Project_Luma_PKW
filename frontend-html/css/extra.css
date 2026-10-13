@@ -222,7 +222,7 @@
 /* คำอธิบายที่อยู่ใต้แถบเลื่อน ให้ชิดขึ้นไปหาแถบเลื่อน */
 .hint-tight { margin-top: -10px; }
 
-/* บรรทัดใต้ปุ่มสร้างภาพ: ขนาดที่จะได้ + ⌘↵ */
+/* บรรทัดใต้ปุ่มสร้างภาพ: ขนาดที่จะได้ */
 .foot-hint {
   font-size: var(--fs-xs);
   color: var(--ink-3);
@@ -232,8 +232,6 @@
   justify-content: center;
   gap: var(--sp-6);
 }
-
-.kbd-hint { opacity: 0.75; }
 
 /* คำอธิบายสีที่ระบายใต้ภาพ mask */
 .mask-legend-swatch {

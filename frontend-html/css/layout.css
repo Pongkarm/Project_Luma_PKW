@@ -525,20 +525,6 @@
   background: var(--panel);
 }
 
-.kbd {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-4);
-  padding: var(--sp-4) var(--sp-8);
-  border: 1px solid var(--line-strong);
-  border-bottom-width: 2px;
-  border-radius: var(--r-sm);
-  background: var(--panel-2);
-  font-family: var(--font-mono);
-  font-size: var(--fs-2xs);
-  color: var(--ink-2);
-}
-
 .controls {
   width: var(--controls-w);
   flex: none;
