@@ -206,33 +206,123 @@ erDiagram
 
 ---
 
-## 🚀 7. Quick Start Guide (วิธีเปิดใช้งานระบบในวงแลน)
+## 🚀 7. Step-by-Step Setup & Reproducibility Guide (คู่มือติดตั้งและเปิดใช้งานฉบับทำซ้ำได้ 100%)
 
-### 1) รัน Node 4: AI Inference Server (พอร์ต 7860 — เครื่อง PC3)
-ดับเบิลคลิกไฟล์ **`start_ai_server.bat`** (One-Click Launcher) หรือรันผ่าน Terminal:
+เพื่อให้บุคคลภายนอกหรือกรรมการสามารถโคลนและเปิดใช้งานระบบตามได้จริงอย่างถูกต้อง (100% Reproducible) ให้ปฏิบัติตามขั้นตอนอย่างเป็นลำดับดังนี้:
+
+### ขั้นตอนที่ 0: สิ่งที่ต้องเตรียมล่วงหน้า (Prerequisites)
+1. **Python Runtime:** Python 3.10 – 3.12 (แนะนำ Python 3.12)
+2. **Git Client:** สำหรับดึงซอร์สโค้ด
+3. **Hardware & Engine Options:**
+   * **โหมดใช้งานจริง (GPU Mode):** มีการ์ดจอ NVIDIA (VRAM ≥ 8GB เช่น RTX 3070) พร้อมไดรเวอร์ CUDA และติดตั้ง **Stable Diffusion WebUI Forge**
+   * **โหมดจำลอง (CPU / Non-GPU Fallback Mode):** เครื่องคอมพิวเตอร์ทั่วไปที่ไม่มีการ์ดจอ สามารถเปิดเซิร์ฟเวอร์เพื่อทดสอบการเชื่อมต่อ API และ Integration Test ได้ผ่านระบบ Fallback Render
+
+---
+
+### ขั้นตอนที่ 1: ติดตั้ง Environment และ Dependencies
+เปิด Terminal (PowerShell / Command Prompt) ในโฟลเดอร์โปรเจกต์:
 ```powershell
-# ในโฟลเดอร์ Project_Luma_PKW หรือ Project_Luma
-python -m ai_server.run
+# 1. สร้าง Virtual Environment
+python -m venv venv
+
+# 2. เปิดใช้งาน Virtual Environment
+.\venv\Scripts\activate
+
+# 3. ติดตั้งไลบรารีที่จำเป็นทั้งหมดสำหรับ AI Node
+pip install -r ai_server/requirements.txt
 ```
-*(ระบบจะผูกเข้ากับ `0.0.0.0:7860` และเชื่อมต่อกับ Forge Headless บน `127.0.0.1:7861` อัตโนมัติ)*
 
-### 2) รัน Node 3: Backend Core API (พอร์ต 8000 — เครื่อง Pongkarm)
+---
+
+### ขั้นตอนที่ 2: ตั้งค่าตัวแปรสภาพแวดล้อม (Configuration `.env`)
+คัดลอกไฟล์ต้นแบบและกำหนดค่ากุญแจความปลอดภัย:
 ```powershell
-# ในโฟลเดอร์ backend_node
+copy ai_server\.env.example ai_server\.env
+```
+ตรวจสอบและแก้ไขไฟล์ `ai_server/.env`:
+```env
+AI_HOST=0.0.0.0
+AI_PORT=7860
+# ❗ ต้องตั้งค่าให้ตรงกับ AI_CALLBACK_SECRET บน Backend (Node 3)
+LUMA_INTERNAL_SECRET=YezuuiiLZOo_IXyz25aVqdNlaDdJhAbLC4oXTMN0BZ8Pj0azVhPILJ493qFcnX9D
+ALLOW_FALLBACK_RENDER=true
+BACKEND_CALLBACK_URL=http://10.23.130.9:8000/api/callback
+```
+
+---
+
+### ขั้นตอนที่ 3: ลำดับการเปิดใช้งานระบบทั้ง 4 โหนด (Execution Order)
+
+เพื่อให้ระบบเชื่อมโยงกันอย่างสมบูรณ์ ควรเปิดตามลำดับต่อไปนี้:
+
+#### 1) เปิด Diffusion Engine บน Node 4 (เครื่อง PC3: `127.0.0.1:7861`)
+* เปิดโปรแกรม Stability Matrix แล้วกดรัน **Stable Diffusion WebUI Forge**
+* หรือรันผ่านคำสั่ง Command-line พร้อมเปิด API Mode:
+  ```powershell
+  webui-user.bat --nowebui --api --port 7861
+  ```
+
+#### 2) เปิด AI Inference Server บน Node 4 (เครื่อง PC3: `10.23.130.112:7860`)
+* ดับเบิลคลิกไฟล์ **`start_ai_server.bat`** (One-Click Launcher)
+* หรือรันผ่านคำสั่ง Python:
+  ```powershell
+  python -m ai_server.run
+  ```
+  *(ระบบจะตรวจจับการ์ดจอ RTX 3070 และพร้อมรับคำสั่ง Text-to-Image / Inpainting ทันที)*
+
+#### 3) เปิด Backend Core API บน Node 3 (เครื่อง Pongkarm: `10.23.130.9:8000`)
+```powershell
+cd backend_node
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### 3) รัน Node 2: Web Frontend (พอร์ต 5500)
-```bash
-# ในโฟลเดอร์ frontend_node/frontend-html
+#### 4) เปิด Web Frontend บน Node 2 (เครื่องไคลเอนต์: `10.23.130.6:5500`)
+```powershell
+cd frontend_node/frontend-html
 python serve_gateway.py
 # หรือ python -m http.server 5500
 ```
 
-### 4) รัน Node 1: Nginx Gateway & DevOps (พอร์ต 80)
+#### 5) เปิด Nginx Gateway บน Node 1 (เครื่อง DevOps: `10.23.130.212:80`)
 ดับเบิลคลิกไฟล์:
 ```text
 nginx\run_nginx_with_logs.bat
+```
+
+---
+
+### ขั้นตอนที่ 4: การตรวจเช็คความพร้อมของระบบ (Health Verification)
+
+ก่อนเริ่มนำเสนอหรือทดสอบ ให้ตรวจสอบความพร้อมผ่านเบราว์เซอร์:
+1. **ตรวจสอบ AI Node เดี่ยว:** เข้าไปที่ `http://10.23.130.112:7860/ai/health`
+   * จะต้องได้ JSON ตอบกลับ:
+     ```json
+     {
+       "status": "healthy",
+       "gpu": {
+         "device": "NVIDIA GeForce RTX 3070 Laptop GPU",
+         "vram_total_gb": 8.0,
+         "vram_allocated_gb": 0.0,
+         "vram_free_gb": 7.2
+       },
+       "task_queue": { "active": 0, "queued": 0 },
+       "forge_online": true
+     }
+     ```
+2. **ตรวจสอบภาพรวม 4 โหนดผ่าน Gateway:** เข้าไปที่ `http://10.23.130.212/dashboard`
+   * โหนดทั้ง 4 ต้องขึ้นสถานะ **ONLINE (สีเขียว)**
+
+---
+
+### ขั้นตอนที่ 5: การรันชุดทดสอบอัตโนมัติ (Automated Verification)
+
+เพื่อพิสูจน์ความถูกต้องของระบบก่อนการใช้งานจริง:
+```powershell
+# รัน Unit Tests และ Edge Cases ของ AI Node (ผ่าน 17/17 รายการ)
+pytest ai_server/tests/test_server.py ai_server/tests/test_edge_cases.py
+
+# รัน Distributed System Verification ข้ามเครือข่ายวงแลน (ผ่าน 12/12 รายการ)
+python nginx/test_distributed_system.py
 ```
 
 ---

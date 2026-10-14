@@ -119,25 +119,101 @@ Backend Proxy และ Frontend ดึงข้อมูลจาก Endpoint �
 
 ---
 
-## 🚀 วิธีเปิดใช้งาน (Quick Start)
+## 🚀 คู่มือติดตั้งและเปิดใช้งานฉบับทำซ้ำได้ (100% Reproducibility Guide)
 
-### วิธีที่ 1: รันด้วย 1-Click Batch Script (แนะนำสำหรับการนำเสนอ)
-ดับเบิลคลิกไฟล์:
-```text
-start_ai_server.bat
-```
+เพื่อให้ทุกคนสามารถโคลนและรัน AI Inference Node ได้อย่างราบรื่นโดยไม่พบข้อผิดพลาด ให้ปฏิบัติตามขั้นตอนนี้:
 
-### วิธีที่ 2: รันผ่านคำสั่ง Python Module
-```powershell
-python -m ai_server.run
-```
-*(ระบบจะบูต Uvicorn ASGI Server ที่ `0.0.0.0:7860` พร้อมระบบ Hot-Reload อัตโนมัติ)*
+### ขั้นตอนที่ 0: สิ่งที่ต้องเตรียมล่วงหน้า (Prerequisites)
+1. **Python:** เวอร์ชัน 3.10 – 3.12
+2. **Stable Diffusion Engine (สำหรับรัน GPU):** 
+   * ติดตั้ง Stable Diffusion WebUI Forge (ผ่าน Stability Matrix หรือ Git)
+   * ดาวน์โหลดโมเดล Checkpoints (เช่น `counterfeitV30_v30.safetensors`, `novaAnimeXL_ilV190.safetensors`) และ LoRAs เก็บไว้ในโฟลเดอร์ของ Stability Matrix
+3. **กรณีไม่มี GPU:** สามารถเปิด `ALLOW_FALLBACK_RENDER=true` เพื่อทดสอบระบบแบบ Mockup Preview ได้ทันที
 
 ---
 
-## 🧪 การรันชุดทดสอบ (Automated Unit Tests)
+### ขั้นตอนที่ 1: ติดตั้ง Dependencies
+```powershell
+# สร้างและเปิดใช้งาน Virtual Environment
+python -m venv venv
+.\venv\Scripts\activate
+
+# ติดตั้งไลบรารีที่จำเป็น
+pip install -r ai_server/requirements.txt
+```
+
+---
+
+### ขั้นตอนที่ 2: ตั้งค่าตัวแปรสภาพแวดล้อม (`ai_server/.env`)
+```powershell
+copy ai_server\.env.example ai_server\.env
+```
+เปิดไฟล์ `ai_server/.env` และตรวจสอบค่า:
+```env
+AI_HOST=0.0.0.0
+AI_PORT=7860
+# Token ต้องตรงกับ AI_CALLBACK_SECRET บน Backend Node 3
+LUMA_INTERNAL_SECRET=YezuuiiLZOo_IXyz25aVqdNlaDdJhAbLC4oXTMN0BZ8Pj0azVhPILJ493qFcnX9D
+ALLOW_FALLBACK_RENDER=true
+BACKEND_CALLBACK_URL=http://10.23.130.9:8000/api/callback
+```
+
+---
+
+### ขั้นตอนที่ 3: เปิดใช้งานเอนจิน Stable Diffusion WebUI Forge (พอร์ต 7861)
+* เปิดผ่าน Stability Matrix หรือรันคำสั่ง:
+  ```powershell
+  webui-user.bat --nowebui --api --port 7861
+  ```
+  *(เอนจินจะเปิดรับคำสั่ง REST API ภายในเครื่องบน `http://127.0.0.1:7861`)*
+
+---
+
+### ขั้นตอนที่ 4: สั่งเปิดเซิร์ฟเวอร์ AI Node (พอร์ต 7860)
+
+* **วิธีที่ 1 (1-Click Launcher):** ดับเบิลคลิกไฟล์:
+  ```text
+  start_ai_server.bat
+  ```
+* **วิธีที่ 2 (Terminal Command):**
+  ```powershell
+  python -m ai_server.run
+  ```
+
+---
+
+### ขั้นตอนที่ 5: ตรวจสอบความพร้อมของระบบ (Health Check)
+เปิดเบราว์เซอร์ไปที่:
+```text
+http://10.23.130.112:7860/ai/health
+หรือ
+http://localhost:7860/ai/health
+```
+**ตัวอย่าง Response ที่ถูกต้อง:**
+```json
+{
+  "status": "healthy",
+  "gpu": {
+    "device": "NVIDIA GeForce RTX 3070 Laptop GPU",
+    "vram_total_gb": 8.0,
+    "vram_allocated_gb": 0.0,
+    "vram_free_gb": 7.2
+  },
+  "task_queue": {
+    "active": 0,
+    "queued": 0
+  },
+  "forge_online": true
+}
+```
+*(หาก `forge_online: true` แสดงว่า AI Node เชื่อมต่อกับ Forge บนการ์ดจอ RTX 3070 สำเร็จ 100%)*
+
+---
+
+### ขั้นตอนที่ 6: การรันชุดทดสอบอัตโนมัติ (Automated Unit Tests)
 
 รันชุดทดสอบความถูกต้องของ AI Node ด้วย pytest (ผ่าน 17/17 รายการสมบูรณ์):
 ```powershell
 pytest ai_server/tests/test_server.py ai_server/tests/test_edge_cases.py
 ```
+
