@@ -273,4 +273,4 @@ erDiagram
 | 3 | AI Inference | [@Kong19565](https://github.com/Kong19565) |
 | 4 | QA / DevOps | [@bankjunjan](https://github.com/bankjunjan) |
 
-🎓 ศูนย์เตรียมสอบปากเปล่า: [kong19565.github.io/luma-defense-mastery](https://kong19565.github.io/luma-defense-mastery/)
+🎓 ข้อมูลเบื้องลึกอย่างละเอียด : [kong19565.github.io/luma-defense-mastery](https://kong19565.github.io/luma-defense-mastery/)
