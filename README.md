@@ -1,6 +1,6 @@
 # 🎨 LUMA: Distributed AI Image Generation Platform
 
-[![Architecture](https://img.shields.io/badge/Architecture-4--Node%20Distributed-orange.svg)](#-1-architecture-overview-สถาปัตยกรรมระบบ-4-เครื่อง)
+[![Architecture](https://img.shields.io/badge/Architecture-4--Node%20Distributed-orange.svg)](#%EF%B8%8F-1-architecture-overview-สถาปัตยกรรมระบบ-4-เครื่อง)
 [![Gateway](https://img.shields.io/badge/Nginx%20Gateway-Port%2080-009639.svg?logo=nginx)](https://github.com/Pongkarm/Project_Luma_PKW/tree/devops)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com)
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg?logo=python)](https://python.org)
@@ -63,7 +63,7 @@ graph TD
     Nginx -->|"/api/, /auth, /generations, /uploads, /admin/ ..."| API
     API -->|"SQLAlchemy ORM"| DB
     API -->|"Atomic File I/O"| Storage
-    API -->|"POST /ai/generate (task_id, callback_url)"| AI
+    API -->|"POST /ai/generate หรือ /ai/edit (task_id, callback_url)"| AI
     AI -->|"Forge API"| SD
     AI -->|"POST /api/callback + X-LUMA-INTERNAL-SECRET"| API
 ```
@@ -77,7 +77,7 @@ graph TD
 | **3** | Backend & Database | macOS | `10.23.130.9` | `8000` | Auth (JWT), จัดการงาน, ฐานข้อมูล, เก็บไฟล์ภาพ, Studio Tools, Admin |
 | **4** | AI Inference | Windows | `10.23.130.112` | `7860` | รัน Stable Diffusion บน GPU ผ่าน WebUI Forge (`:7861`) พร้อมคิว FIFO |
 
-> 🔒 Nginx อนุญาตเฉพาะเครื่องในวงแลน (`10.23.130.0/24`, `172.20.10.0/24`) และหน้า `/dashboard` เปิดได้จากเครื่อง Gateway เท่านั้น
+> 🔒 Nginx รับเฉพาะ IP ภายใน ได้แก่ localhost, `10.0.0.0/8` (รวมวงแลนโปรเจกต์ `10.23.130.0/24`), `172.20.10.0/24` และ `192.168.0.0/16` ส่วนหน้า `/dashboard` เปิดได้จาก localhost, `10.23.130.212`, `172.20.10.9` และ `192.168.56.1` เท่านั้น
 
 ---
 
@@ -97,7 +97,7 @@ sequenceDiagram
     U->>G: POST /generations (prompt, model, LoRA, settings)
     G->>B: ส่งต่อคำขอ
     B->>D: บันทึกงาน status=pending
-    B->>A: POST /ai/generate (task_id, callback_url)
+    B->>A: POST /ai/generate (txt2img) หรือ /ai/edit (img2img, inpaint)
     A-->>B: 202 Accepted (เข้าคิว FIFO)
     loop ระหว่างรอ
         U->>G: GET /generations/{id}/progress
@@ -120,7 +120,7 @@ sequenceDiagram
 
 | หน้า | ไฟล์ | ใช้ทำอะไร |
 | :--- | :--- | :--- |
-| หน้าแรก | `index.html` | แนะนำระบบและทางเข้า |
+| หน้าแรก | `index.html` | ไม่มีเนื้อหา ส่งต่อทันที: ล็อกอินแล้วไป `generate.html` ยังไม่ล็อกอินไป `login.html` |
 | สมัคร / เข้าสู่ระบบ | `register.html`, `login.html` | สร้างบัญชีและรับ JWT |
 | สร้างภาพ | `generate.html` | txt2img, img2img, inpaint (วาด mask บน canvas), เลือก Model และ LoRA, ร่างงานบันทึกอัตโนมัติ |
 | Studio | `studio.html` | เครื่องมือแต่งภาพ: Pose, Sketch, Color Splash, Remove Background |
@@ -134,16 +134,16 @@ sequenceDiagram
 | :--- | :--- |
 | Auth | `POST /auth/register`, `POST /auth/login`, `GET/PATCH /auth/me` |
 | Generations | `POST/GET /generations`, `GET/DELETE /generations/{id}`, `POST /generations/{id}/cancel`, `GET /generations/{id}/progress`, `GET /generations/{id}/image` |
-| Uploads | `POST /uploads`, `GET /uploads/{filename}` |
+| Uploads | `POST /uploads` (หรือ `POST /generations/upload`), `GET /uploads/{filename}` |
 | Models | `GET /api/models` (Checkpoint และ LoRA พร้อม family) |
 | Studio Tools | `POST /api/tools/pose`, `/sketch`, `/color-splash`, `/remove-bg`, `GET /api/tools/results/{filename}` |
 | Admin | `/admin/me`, `/admin/stats`, `/admin/users`, `/admin/generations`, `/admin/audit`, `/admin/roles` |
 | AI Callback | `POST /api/callback` (ต้องมี `X-LUMA-INTERNAL-SECRET`) |
-| Health | `GET /healthz` |
+| Health / System | `GET /healthz` (สถานะ Backend และฐานข้อมูล), `GET /api/status` (งานที่รองรับ, ขนาดอัปโหลดสูงสุด, `AI_MODE`) |
 
 ### AI Server (`ai_server/`)
 
-`GET /ai/health`, `GET /ai/models`, `POST /ai/generate`, `POST /ai/edit`, `GET /ai/status/{task_id}`
+`GET /ai/health`, `GET /ai/models`, `POST /ai/generate`, `POST /ai/edit`, `GET /ai/status/{task_id}` (หรือ `GET /ai/task/{task_id}`), `DELETE /ai/task/{task_id}` (ยกเลิกงาน)
 
 ---
 
@@ -204,7 +204,7 @@ erDiagram
         timestamp completed_at
     }
     ADMIN_ROLES {
-        uuid user_id FK
+        uuid user_id PK, FK
         string role "owner | admin | reviewer"
         uuid granted_by FK
         timestamp granted_at
@@ -226,26 +226,33 @@ erDiagram
 
 | ชั้น | อยู่ที่ | รายละเอียด |
 | :--- | :--- | :--- |
-| LAN Isolation | Gateway | รับเฉพาะ IP ในวงแลน นอกนั้นตอบ 403 |
-| Dashboard Whitelist | Gateway | `/dashboard` เปิดได้จากเครื่อง Gateway เท่านั้น |
+| LAN Isolation | Gateway | รับเฉพาะ IP ภายใน (`10.0.0.0/8`, `172.20.10.0/24`, `192.168.0.0/16`, localhost) นอกนั้นตอบ 403 |
+| Dashboard Whitelist | Gateway | `/dashboard` เปิดได้จาก localhost, `10.23.130.212`, `172.20.10.9`, `192.168.56.1` เท่านั้น |
 | Gateway-only Frontend | Frontend | เข้าพอร์ต 5500 ตรงจะได้ 403 ต้องผ่าน Gateway |
 | JWT + Bcrypt + Role | Backend | ยืนยันตัวตนทุกคำขอ แยกสิทธิ์ owner / admin / reviewer พร้อม Audit Log |
 | 5-Layer Image Validation | Backend | Content-Type → ขนาดไฟล์ ≤ 10MB → Magic Bytes → กัน Decompression Bomb → ลบ EXIF และบันทึกแบบ Atomic |
-| Internal Secret | Backend ↔ AI | callback ต้องแนบ `X-LUMA-INTERNAL-SECRET` ที่ตรงกันทั้งสองเครื่อง |
+| Internal Secret | Backend ↔ AI | คำขอระหว่างสองเครื่องต้องแนบ `X-LUMA-INTERNAL-SECRET` โดย `AI_CALLBACK_SECRET` (Backend) ต้องเท่ากับ `LUMA_INTERNAL_SECRET` (AI) |
 
-> ⚠️ ค่าใน `.env.example` เป็นตัวอย่างเท่านั้น ต้องสร้าง `SECRET_KEY` และ `AI_CALLBACK_SECRET` ใหม่เองด้วย
+> ⚠️ ค่าใน `.env.example` เป็นตัวอย่างเท่านั้น ต้องสร้าง `SECRET_KEY`, `AI_CALLBACK_SECRET` และ `LUMA_INTERNAL_SECRET` ใหม่เอง ด้วยคำสั่ง
 > `python -c "import secrets; print(secrets.token_urlsafe(64))"`
+>
+> ทั้ง Backend และ AI **จะไม่ยอมเปิด** ถ้า secret ยังเป็นค่าตัวอย่าง เป็นค่าที่เคยหลุด หรือสั้นกว่า 32 ตัวอักษร
 
 ---
 
 ## 🧪 7. การทดสอบ
 
-| Node | ชุดทดสอบ | จำนวน | วิธีรัน |
-| :--- | :--- | :---: | :--- |
-| Gateway | `nginx/test_distributed_system.py` / `.ps1` | 12 (Python) / 16 (PowerShell) | `nginx\run_tests.bat` |
-| Frontend | `frontend-html/tests/` (unit, e2e, regressions, responsive) | 4 ชุด | `npm run test:all` (Node 22+) |
-| Backend | `tests/` (pytest) | 96 | `pytest --cov=app` |
-| AI Server | `ai_server/tests/` (pytest) | 18 | `pytest ai_server/tests` |
+| Node | ชุดทดสอบ | จำนวน | วิธีรัน | ต้องเปิดอะไรไว้ก่อน |
+| :--- | :--- | :---: | :--- | :--- |
+| Gateway | `nginx/test_distributed_system.py` / `.ps1` | 12 (Python) / 16 (PowerShell) | `nginx\run_tests.bat` | ทั้ง 4 เครื่อง (ทดสอบกับ IP จริง) |
+| Frontend | `tests/unit.mjs` | 14 | `npm run test:unit` | ไม่ต้อง |
+| Frontend | `tests/e2e.mjs`, `regressions.mjs`, `responsive.mjs` | 3 ชุด | `npm test`, `npm run test:regressions`, `npm run test:responsive` | Backend ที่ `localhost:8000` + AI หรือ mock AI และบัญชี owner (`alice`) |
+| Backend | `tests/` ยกเว้น `test_admin_permissions.py` | 85 | `pytest --cov=app` | ไม่ต้อง (แต่ต้องตั้ง `DATABASE_URL`, `SECRET_KEY`, `AI_CALLBACK_SECRET` ก่อน) |
+| Backend | `tests/test_admin_permissions.py` | 31 | (รันพร้อมชุดบน) | Backend ที่ `localhost:8000` และบัญชีทดสอบ `alice` (owner), `normaluser` (reviewer), `outsider` (ผู้ใช้ทั่วไป) |
+| AI Server | `test_server.py`, `test_edge_cases.py` | 17 | `pytest ai_server/tests/test_server.py ai_server/tests/test_edge_cases.py` | ไม่ต้อง (แต่ต้องตั้ง `LUMA_INTERNAL_SECRET` และติดตั้ง `pytest` เพิ่ม เพราะไม่อยู่ใน `requirements.txt`) |
+| AI Server | `test_multi_node_e2e.py` | 1 | `pytest ai_server/tests/test_multi_node_e2e.py` | โค้ด branch `backend` ในโฟลเดอร์ `backend_node` ข้างโฟลเดอร์ repo (ถ้าไม่มีจะข้าม) — test เปิด AI :7860 และ Backend :8000 ให้เอง |
+
+> Frontend ต้องใช้ Node 22 ขึ้นไป · Backend รวมทั้งหมด 116 test (pytest นับแยกทุกกรณีของ parametrize)
 
 ---
 
@@ -260,7 +267,26 @@ erDiagram
 | 3 | Frontend | `frontend-app` | `cd frontend-html && python3 serve_gateway.py` |
 | 4 | Gateway | `devops` | `nginx\run_nginx_with_logs.bat` |
 
-ตั้งค่าแต่ละเครื่องโดยคัดลอก `.env.example` เป็น `.env` แล้วแก้ IP และ secret ให้ตรงกัน ส่วนรายละเอียดเพิ่มเติมดูได้จากคู่มือในแต่ละ branch (`DEVOPS_MANUAL.md`, `README-backend.md`, `ai_server/README.md`, `frontend-html/README.md`)
+### ค่าที่ต้องตั้งใน `.env` เมื่อรันข้ามเครื่องจริง
+
+ค่าเริ่มต้นของ Backend ชี้ไปที่ mock AI บนเครื่องตัวเอง (`AI_MODE=direct`, `localhost:8001`) ถ้าจะใช้ AI Node จริงต้องคัดลอก `.env.example` เป็น `.env` แล้วตั้งค่าตามนี้
+
+| เครื่อง | ไฟล์ | ตัวแปร | ค่า |
+| :--- | :--- | :--- | :--- |
+| Backend | `.env` | `AI_MODE` | `callback` |
+| Backend | `.env` | `AI_SERVER_CALLBACK_URL` | `http://10.23.130.112:7860/ai/generate` |
+| Backend | `.env` | `BACKEND_CALLBACK_URL` | `http://10.23.130.9:8000/api/callback` |
+| Backend | `.env` | `DATABASE_URL` | ฐานข้อมูลที่ใช้ (PostgreSQL หรือ SQLite) |
+| Backend | `.env` | `SECRET_KEY` | สร้างใหม่ (ดูหัวข้อ 6) |
+| Backend | `.env` | `AI_CALLBACK_SECRET` | ค่าเดียวกับ `LUMA_INTERNAL_SECRET` ของเครื่อง AI |
+| AI | `ai_server/.env` | `LUMA_INTERNAL_SECRET` | ค่าเดียวกับ `AI_CALLBACK_SECRET` ของ Backend |
+| AI | `ai_server/.env` | `BACKEND_CALLBACK_URL` | `http://10.23.130.9:8000/api/callback` |
+
+> `.env.example` ใน branch `backend` ยังไม่มีบรรทัด `AI_SERVER_CALLBACK_URL` ต้องเพิ่มเอง (ไฟล์ใน `main` และ `devops` มีแล้ว)
+>
+> Frontend กับ Gateway ไม่มี `.env` — IP ที่ต้องตรงกันอยู่ใน `nginx/conf/nginx.conf` (upstream ของ Frontend และ Backend) และ `frontend-html/serve_gateway.py` (IP ของ Gateway ที่ Frontend ยอมรับ)
+
+รายละเอียดเพิ่มเติมดูได้จากคู่มือในแต่ละ branch (`nginx/DEVOPS_MANUAL.md`, `README-backend.md`, `ai_server/README.md`, `frontend-html/README.md`)
 
 ---
 
