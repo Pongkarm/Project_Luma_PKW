@@ -1,199 +1,276 @@
 # 🎨 LUMA: Distributed AI Image Generation Platform
 
-[![Python](https://img.shields.io/badge/Python-3.10-blue.svg)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg)](https://fastapi.tiangolo.com)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-336791.svg)](https://www.postgresql.org)
-[![Pytest](https://img.shields.io/badge/Tests-51%20Passed-brightgreen.svg)](https://pytest.org)
-[![Coverage](https://img.shields.io/badge/Coverage-90%25-success.svg)](https://coverage.readthedocs.io)
+[![Architecture](https://img.shields.io/badge/Architecture-4--Node%20Distributed-orange.svg)](#-1-architecture-overview-สถาปัตยกรรมระบบ-4-เครื่อง)
+[![Gateway](https://img.shields.io/badge/Nginx%20Gateway-Port%2080-009639.svg?logo=nginx)](https://github.com/Pongkarm/Project_Luma_PKW/tree/devops)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg?logo=python)](https://python.org)
+[![Frontend](https://img.shields.io/badge/Frontend-HTML%20%2B%20Vanilla%20JS-f7df1e.svg?logo=javascript&logoColor=black)](https://github.com/Pongkarm/Project_Luma_PKW/tree/frontend-app)
+[![Defense Mastery Hub](https://img.shields.io/badge/Defense%20Mastery%20Hub-Live%20Web-6366f1.svg?logo=googlechrome&logoColor=white)](https://kong19565.github.io/luma-defense-mastery/)
 
-**LUMA** เป็นระบบประมวลผลและสร้างภาพด้วยปัญญาประดิษฐ์ (AI Image Generation Platform) ที่ถูกออกแบบด้วยสถาปัตยกรรมแบบ **Distributed Computing** รองรับการสร้างภาพแบบ Multi-Modal ทั้ง **Text-to-Image (txt2img)**, **Image-to-Image (img2img)**, และ **Canvas Inpainting**
+**LUMA** เป็นแพลตฟอร์มสร้างและตกแต่งภาพด้วย AI ที่ออกแบบเป็นระบบ **Distributed Computing 4 เครื่อง** เชื่อมกันผ่านวงแลน รองรับ **Text-to-Image (txt2img)**, **Image-to-Image (img2img)**, **Canvas Inpainting** และเครื่องมือ Studio (ตรวจจับท่าทาง, ลายเส้น, Color Splash, ลบพื้นหลัง)
+
+📄 สไลด์นำเสนอโปรเจกต์: [`LUMA_Project_Presentation.pdf`](LUMA_Project_Presentation.pdf)
 
 ---
 
-## 🏛️ 1. Architecture Overview (สถาปัตยกรรมระบบ)
+## 🌿 0. โครงสร้าง Repository (แยก Branch ตามเครื่อง)
 
-ระบบแบ่งออกเป็น 3 Nodes อิสระ เชื่อมต่อกันผ่าน Local Area Network (LAN):
+โค้ดของแต่ละเครื่องอยู่คนละ branch โดย `main` เก็บเฉพาะภาพรวมโปรเจกต์ เอกสาร และสไลด์นำเสนอ
+
+| Branch | เครื่อง | เนื้อหาหลัก | ผู้รับผิดชอบ |
+| :--- | :--- | :--- | :---: |
+| [`main`](https://github.com/Pongkarm/Project_Luma_PKW/tree/main) | — | README ภาพรวม, `.env.example`, สไลด์นำเสนอ | ทั้งทีม |
+| [`devops`](https://github.com/Pongkarm/Project_Luma_PKW/tree/devops) | Node 1: Gateway | `nginx/` (`nginx.conf`, Dashboard, QA Test Suite, Backup, `DEVOPS_MANUAL.md`) | [@bankjunjan](https://github.com/bankjunjan) |
+| [`frontend-app`](https://github.com/Pongkarm/Project_Luma_PKW/tree/frontend-app) | Node 2: Frontend | `frontend-html/` (HTML + CSS + Vanilla JS, ชุดทดสอบ `tests/`) | [@winxtxrgit](https://github.com/winxtxrgit) · [@wxnxtxr](https://github.com/wxnxtxr) |
+| [`backend`](https://github.com/Pongkarm/Project_Luma_PKW/tree/backend) | Node 3: Backend | `app/` (FastAPI), `tests/` (pytest), Dockerfile, สคริปต์ `run_backend` | [@Pongkarm](https://github.com/Pongkarm) |
+| [`ai-node`](https://github.com/Pongkarm/Project_Luma_PKW/tree/ai-node) | Node 4: AI | `ai_server/` (FastAPI + WebUI Forge), LoRA Compatibility Guard | [@Kong19565](https://github.com/Kong19565) |
+
+> แต่ละ branch มี README/คู่มือของตัวเองที่ลงรายละเอียดเฉพาะเครื่องนั้น
+
+---
+
+## 🏛️ 1. Architecture Overview (สถาปัตยกรรมระบบ 4 เครื่อง)
+
+ผู้ใช้เข้าระบบผ่าน Nginx Gateway ที่พอร์ต 80 เพียงจุดเดียว Gateway ส่งต่อหน้าเว็บไปที่ Frontend และส่งคำขอ API ไปที่ Backend ทำให้หน้าเว็บกับ API อยู่ origin เดียวกันและไม่มีปัญหา CORS
 
 ```mermaid
 graph TD
-    User([👤 User / Browser])
-    
-    subgraph PC1 ["Node 1: Frontend (192.168.1.10)"]
-        UI[Bootstrap 5 + Canvas Inpaint Tool]
+    User(["👤 User / Browser"])
+
+    subgraph N1 ["Node 1: Nginx Gateway & DevOps (10.23.130.212:80)"]
+        Nginx["Nginx Reverse Proxy"]
+        Dash["DevOps Dashboard /dashboard"]
+        QA["QA Test Suite + Backup SHA-256"]
     end
 
-    subgraph PC2 ["Node 2: Backend (192.168.1.20:8000)"]
-        API[FastAPI Backend Engine]
-        DB[(PostgreSQL Database)]
-        Storage[Local File Storage: uploads/ & outputs/]
-        Security[JWT + Bcrypt + 5-Layer Image Validation]
+    subgraph N2 ["Node 2: Frontend (10.23.130.6:5500)"]
+        UI["HTML + Vanilla JS<br/>Generate • Studio • History • Admin"]
     end
 
-    subgraph PC3 ["Node 3: AI Inference Engine (192.168.1.30:7860)"]
-        AIEngine[FastAPI AI Wrapper]
-        SD[Stable Diffusion / WebUI Forge RTX 3070]
-        LoRA[LoRA Registry & Checkpoint Loader]
+    subgraph N3 ["Node 3: Backend & Database (10.23.130.9:8000)"]
+        API["FastAPI Backend"]
+        DB[("SQLite / PostgreSQL")]
+        Storage["uploads/ & outputs/"]
     end
 
-    User -->|"HTTP / HTTPS"| UI
-    UI -->|"REST API + JWT"| API
+    subgraph N4 ["Node 4: AI Inference (10.23.130.112:7860)"]
+        AI["FastAPI AI Server"]
+        SD["Stable Diffusion WebUI Forge :7861<br/>RTX 3070"]
+    end
+
+    User -->|"HTTP :80"| Nginx
+    Nginx -->|"/ (หน้าเว็บ)"| UI
+    Nginx -->|"/api/, /auth, /generations, /uploads, /admin/ ..."| API
     API -->|"SQLAlchemy ORM"| DB
     API -->|"Atomic File I/O"| Storage
-    API -->|"Direct (Sync) OR Callback (Webhook)"| AIEngine
-    AIEngine -->|"Inference Execution"| SD
-    AIEngine -->|"X-LUMA-INTERNAL-SECRET Callback"| API
+    API -->|"POST /ai/generate (task_id, callback_url)"| AI
+    AI -->|"Forge API"| SD
+    AI -->|"POST /api/callback + X-LUMA-INTERNAL-SECRET"| API
 ```
+
+### ตารางเครื่องและพอร์ต
+
+| Node | บทบาท | OS | IP | Port | หน้าที่หลัก |
+| :---: | :--- | :---: | :---: | :---: | :--- |
+| **1** | Nginx Gateway & DevOps | Windows | `10.23.130.212` | `80` | จุดเข้าระบบจุดเดียว, Reverse Proxy, Traffic Log, Dashboard, QA, Backup |
+| **2** | Frontend | macOS | `10.23.130.6` | `5500` | หน้าเว็บทั้งหมด รับคำขอเฉพาะที่ผ่าน Gateway (`serve_gateway.py`) |
+| **3** | Backend & Database | macOS | `10.23.130.9` | `8000` | Auth (JWT), จัดการงาน, ฐานข้อมูล, เก็บไฟล์ภาพ, Studio Tools, Admin |
+| **4** | AI Inference | Windows | `10.23.130.112` | `7860` | รัน Stable Diffusion บน GPU ผ่าน WebUI Forge (`:7861`) พร้อมคิว FIFO |
+
+> 🔒 Nginx อนุญาตเฉพาะเครื่องในวงแลน (`10.23.130.0/24`, `172.20.10.0/24`) และหน้า `/dashboard` เปิดได้จากเครื่อง Gateway เท่านั้น
 
 ---
 
-## 🔄 2. Dual-Mode Inference Strategy
+## 🔄 2. ลำดับการสร้างภาพ (Distributed Callback Mode)
 
-ระบบรองรับการทำงานกับ AI Node ใน 2 รูปแบบ สลับได้ง่ายๆ ผ่านการตั้งค่า `AI_MODE` ใน `.env`:
+Backend สลับโหมดการคุยกับ AI Node ได้ด้วย `AI_MODE` ในไฟล์ `.env` ใช้โหมด Direct (synchronous) ตอนทดสอบบนเครื่องเดียว และใช้โหมด Callback เมื่อรันข้ามเครื่องจริง
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Client as Frontend (PC1)
-    participant Backend as Backend Engine (PC2)
-    participant DB as PostgreSQL
-    participant AI as AI Node (PC3)
+    actor U as Browser
+    participant G as Nginx Gateway
+    participant B as Backend
+    participant D as Database
+    participant A as AI Node
 
-    alt Mode A: Direct Mode (Synchronous)
-        Client->>Backend: POST /generations (Prompt, Settings)
-        Backend->>DB: Record Task (status=pending)
-        Backend->>AI: POST /generate (Prompt, Resolution)
-        AI-->>Backend: Return Base64 PNG Image
-        Backend->>Backend: Save outputs/{id}.png
-        Backend->>DB: Update status=completed
-        Client->>Backend: GET /generations/{id}/image
-        Backend-->>Client: 200 OK (PNG File)
-    else Mode B: Distributed Callback Mode (Asynchronous Webhook)
-        Client->>Backend: POST /generations (Prompt)
-        Backend->>DB: Record Task (status=pending)
-        Backend->>AI: POST /ai/generate (task_id, callback_url)
-        AI-->>Backend: 202 Accepted (Enqueued)
-        Note over AI: GPU Inferences on RTX 3070...
-        AI->>Backend: POST /api/callback (X-LUMA-INTERNAL-SECRET, Base64 Image)
-        Backend->>Backend: Atomic Save outputs/{id}.png
-        Backend->>DB: Update status=completed
-        Client->>Backend: GET /generations/{id} (Polling status)
-        Backend-->>Client: 200 OK (status: completed)
+    U->>G: POST /generations (prompt, model, LoRA, settings)
+    G->>B: ส่งต่อคำขอ
+    B->>D: บันทึกงาน status=pending
+    B->>A: POST /ai/generate (task_id, callback_url)
+    A-->>B: 202 Accepted (เข้าคิว FIFO)
+    loop ระหว่างรอ
+        U->>G: GET /generations/{id}/progress
+        G->>B: ส่งต่อคำขอ
+        B-->>U: สถานะและความคืบหน้า
     end
+    A->>B: POST /api/callback (X-LUMA-INTERNAL-SECRET, ภาพผลลัพธ์)
+    B->>B: บันทึกภาพแบบ Atomic Write
+    B->>D: อัปเดต status=completed
+    U->>G: GET /generations/{id}/image
+    G->>B: ส่งต่อคำขอ
+    B-->>U: ไฟล์ภาพ
 ```
 
 ---
 
-## 🗄️ 3. Database Schema (Entity-Relationship)
+## ✨ 3. ความสามารถของระบบ
+
+### หน้าเว็บ (Frontend: `frontend-html/`)
+
+| หน้า | ไฟล์ | ใช้ทำอะไร |
+| :--- | :--- | :--- |
+| หน้าแรก | `index.html` | แนะนำระบบและทางเข้า |
+| สมัคร / เข้าสู่ระบบ | `register.html`, `login.html` | สร้างบัญชีและรับ JWT |
+| สร้างภาพ | `generate.html` | txt2img, img2img, inpaint (วาด mask บน canvas), เลือก Model และ LoRA, ร่างงานบันทึกอัตโนมัติ |
+| Studio | `studio.html` | เครื่องมือแต่งภาพ: Pose, Sketch, Color Splash, Remove Background |
+| ประวัติ | `history.html` | ดู ดาวน์โหลด และลบภาพที่เคยสร้าง |
+| บัญชี | `account.html` | แก้ไขข้อมูลผู้ใช้ |
+| ผู้ดูแลระบบ | `admin.html` | สถิติ, จัดการผู้ใช้, สิทธิ์ admin, Audit Log |
+
+### API หลัก (Backend: `app/api/`)
+
+| กลุ่ม | Endpoint |
+| :--- | :--- |
+| Auth | `POST /auth/register`, `POST /auth/login`, `GET/PATCH /auth/me` |
+| Generations | `POST/GET /generations`, `GET/DELETE /generations/{id}`, `POST /generations/{id}/cancel`, `GET /generations/{id}/progress`, `GET /generations/{id}/image` |
+| Uploads | `POST /uploads`, `GET /uploads/{filename}` |
+| Models | `GET /api/models` (Checkpoint และ LoRA พร้อม family) |
+| Studio Tools | `POST /api/tools/pose`, `/sketch`, `/color-splash`, `/remove-bg`, `GET /api/tools/results/{filename}` |
+| Admin | `/admin/me`, `/admin/stats`, `/admin/users`, `/admin/generations`, `/admin/audit`, `/admin/roles` |
+| AI Callback | `POST /api/callback` (ต้องมี `X-LUMA-INTERNAL-SECRET`) |
+| Health | `GET /healthz` |
+
+### AI Server (`ai_server/`)
+
+`GET /ai/health`, `GET /ai/models`, `POST /ai/generate`, `POST /ai/edit`, `GET /ai/status/{task_id}`
+
+---
+
+## 🧠 4. Model & LoRA Compatibility Guard
+
+LoRA แต่ละตัวเทรนมาสำหรับ Base Model ตระกูลเดียว ถ้าใช้ข้ามตระกูล ภาพจะเพี้ยน ระบบจึงกันไว้ 2 ชั้น
+
+| Family | ตัวอย่าง Checkpoint | LoRA ที่ใช้ได้ |
+| :--- | :--- | :--- |
+| `sd15` | `counterfeitV30_v30` | `tachi-e`, `niji_and_midj_mix217` |
+| `illustrious_xl` | `novaAnimeXL_ilV190` | `SousouNoFrieren`, `Char-Frieren-IL-V1`, `himmel` |
+| `pony_xl` | `prefectPonyXL_v6` | `[Artstyle] SomethingWeird_Geekpower [PDXL]` |
+
+1. **Frontend:** รายการ LoRA แสดงเฉพาะตัวที่เข้ากับ Model ที่เลือก ถ้าเปลี่ยน Model แล้ว LoRA เดิมใช้ไม่ได้ จะรีเซ็ตเป็น "ไม่ใช้"
+2. **AI Server:** ถ้ามีคำขอข้ามตระกูลส่งตรงมาทาง API ระบบจะตัด LoRA นั้นออก (auto-skip) แล้วบันทึก warning แทนการตอบ error
+
+---
+
+## 🗄️ 5. Database Schema
 
 ```mermaid
 erDiagram
     USERS ||--o{ GENERATIONS : owns
+    USERS ||--o| ADMIN_ROLES : has
+    USERS ||--o{ AUDIT_EVENTS : performs
     USERS {
-        uuid id PK "gen_random_uuid()"
-        string username "Unique, Indexed"
-        string email "Unique, Indexed"
-        string password_hash "Bcrypt Encrypted"
-        boolean is_active "Default: True"
-        timestamp created_at "Server Default: NOW()"
+        uuid id PK
+        string username "unique"
+        string email "unique"
+        string password_hash "bcrypt"
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+        timestamp last_login_at
     }
     GENERATIONS {
-        uuid id PK "gen_random_uuid()"
-        uuid user_id FK "References users(id)"
+        uuid id PK
+        uuid user_id FK
         string task_type "txt2img | img2img | inpaint"
-        text prompt "User prompt"
-        text negative_prompt "Negative keywords"
-        string model_name "SD Checkpoint model"
-        jsonb lora_config "LoRA weights and triggers"
-        string sampler_name "Sampling algorithm"
-        int steps "Inference steps (1-150)"
-        float cfg_scale "CFG scale (0-30)"
-        bigint seed "Random seed"
-        int width "Width in px"
-        int height "Height in px"
-        string source_image_path "Uploaded base image"
-        string mask_image_path "Uploaded inpaint mask"
-        float denoising_strength "img2img strength (0.0-1.0)"
-        string output_path "Path to generated image"
+        text prompt
+        text negative_prompt
+        string model_name
+        json lora_config
+        string sampler_name
+        int steps
+        float cfg_scale
+        bigint seed
+        int width
+        int height
+        string source_image_path
+        string mask_image_path
+        float denoising_strength
+        string output_path
         string status "pending | processing | completed | failed"
-        text error_message "Error diagnostics"
-        float duration_seconds "Processing duration"
-        timestamp created_at "Created timestamp"
-        timestamp completed_at "Completed timestamp"
+        text error_message
+        float duration_seconds
+        timestamp created_at
+        timestamp completed_at
+    }
+    ADMIN_ROLES {
+        uuid user_id FK
+        string role "owner | admin | reviewer"
+        uuid granted_by FK
+        timestamp granted_at
+    }
+    AUDIT_EVENTS {
+        uuid id PK
+        uuid actor_id FK
+        string action
+        string target_type
+        uuid target_id
+        json detail
+        timestamp created_at
     }
 ```
 
 ---
 
-## 🛡️ 4. Five-Layer Image Security Validation
+## 🛡️ 6. ความปลอดภัย (Defense-in-Depth)
 
-| Layer | Validation Type | Defense Purpose |
-|---|---|---|
-| **Layer 1** | Content-Type Header | กรองเบื้องต้นเฉพาะ `image/png`, `image/jpeg`, `image/webp` |
-| **Layer 2** | File Size Limit (10MB) | ป้องกัน DoS จากไฟล์ขนาดใหญ่ (HTTP 413) |
-| **Layer 3** | Magic Bytes Inspection | ตรวจสอบ Header ไบนารีแท้ ป้องกันมัลแวร์ที่ปลอมนามสกุล (HTTP 422) |
-| **Layer 4** | Decompression Bomb Defense | จำกัด `Image.MAX_IMAGE_PIXELS = 16M` (4096x4096px) ตาม OWASP |
-| **Layer 5** | EXIF Stripping & Atomic Write | ลบพิกัด GPS/Metadata เพื่อความเป็นส่วนตัว และบันทึกแบบ Atomic |
+| ชั้น | อยู่ที่ | รายละเอียด |
+| :--- | :--- | :--- |
+| LAN Isolation | Gateway | รับเฉพาะ IP ในวงแลน นอกนั้นตอบ 403 |
+| Dashboard Whitelist | Gateway | `/dashboard` เปิดได้จากเครื่อง Gateway เท่านั้น |
+| Gateway-only Frontend | Frontend | เข้าพอร์ต 5500 ตรงจะได้ 403 ต้องผ่าน Gateway |
+| JWT + Bcrypt + Role | Backend | ยืนยันตัวตนทุกคำขอ แยกสิทธิ์ owner / admin / reviewer พร้อม Audit Log |
+| 5-Layer Image Validation | Backend | Content-Type → ขนาดไฟล์ ≤ 10MB → Magic Bytes → กัน Decompression Bomb → ลบ EXIF และบันทึกแบบ Atomic |
+| Internal Secret | Backend ↔ AI | callback ต้องแนบ `X-LUMA-INTERNAL-SECRET` ที่ตรงกันทั้งสองเครื่อง |
 
----
-
-## 🧪 5. Testing & Quality Assurance (51 Tests, 90% Coverage)
-
-```text
-================================ tests coverage ================================
-Name                         Stmts   Miss  Cover
-------------------------------------------------
-app/api/auth.py                 34      1    97%
-app/api/callback.py             23      1    96%
-app/api/generation.py           32      1    97%
-app/api/upload.py               22      0   100% ⭐
-app/core/config.py              19      0   100% ⭐
-app/core/security.py            53      7    87%
-app/db/database.py              11      0   100% ⭐
-app/models/__init__.py          42      0   100% ⭐
-app/schemas/generation.py       75      1    99%
-app/schemas/token.py             4      0   100% ⭐
-app/schemas/user.py             22      0   100% ⭐
-app/services/generation.py     216     41    81%
-app/services/upload.py          73     10    86%
-------------------------------------------------
-TOTAL                          630     62    90% 🏆
-======================== 51 passed in 8.57s ========================
-```
+> ⚠️ ค่าใน `.env.example` เป็นตัวอย่างเท่านั้น ต้องสร้าง `SECRET_KEY` และ `AI_CALLBACK_SECRET` ใหม่เองด้วย
+> `python -c "import secrets; print(secrets.token_urlsafe(64))"`
 
 ---
 
-## 🚀 6. Quick Start Guide
+## 🧪 7. การทดสอบ
 
-### วิธีที่ 1: รันผ่าน Local Python Virtualenv
-```bash
-# 1. ติดตั้ง Dependencies
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
-# 2. รัน Mock AI Server (Port 8001)
-python mock_ai_server.py
-
-# 3. รัน Backend API (Port 8000)
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-
-# 4. สั่งรัน Automated Tests
-pytest --cov=app --cov-report=term-missing
-```
-
-### วิธีที่ 2: รันผ่าน Docker Compose
-```bash
-docker-compose up --build
-```
+| Node | ชุดทดสอบ | จำนวน | วิธีรัน |
+| :--- | :--- | :---: | :--- |
+| Gateway | `nginx/test_distributed_system.py` / `.ps1` | 12 (Python) / 16 (PowerShell) | `nginx\run_tests.bat` |
+| Frontend | `frontend-html/tests/` (unit, e2e, regressions, responsive) | 4 ชุด | `npm run test:all` (Node 22+) |
+| Backend | `tests/` (pytest) | 96 | `pytest --cov=app` |
+| AI Server | `ai_server/tests/` (pytest) | 18 | `pytest ai_server/tests` |
 
 ---
 
-## 🎬 7. Live Demonstration Flow (สำหรับนำเสนออาจารย์)
+## 🚀 8. วิธีเปิดระบบ
 
-1. **เปิด Swagger UI:** ไปที่ `http://localhost:8000/docs`
-2. **Register & Login:** สมัครสมาชิกและล็อกอินรับ Token
-3. **Check Profile:** เรียก `GET /auth/me` แสดงยอด `total_generations: 0`
-4. **Live Demo 1 (txt2img):** สั่งสร้างภาพด้วย Prompt $\rightarrow$ เรียก `GET /generations/{id}/image` ดูภาพที่สร้างเสร็จ
-5. **Live Demo 2 (img2img):** อัปโหลดภาพผ่าน `POST /uploads` $\rightarrow$ สั่ง `task_type="img2img"` $\rightarrow$ แสดงภาพ Before/After
-6. **Live Demo 3 (Distributed Callback):** แสดงการทำงานแบบ Asynchronous Webhook
-7. **Show Test Results:** รัน `pytest` แสดงผล 51/51 Tests ผ่าน 100% (Coverage 90%)
+เปิดตามลำดับ **AI → Backend → Frontend → Gateway** แล้วเข้าใช้งานที่ **`http://10.23.130.212`**
+
+| ลำดับ | เครื่อง | Branch | คำสั่ง |
+| :---: | :--- | :--- | :--- |
+| 1 | AI Node | `ai-node` | `ai_server\start_forge_api.bat` (Forge :7861) แล้วตามด้วย `start_ai_server.bat` (AI Server :7860) |
+| 2 | Backend | `backend` | `./run_backend.sh` (macOS/Linux) หรือ `run_backend.bat` (Windows) |
+| 3 | Frontend | `frontend-app` | `cd frontend-html && python3 serve_gateway.py` |
+| 4 | Gateway | `devops` | `nginx\run_nginx_with_logs.bat` |
+
+ตั้งค่าแต่ละเครื่องโดยคัดลอก `.env.example` เป็น `.env` แล้วแก้ IP และ secret ให้ตรงกัน ส่วนรายละเอียดเพิ่มเติมดูได้จากคู่มือในแต่ละ branch (`DEVOPS_MANUAL.md`, `README-backend.md`, `ai_server/README.md`, `frontend-html/README.md`)
+
+---
+
+## 👥 9. ทีมพัฒนา
+
+| คนที่ | หน้าที่ | GitHub |
+| :---: | :--- | :--- |
+| 1 | Frontend | [@winxtxrgit](https://github.com/winxtxrgit) · [@wxnxtxr](https://github.com/wxnxtxr) |
+| 2 | Backend & Database (เจ้าของ repo) | [@Pongkarm](https://github.com/Pongkarm) |
+| 3 | AI Inference | [@Kong19565](https://github.com/Kong19565) |
+| 4 | QA / DevOps | [@bankjunjan](https://github.com/bankjunjan) |
+
+🎓 ศูนย์เตรียมสอบปากเปล่า: [kong19565.github.io/luma-defense-mastery](https://kong19565.github.io/luma-defense-mastery/)
