@@ -270,7 +270,7 @@ erDiagram
 | :---: | :--- | :--- |
 | 1 | Frontend | [@winxtxrgit](https://github.com/winxtxrgit) · [@wxnxtxr](https://github.com/wxnxtxr) |
 | 2 | Backend & Database (เจ้าของ repo) | [@Pongkarm](https://github.com/Pongkarm) |
-| 3 | AI Inference | [@Kong19565](https://github.com/Kong19565) |
+| 3 | AI Server | [@Kong19565](https://github.com/Kong19565) |
 | 4 | QA / DevOps | [@bankjunjan](https://github.com/bankjunjan) |
 
 🎓 ข้อมูลเบื้องลึกอย่างละเอียด : [kong19565.github.io/luma-defense-mastery](https://kong19565.github.io/luma-defense-mastery/)
