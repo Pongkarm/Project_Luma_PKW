@@ -1,7 +1,7 @@
 """เสิร์ฟ frontend ที่พอร์ต 5500 แต่ยอมรับเฉพาะคำขอที่มาจาก Nginx Gateway เท่านั้น
 
 เข้าตรง http://<เครื่องนี้>:5500 จากเครื่องอื่น → 403 · เข้าผ่าน http://<gateway>/ → ใช้งานได้ปกติ
-ส่งให้เฉพาะไฟล์ที่หน้าเว็บใช้ (หน้า .html, css/, js/) ไฟล์อื่น เช่น tests/ README.md → 404
+ส่งให้เฉพาะไฟล์ที่หน้าเว็บใช้ (หน้า .html, css/, js/) ไฟล์อื่น เช่น README.md start.sh → 404
 และไม่แสดงรายชื่อไฟล์ในโฟลเดอร์
 """
 import posixpath
@@ -39,7 +39,7 @@ class GatewayOnlyHandler(SimpleHTTPRequestHandler):
         return False
 
     # หน้าเว็บโหลดแค่หน้า .html ที่อยู่บนสุด กับไฟล์ใน css/ และ js/ ที่เหลือไม่ต้องส่ง
-    # normpath ก่อนเช็ค เพื่อกัน /js/../tests/lib.mjs
+    # normpath ก่อนเช็ค เพื่อกัน /js/../README.md
     def _public(self):
         path = posixpath.normpath(unquote(urlsplit(self.path).path))
         if path == "/" or path.startswith(("/css/", "/js/")):

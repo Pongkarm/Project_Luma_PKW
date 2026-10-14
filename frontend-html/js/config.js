@@ -22,7 +22,6 @@
  * เชื่อมกับ:
  *   โหลดเป็นไฟล์แรกของทุกหน้า ไม่ใช้ของไฟล์อื่น
  *   ถูกใช้โดย  api.js, generate/*, studio/*, history/*
- *   ชุดทดสอบ (tests/lib.mjs) แทนค่า API_BASE_URL ระหว่างทางให้ชี้ไป backend ของการทดสอบ
  */
 const API_BASE_URL = '';
 

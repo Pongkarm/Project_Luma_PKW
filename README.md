@@ -21,7 +21,7 @@
 | :--- | :--- | :--- | :---: |
 | [`main`](https://github.com/Pongkarm/Project_Luma_PKW/tree/main) | — | README ภาพรวม, `.env.example`, สไลด์นำเสนอ | ทั้งทีม |
 | [`devops`](https://github.com/Pongkarm/Project_Luma_PKW/tree/devops) | Node 1: Gateway | `nginx/` (`nginx.conf`, Dashboard, QA Test Suite, Backup, `DEVOPS_MANUAL.md`) | [@bankjunjan](https://github.com/bankjunjan) |
-| [`frontend-app`](https://github.com/Pongkarm/Project_Luma_PKW/tree/frontend-app) | Node 2: Frontend | `frontend-html/` (HTML + CSS + Vanilla JS, ชุดทดสอบ `tests/`) | [@winxtxrgit](https://github.com/winxtxrgit) · [@wxnxtxr](https://github.com/wxnxtxr) |
+| [`frontend-app`](https://github.com/Pongkarm/Project_Luma_PKW/tree/frontend-app) | Node 2: Frontend | `frontend-html/` (HTML + CSS + Vanilla JS), สคริปต์ `start.sh` | [@winxtxrgit](https://github.com/winxtxrgit) · [@wxnxtxr](https://github.com/wxnxtxr) |
 | [`backend`](https://github.com/Pongkarm/Project_Luma_PKW/tree/backend) | Node 3: Backend | `app/` (FastAPI), `tests/` (pytest), Dockerfile, สคริปต์ `run_backend` | [@Pongkarm](https://github.com/Pongkarm) |
 | [`ai-node`](https://github.com/Pongkarm/Project_Luma_PKW/tree/ai-node) | Node 4: AI | `ai_server/` (FastAPI + WebUI Forge), LoRA Compatibility Guard | [@Kong19565](https://github.com/Kong19565) |
 
@@ -245,14 +245,12 @@ erDiagram
 | Node | ชุดทดสอบ | จำนวน | วิธีรัน | ต้องเปิดอะไรไว้ก่อน |
 | :--- | :--- | :---: | :--- | :--- |
 | Gateway | `nginx/test_distributed_system.py` / `.ps1` | 12 (Python) / 16 (PowerShell) | `nginx\run_tests.bat` | ทั้ง 4 เครื่อง (ทดสอบกับ IP จริง) |
-| Frontend | `tests/unit.mjs` | 14 | `npm run test:unit` | ไม่ต้อง |
-| Frontend | `tests/e2e.mjs`, `regressions.mjs`, `responsive.mjs` | 3 ชุด | `npm test`, `npm run test:regressions`, `npm run test:responsive` | Backend ที่ `localhost:8000` + AI หรือ mock AI และบัญชี owner (`alice`) |
 | Backend | `tests/` ยกเว้น `test_admin_permissions.py` | 85 | `pytest --cov=app` | ไม่ต้อง (แต่ต้องตั้ง `DATABASE_URL`, `SECRET_KEY`, `AI_CALLBACK_SECRET` ก่อน) |
 | Backend | `tests/test_admin_permissions.py` | 31 | (รันพร้อมชุดบน) | Backend ที่ `localhost:8000` และบัญชีทดสอบ `alice` (owner), `normaluser` (reviewer), `outsider` (ผู้ใช้ทั่วไป) |
 | AI Server | `test_server.py`, `test_edge_cases.py` | 17 | `pytest ai_server/tests/test_server.py ai_server/tests/test_edge_cases.py` | ไม่ต้อง (แต่ต้องตั้ง `LUMA_INTERNAL_SECRET` และติดตั้ง `pytest` เพิ่ม เพราะไม่อยู่ใน `requirements.txt`) |
 | AI Server | `test_multi_node_e2e.py` | 1 | `pytest ai_server/tests/test_multi_node_e2e.py` | โค้ด branch `backend` ในโฟลเดอร์ `backend_node` ข้างโฟลเดอร์ repo (ถ้าไม่มีจะข้าม) — test เปิด AI :7860 และ Backend :8000 ให้เอง |
 
-> Frontend ต้องใช้ Node 22 ขึ้นไป · Backend รวมทั้งหมด 116 test (pytest นับแยกทุกกรณีของ parametrize)
+> Backend รวมทั้งหมด 116 test (pytest นับแยกทุกกรณีของ parametrize)
 
 ---
 
@@ -264,7 +262,7 @@ erDiagram
 | :---: | :--- | :--- | :--- |
 | 1 | AI Node | `ai-node` | `ai_server\start_forge_api.bat` (Forge :7861) แล้วตามด้วย `start_ai_server.bat` (AI Server :7860) |
 | 2 | Backend | `backend` | `./run_backend.sh` (macOS/Linux) หรือ `run_backend.bat` (Windows) |
-| 3 | Frontend | `frontend-app` | `cd frontend-html && python3 serve_gateway.py` |
+| 3 | Frontend | `frontend-app` | `cd frontend-html && ./start.sh` |
 | 4 | Gateway | `devops` | `nginx\run_nginx_with_logs.bat` |
 
 ### ค่าที่ต้องตั้งใน `.env` เมื่อรันข้ามเครื่องจริง
