@@ -271,6 +271,6 @@ erDiagram
 | 6710301007 | นายดรัณภพ พิทักษ์กิจไพศาล | Backend & Database (เจ้าของ repo) | [@Pongkarm](https://github.com/Pongkarm) |
 | 6710301009 | นายอภิสักก์ คงภักดี | AI Server | [@Kong19565](https://github.com/Kong19565) |
 | 6710301032 | นายธนัท จงธีรธนโชติ | Frontend | [@winxtxrgit](https://github.com/winxtxrgit) · [@wxnxtxr](https://github.com/wxnxtxr) |
-| 6710301047 | วิรัชสัณห์ เจนนานาโชค | QA / DevOps | [@bankjunjan](https://github.com/bankjunjan) |
+| 6710301047 | นายวิรัชสัณห์ เจนนานาโชค | QA / DevOps | [@bankjunjan](https://github.com/bankjunjan) |
 
 🎓 ข้อมูลเบื้องลึกอย่างละเอียด : [kong19565.github.io/luma-defense-mastery](https://kong19565.github.io/luma-defense-mastery/)
