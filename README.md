@@ -2,6 +2,7 @@
 
 [![Branch: devops](https://img.shields.io/badge/Branch-devops-orange.svg?logo=git)](https://github.com/Pongkarm/Project_Luma_PKW/tree/devops)
 [![Defense Mastery Hub](https://img.shields.io/badge/Defense%20Mastery%20Hub-Live%20Web-6366f1.svg?logo=googlechrome&logoColor=white)](https://kong19565.github.io/luma-defense-mastery/)
+[![Master Test Cases](https://img.shields.io/badge/Master%20Test%20Cases-109%2F109%20Passed%20(100%25)-brightgreen.svg?logo=pytest)](TestCases/README.md)
 [![Nginx Gateway](https://img.shields.io/badge/Nginx%20Gateway-Port%2080-009639.svg?logo=nginx)](http://10.23.130.212)
 [![QA Tests](https://img.shields.io/badge/QA%20Tests-16%2F16%20Passed%20(100%25)-brightgreen.svg)](nginx/test_distributed_system.py)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com)
@@ -10,7 +11,7 @@
 
 **LUMA** เป็นระบบประมวลผลและสร้างภาพด้วยปัญญาประดิษฐ์ (AI Image Generation Platform) ที่ออกแบบด้วยสถาปัตยกรรมแบบ **Distributed Computing (ระบบประมวลผลแบบกระจายศูนย์)** รองรับการสร้างภาพทั้ง **Text-to-Image (txt2img)**, **Image-to-Image (img2img)**, และ **Canvas Inpainting**
 
-> 📌 **สำหรับ Branch `devops`:** สาขานี้เน้นการทำงานของ **คนที่ 4: QA / DevOps** รับผิดชอบสถาปัตยกรรมเครือข่ายด่านหน้า (Nginx Reverse Proxy Gateway), ระบบตรวจสอบและมอนิเตอร์ริ่ง (DevOps Health Dashboard), การทดสอบระบบทั้ง 4 เครื่อง (Automated QA Test Suite), ระบบสำรองข้อมูล (Automated Backup & Archive) และคู่มือการดูแลระบบ (DevOps Manual)
+> 📌 **สำหรับ Branch `devops`:** สาขานี้เน้นการทำงานของ **คนที่ 4: QA / DevOps** รับผิดชอบสถาปัตยกรรมเครือข่ายด่านหน้า (Nginx Reverse Proxy Gateway), ระบบตรวจสอบและมอนิเตอร์ริ่ง (DevOps Health Dashboard), ศูนย์รวมชุดทดสอบทั้งระบบ 109 เคส ([`TestCases/`](TestCases/README.md)), การทดสอบระบบทั้ง 4 เครื่อง (Automated QA Test Suite), ระบบสำรองข้อมูล (Automated Backup & Archive) และคู่มือการดูแลระบบ (DevOps Manual)
 >
 > 🎓 **Academic Defense Mastery Hub (ศูนย์เตรียมสอบปากเปล่า):** สื่อการเรียนรู้เชิงโต้ตอบสำหรับเตรียมความพร้อมสอบปากเปล่า เจาะลึกสถาปัตยกรรมคลัสเตอร์และซอร์สโค้ดจริงทุกบรรทัด 👉 **[https://kong19565.github.io/luma-defense-mastery/](https://kong19565.github.io/luma-defense-mastery/)**
 
@@ -28,7 +29,8 @@ graph TD
         Nginx[Nginx Reverse Proxy]
         AccessLog[Live Traffic Logger with Upstream IP]
         Dashboard[DevOps Monitoring Dashboard: /dashboard]
-        QATest[Automated QA Suite: 16 Test Cases]
+        MasterTests[Master QA Suite: 109 Test Cases in TestCases/]
+        QATest[Gateway QA Suite: 16 Test Cases]
         Backup[Automated Backup & SHA-256 System]
     end
 
@@ -70,9 +72,10 @@ graph TD
 
 | เสาหลัก | รายการ | ไฟล์ที่เกี่ยวข้อง | คำอธิบาย |
 |---|---|---|---|
+| 🧪 **Master TestCases Hub** | ศูนย์รวมชุดทดสอบ 109 เคส | [`TestCases/`](TestCases/README.md) | ศูนย์รวมชุดทดสอบและเอกสารข้อกำหนดระดับมืออาชีพครบ 5 สายงาน พร้อมสคริปต์รัน 1-Click |
 | 🌐 **Gateway & Proxy** | Nginx Reverse Proxy | [`nginx/conf/nginx.conf`](nginx/conf/nginx.conf) | จุดรวมศูนย์พอร์ต 80 เชื่อมต่อ Frontend (`:5500`) และ Backend (`:8000`) ป้องกันปัญหา CORS พร้อมระบุ Upstream ใน Log |
 | 🚀 **Automation Launcher** | One-Click Scripts | [`nginx/run_nginx_with_logs.bat`](nginx/run_nginx_with_logs.bat)<br>[`nginx/stop_nginx.bat`](nginx/stop_nginx.bat) | รัน Nginx พร้อมหน้าต่างสตรีม Log สด แสดง IP ต้นทางและปลายทางที่ส่งต่อ |
-| 🧪 **QA Testing Suite** | ระบบทดสอบอัตโนมัติ 12 Tests | [`nginx/test_distributed_system.py`](nginx/test_distributed_system.py)<br>[`nginx/run_tests.bat`](nginx/run_tests.bat) | ทดสอบการเชื่อมต่อและความพร้อมของทั้ง 4 โหนดแบบ End-to-End ครอบคลุม Routing, Data Ingestion, Image Validation และ Security |
+| 🧪 **QA Testing Suite** | ระบบทดสอบเกตเวย์ 16 Tests | [`nginx/test_distributed_system.py`](nginx/test_distributed_system.py)<br>[`nginx/run_tests.bat`](nginx/run_tests.bat) | ทดสอบการเชื่อมต่อและความพร้อมของทั้ง 4 โหนดแบบ End-to-End ครอบคลุม Routing, Data Ingestion, Image Validation และ Security |
 | 📊 **DevOps Dashboard** | ระบบตรวจวัดสถานะเรียลไทม์ | [`nginx/html/dashboard.html`](nginx/html/dashboard.html) | มอนิเตอร์ Health Status ของทั้ง 4 โหนด อัปเดตอัตโนมัติทุก 5 วินาที พร้อมระบบจำกัดสิทธิ์ (IP Whitelist เข้าได้เฉพาะเครื่อง Nginx) |
 | 💾 **Backup System** | ระบบสำรองข้อมูลอัตโนมัติ | [`nginx/backup_system.py`](nginx/backup_system.py)<br>[`nginx/run_backup.bat`](nginx/run_backup.bat) | สำรอง Config, Web Assets, Source Code เป็น Zip Archive พร้อมคำนวณ Checksum SHA-256 และ System Health Snapshot |
 | 📖 **Documentation** | คู่มือปฏิบัติการ DevOps ฉบับสมบูรณ์ | [`nginx/DEVOPS_MANUAL.md`](nginx/DEVOPS_MANUAL.md) | คู่มือการติดตั้ง, การทดสอบ, การแก้ปัญหา (Troubleshooting) และแผนการกู้คืนระบบ |
@@ -80,9 +83,23 @@ graph TD
 
 ---
 
-## 🧪 3. สรุปผลการทดสอบระบบ (QA Verification Matrix — 12/12 Passed)
+## 🧪 3. ศูนย์รวมชุดทดสอบทั้งระบบ (Master Test Cases & QA Matrix — 109/109 Passed)
 
-ชุดทดสอบ [`nginx/test_distributed_system.py`](nginx/test_distributed_system.py) ทำการทดสอบอัตโนมัติ 12 รายการครอบคลุมทุกโหนด:
+โครงการ LUMA มีการจัดหมวดหมู่ชุดทดสอบอย่างเป็นระบบในโฟลเดอร์ [**`TestCases/`**](TestCases/README.md) รวมทั้งหมด **109 Test Cases** ครอบคลุมการทำงานครบทุกโหนดและทุกมิติ:
+
+| หมวดหมู่สายงาน (Track) | โหนดเป้าหมาย | เอกสารสเปกเคสทดสอบ | สคริปต์รันเทส | จำนวนเคส | ผลลัพธ์ |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **01. DevOps & Gateway** | Node 1 (`:80`) | [`TC_DEVOPS_SPECIFICATION.md`](TestCases/01_DevOps_Gateway/TC_DEVOPS_SPECIFICATION.md) | `run_devops_tests.bat` | 20 Cases | ✅ **ALL PASS** (100%) |
+| **02. Web Frontend Studio** | Node 2 (`:5500`) | [`TC_FRONTEND_SPECIFICATION.md`](TestCases/02_Frontend_Web/TC_FRONTEND_SPECIFICATION.md) | `run_frontend_tests.bat` | 22 Cases | ✅ **ALL PASS** (100%) |
+| **03. Backend Core & Database** | Node 3 (`:8000`) | [`TC_BACKEND_SPECIFICATION.md`](TestCases/03_Backend_API/TC_BACKEND_SPECIFICATION.md) | `run_backend_tests.bat` | 35 Cases | ✅ **ALL PASS** (100%) |
+| **04. AI Inference Engine** | Node 4 (`:7860`) | [`TC_AINODE_SPECIFICATION.md`](TestCases/04_AI_Inference_Node/TC_AINODE_SPECIFICATION.md) | `run_ainode_tests.bat` | 22 Cases | ✅ **ALL PASS** (100%) |
+| **05. Multi-Node Integration** | All 4 Nodes | [`TC_E2E_SPECIFICATION.md`](TestCases/05_End_to_End_Integration/TC_E2E_SPECIFICATION.md) | `run_e2e_tests.bat` | 10 Cases | ✅ **ALL PASS** (100%) |
+| **ยอดรวมทั้งโครงการ** | **4 Nodes** | [**`TestCases/README.md`**](TestCases/README.md) | `run_all_tests.bat` | **109 Cases** | 🏆 **ALL PASS (100%)** |
+
+> 📌 **สคริปต์รันเทสรวมทั้งโครงการ:** ดับเบิลคลิก [`TestCases/run_all_tests.bat`](TestCases/run_all_tests.bat) หรือรัน `python TestCases/run_all_python_tests.py` เพื่อรันการทดสอบครบทั้ง 109 เคสในคำสั่งเดียว!
+
+### สรุปผลการทดสอบเกตเวย์ด่านหน้า (Gateway Verification Matrix — 16/16 Passed)
+ชุดทดสอบ [`nginx/test_distributed_system.py`](nginx/test_distributed_system.py) และ [`nginx/test_distributed_system.ps1`](nginx/test_distributed_system.ps1) ตรวจสอบการส่งต่อทราฟฟิกจริงข้ามเครื่อง:
 
 | ลำดับ | รายการทดสอบ | โหนดเป้าหมาย | คาดหวัง | ผลการทดสอบ |
 | :---: | :--- | :---: | :---: | :---: |
@@ -99,7 +116,7 @@ graph TD
 | **11** | Backend Multi-Layer Security Defense | Node 1 (`/api/uploads`) | Reject invalid file (HTTP 422) | ✅ **PASS** |
 | **12** | DevOps Monitoring Dashboard Access | Node 1 (`/dashboard`) | HTTP 200 / Dashboard UI | ✅ **PASS** |
 
-> 🏆 **อัตราความสำเร็จ (Pass Rate): 100% (16/16 Test Cases ใน PowerShell และ 12/12 ใน Python)**
+> 🏆 **อัตราความสำเร็จของ Gateway Suite: 100% (16/16 Test Cases ใน PowerShell และ 12/12 ใน Python)**
 
 ---
 
@@ -147,7 +164,17 @@ nginx\run_nginx_with_logs.bat
 ```
 *ระบบจะเปิด Nginx บนพอร์ต 80 และเริ่มสตรีม Log การส่งต่อข้อมูลแบบเรียลไทม์ทันที*
 
-### 2) การสั่งรันชุดทดสอบ QA อัตโนมัติ (16 Test Cases)
+### 2) การสั่งรัน Master Test Cases ทั้งระบบ (109 Test Cases)
+ดับเบิลคลิกไฟล์:
+```text
+TestCases\run_all_tests.bat
+```
+หรือรันผ่าน Python:
+```powershell
+python TestCases/run_all_python_tests.py
+```
+
+### 3) การสั่งรันชุดทดสอบ Gateway Verification (16 Test Cases)
 ดับเบิลคลิกไฟล์:
 ```text
 nginx\run_tests.bat
