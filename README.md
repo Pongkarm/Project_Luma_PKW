@@ -2,47 +2,66 @@
 
 [![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg)](https://fastapi.tiangolo.com)
-[![Architecture](https://img.shields.io/badge/Architecture-3--Node%20Distributed-orange.svg)](#-1-architecture-overview-สถาปัตยกรรมระบบ)
-[![Tests](https://img.shields.io/badge/Tests-Full%20Multi--Node%20Passed-brightgreen.svg)](#-6-testing--quality-assurance)
-[![Safety](https://img.shields.io/badge/Safety-5--Layer%20Guard%20%2B%20LoRA%20Compat-success.svg)](#-4-model--lora-architecture-compatibility-ระบบตรวจจับความเข้ากันได้)
+[![Architecture](https://img.shields.io/badge/Architecture-4--Node%20Distributed-orange.svg)](#-1-architecture-overview-สถาปัตยกรรมระบบ-4-โหนด)
+[![Nginx Gateway](https://img.shields.io/badge/Nginx%20Gateway-10.23.130.212%3A80-009639.svg?logo=nginx)](http://10.23.130.212)
+[![AI Node (PC3)](https://img.shields.io/badge/AI%20Node%20(PC3)-10.23.130.112%3A7860-blueviolet.svg?logo=nvidia)](http://10.23.130.112:7860)
+[![Tests](https://img.shields.io/badge/Tests-Full%20Multi--Node%20Passed%20(17%2F17%20AI%20%2B%2012%2F12%20QA)-brightgreen.svg)](#-6-testing--quality-assurance)
+[![Safety](https://img.shields.io/badge/Safety-5--Layer%20Guard%20%2B%20LoRA%20Compat-success.svg)](#-3-model--lora-architecture-compatibility-ระบบตรวจสอบความเข้ากันได้)
 
-**LUMA** เป็นแพลตฟอร์มสร้างและตัดต่อภาพด้วยปัญญาประดิษฐ์ระดับสตูดิโอ (AI Studio & Image Generation Platform) ที่ออกแบบด้วยสถาปัตยกรรม **Distributed Computing 3 โหนด** รองรับการสร้างภาพแบบ Multi-Modal ทั้ง **Text-to-Image (txt2img)**, **Image-to-Image (img2img)**, และ **Canvas Inpainting** พร้อมเครื่องมือประมวลผลภาพขั้นสูงในตัว
+**LUMA** เป็นแพลตฟอร์มสร้างและตัดต่อภาพด้วยปัญญาประดิษฐ์ระดับสตูดิโอ (AI Studio & Image Generation Platform) ที่ออกแบบด้วยสถาปัตยกรรม **Distributed Computing 4 โหนด (4 Physical Nodes)** รองรับการสร้างภาพแบบ Multi-Modal ทั้ง **Text-to-Image (txt2img)**, **Image-to-Image (img2img)**, และ **Canvas Inpainting** พร้อมเครื่องมือประมวลผลภาพขั้นสูงในตัว
 
 ---
 
-## 🏛️ 1. Architecture Overview (สถาปัตยกรรมระบบ 3 โหนด)
+## 🏛️ 1. Architecture Overview (สถาปัตยกรรมระบบ 4 โหนด)
 
-ระบบทำงานร่วมกันผ่าน Local Area Network (LAN) โดยแยกหน้าที่กันอย่างเด็ดขาดตามหลักการ Separation of Concerns:
+ระบบแบ่งแยกหน้าที่การทำงานอย่างชัดเจนตามหลักการ Separation of Concerns ออกเป็น **4 Physical Nodes** เชื่อมต่อกันผ่านเครือข่ายวงแลน (Local Area Network):
 
 ```mermaid
 graph TD
     User([👤 User / Web Browser])
-    
-    subgraph PC1 ["Node 1: Frontend (192.168.1.10)"]
+
+    subgraph Node1 ["Node 1: Nginx Gateway & DevOps (10.23.130.212:80)"]
+        Nginx["Nginx Reverse Proxy (Port 80)<br/>Single Entry Point & CORS Elimination"]
+        AccessLog["Live Traffic Logger with Upstream IP"]
+        Dashboard["DevOps Health Monitoring: /dashboard"]
+        QATest["Automated QA Suite: 12-16 Test Cases"]
+    end
+
+    subgraph Node2 ["Node 2: Frontend Web Client (10.23.130.6:5500)"]
         UI["Modern Web Studio (HTML5 / Vanilla JS)<br/>Canvas Inpainting • GrabCut • Pose Detection"]
     end
 
-    subgraph PC2 ["Node 2: Backend Core (192.168.1.20:8000)"]
+    subgraph Node3 ["Node 3: Backend & Database (10.23.130.9:8000)"]
         API["FastAPI Core Engine & API Gateway"]
-        DB[("Database: PostgreSQL / SQLite")]
-        Storage["Local File Storage: uploads/ & outputs/"]
-        Security["JWT Auth • Role-based Access • 5-Layer Security"]
+        DB[("Database: SQLite / PostgreSQL")]
+        Storage["Storage: uploads/ & outputs/"]
+        Security["JWT Auth • Bcrypt • 5-Layer Image Validation"]
     end
 
-    subgraph PC3 ["Node 3: AI Inference Server (192.168.1.30:7860)"]
-        AIEngine["FastAPI AI Engine (Port 7860)"]
-        SD["Stable Diffusion WebUI Forge (RTX 3070 8GB)"]
+    subgraph Node4 ["Node 4: AI Inference Engine (10.23.130.112:7860 — PC3)"]
+        AIEngine["FastAPI AI Engine (Port 7860)<br/>FIFO Queue • Watchdog 120s • Auto-skip"]
+        SD["Stable Diffusion WebUI Forge (RTX 3070 8GB)<br/>Port 7861 Loopback (--nowebui --api)"]
         LoRA["LoRA Registry & Compatibility Guard"]
     end
 
-    User -->|"HTTP"| UI
-    UI -->|"REST API + JWT"| API
-    API -->|"SQLAlchemy ORM"| DB
-    API -->|"Atomic File I/O"| Storage
-    API -->|"Async Webhook Dispatch"| AIEngine
+    User -->|"HTTP Port 80"| Nginx
+    Nginx -->|"Reverse Proxy / -> 10.23.130.6:5500"| UI
+    Nginx -->|"Reverse Proxy /api/, /auth, /generations"| API
+    UI -->|"REST API + JWT (via Gateway)"| API
+    API -->|"Async Webhook Dispatch (/ai/generate)"| AIEngine
     AIEngine -->|"Forge API (:7861)"| SD
-    AIEngine -->|"Webhook Callback (X-LUMA-INTERNAL-SECRET)"| API
+    AIEngine -->|"HTTP Callback (/api/callback) + WebP"| API
 ```
+
+### ตารางแจกแจงอุปกรณ์และพอร์ตในเครือข่าย (Network & Hardware Matrix)
+
+| Node | เครื่อง / บทบาท | ผู้รับผิดชอบ | ระบบปฏิบัติการ | IP Address | Port | หน้าที่หลัก |
+| :---: | :--- | :---: | :---: | :---: | :---: | :--- |
+| **1** | **Nginx Gateway & DevOps** | คนที่ 4 (QA / DevOps) | Windows | `10.23.130.212` | `80` | จุดรับ Traffic จุดเดียว (Single Entry Point), Reverse Proxy กระจายงาน, Realtime Log, Monitoring Dashboard, QA Testing, Backup |
+| **2** | **Frontend Client** | คนที่ 1 | macOS | `10.23.130.6` | `5500` | บริการหน้าเว็บ UI, Canvas Inpainting Tool, Studio GrabCut, Pose Detection |
+| **3** | **Backend & Database** | คนที่ 2 (Pongkarm) | macOS | `10.23.130.9` | `8000` | จัดการ Authentication, บันทึก Task คิว, ฐานข้อมูล, จัดเก็บรูปภาพ, รับ Callback Webhook |
+| **4** | **AI Inference Engine** | คนที่ 3 (Apisak K.) | Windows (PC3) | `10.23.130.112` | `7860` | ประมวลผลโมเดล Stable Diffusion บน GPU RTX 3070 8GB, FIFO Queue, LoRA Guard, WebP Compression |
+| **-** | **Forge Headless Engine** | โลคอลภายใน Node 4 | Windows (PC3) | `127.0.0.1` | `7861` | เอนจิน Diffusion ทำงานเบื้องหลังผ่าน REST API (`--nowebui --api`) |
 
 ---
 
@@ -53,31 +72,45 @@ Backend รองรับการทำงานร่วมกับ AI Node 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Client as Frontend (PC1)
-    participant Backend as Backend Engine (PC2)
-    participant DB as Database
-    participant AI as AI Node (PC3)
+    actor User as ผู้ใช้งาน (Browser)
+    participant Gateway as Node 1: Gateway (10.23.130.212)
+    participant Frontend as Node 2: Frontend (10.23.130.6)
+    participant Backend as Node 3: Backend (10.23.130.9)
+    participant DB as ฐานข้อมูล (SQLite/PostgreSQL)
+    participant AI as Node 4: AI Engine (10.23.130.112)
+    participant Forge as Forge GPU (127.0.0.1:7861)
 
     alt โหมด A: Direct Mode (Synchronous — สำหรับทดสอบบนเครื่องเดี่ยว)
-        Client->>Backend: POST /generations (Prompt, Settings)
+        User->>Gateway: POST /api/generations (Prompt, Settings)
+        Gateway->>Backend: Forward to 10.23.130.9:8000
         Backend->>DB: บันทึกสถานะงาน (status=pending)
         Backend->>AI: POST /generate (Prompt, Resolution)
-        AI-->>Backend: ส่งภาพผลลัพธ์กลับมาทันที (Base64 WebP/PNG)
+        AI->>Forge: /sdapi/v1/txt2img
+        Forge-->>AI: PNG Image
+        AI-->>Backend: ส่งภาพผลลัพธ์กลับมาทันที (Base64 WebP)
         Backend->>Backend: บันทึกภาพลง Disk (outputs/{id}.webp)
         Backend->>DB: อัปเดตสถานะงาน (status=completed)
-        Client->>Backend: GET /generations/{id}/image
-        Backend-->>Client: 200 OK (ไฟล์ภาพ)
-    else โหมด B: Distributed Callback Mode (Asynchronous — ใช้งานจริงข้ามเครื่อง)
-        Client->>Backend: POST /generations (Prompt)
+        User->>Gateway: GET /api/generations/{id}/image
+        Gateway->>Backend: Forward to 10.23.130.9:8000
+        Backend-->>User: 200 OK (ไฟล์ภาพ)
+    else โหมด B: Distributed Callback Mode (Asynchronous — ใช้งานจริงในระบบ 4 โหนด)
+        User->>Gateway: POST /api/generations (Prompt, Settings)
+        Gateway->>Backend: Forward to 10.23.130.9:8000
         Backend->>DB: บันทึกสถานะงาน (status=pending)
         Backend->>AI: POST /ai/generate (task_id, callback_url)
-        AI-->>Backend: ตอบรับ 202 Accepted ทันที (เข้า FIFO Queue)
-        Note over AI: GPU รันบน RTX 3070 พร้อม Watchdog 120s...
-        AI->>Backend: POST /api/callback (Secret Token, ภาพผลลัพธ์ WebP)
-        Backend->>Backend: บันทึกภาพแบบ Atomic Write
+        AI-->>Backend: ตอบรับ HTTP 202 Accepted ทันที (เข้า FIFO Queue)
+        Backend-->>Gateway: 202 Accepted (task_id, status: pending)
+        Gateway-->>User: ตอบกลับทันที (ไม่เกิด 504 Gateway Timeout)
+        Note over AI,Forge: GPU RTX 3070 ประมวลผล Denoising (7.54 it/s)...
+        AI->>Forge: POST /sdapi/v1/txt2img
+        Forge-->>AI: Output Latent Decoded
+        AI->>AI: บีบอัด WebP (Method 6, Quality 92) + สำรอง Disaster Cache
+        AI->>Backend: POST /api/callback (X-LUMA-INTERNAL-SECRET, WebP Base64, Seed)
+        Backend->>Backend: บันทึกภาพแบบ Atomic Write (outputs/{id}.webp)
         Backend->>DB: อัปเดตสถานะงาน (status=completed)
-        Client->>Backend: โพลล์สถานะ GET /generations/{id}
-        Backend-->>Client: 200 OK (status: completed)
+        User->>Gateway: โพลล์สถานะ GET /api/generations/{id}
+        Gateway->>Backend: Forward
+        Backend-->>User: 200 OK (status: completed, image_url)
     end
 ```
 
@@ -161,45 +194,60 @@ erDiagram
 
 ## 🧪 6. Testing & Quality Assurance (ผลการทดสอบเต็มระบบ)
 
-ระบบผ่านการทดสอบแบบอัตโนมัติ (Automated Tests) ครบถ้วนทุกชั้นสถาปัตยกรรม:
+ระบบผ่านการทดสอบแบบอัตโนมัติ (Automated Tests) ครบถ้วนทุกชั้นสถาปัตยกรรมทั้ง 4 โหนด:
 
-* **Node 1 Frontend (`frontend-html`)**: ผ่านการทดสอบ **14/14 Tests** ครอบคลุมการคำนวณขนาดภาพ, กฎรหัสผ่าน, และการกรอง LoRA ตามตระกูลโมเดล
-* **Node 2 Backend Core (`backend_node`)**: ผ่านการทดสอบ **83+ Integration Tests** ครอบคลุม Auth, Permissions, Upload Security, และ Webhook Idempotency
-* **Node 3 AI Inference Node (`Project_Luma_PKW`)**: ผ่านการทดสอบ **17/17 Tests** ครอบคลุม GPU Monitor, Queue FIFO, Safety Bounds, และ Auto-skip Guard
-* **Multi-Node Full Pipeline (`test_multi_node_e2e.py`)**: ผ่านการทดสอบจำลองเชื่อมโยง 3 โหนดพร้อมกันแบบครบวงจร
+* **Node 1 DevOps Gateway (`nginx/test_distributed_system.py`)**: ผ่านการทดสอบ **12/12 Tests (100% Pass)** ครอบคลุม Routing, Reverse Proxy, Upstream IP Whitelist, Data Ingestion, Image Validation และ Backup Integrity
+* **Node 2 Frontend (`frontend-html`)**: ผ่านการทดสอบ **14/14 Tests** ครอบคลุมการคำนวณขนาดภาพ, กฎรหัสผ่าน, และการกรอง LoRA ตามตระกูลโมเดล
+* **Node 3 Backend Core (`backend_node`)**: ผ่านการทดสอบ **83+ Integration Tests** ครอบคลุม Auth, Permissions, Upload Security, และ Webhook Idempotency
+* **Node 4 AI Inference Node (`Project_Luma_PKW` / `ai_server`)**: ผ่านการทดสอบ **17/17 Tests (100% Pass)**
+  * `test_server.py`: **9/9 Passed** (GPU Monitor, Models List, LoRA Trigger, Task Lifecycle, VRAM Guard)
+  * `test_edge_cases.py`: **8/8 Passed** (Bounds Sanitization, Empty Prompt, HTTP 403 Security, Cancellation)
+* **Multi-Node Full Pipeline (`test_multi_node_e2e.py`)**: ผ่านการทดสอบจำลองเชื่อมโยง 4 โหนดพร้อมกันแบบครบวงจรข้ามวงแลน
 
 ---
 
-## 🚀 7. Quick Start Guide (วิธีเปิดใช้งานระบบ)
+## 🚀 7. Quick Start Guide (วิธีเปิดใช้งานระบบในวงแลน)
 
-### รัน Node 3: AI Inference Server (พอร์ต 7860)
+### 1) รัน Node 4: AI Inference Server (พอร์ต 7860 — เครื่อง PC3)
+ดับเบิลคลิกไฟล์ **`start_ai_server.bat`** (One-Click Launcher) หรือรันผ่าน Terminal:
 ```powershell
-# ในโฟลเดอร์ Project_Luma_PKW
-python -m uvicorn ai_server.server:app --host 0.0.0.0 --port 7860
+# ในโฟลเดอร์ Project_Luma_PKW หรือ Project_Luma
+python -m ai_server.run
 ```
+*(ระบบจะผูกเข้ากับ `0.0.0.0:7860` และเชื่อมต่อกับ Forge Headless บน `127.0.0.1:7861` อัตโนมัติ)*
 
-### รัน Node 2: Backend Core API (พอร์ต 8000)
+### 2) รัน Node 3: Backend Core API (พอร์ต 8000 — เครื่อง Pongkarm)
 ```powershell
 # ในโฟลเดอร์ backend_node
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### รัน Node 1: Web Frontend (พอร์ต 5500)
+### 3) รัน Node 2: Web Frontend (พอร์ต 5500)
 ```bash
 # ในโฟลเดอร์ frontend_node/frontend-html
-python -m http.server 5500
-# เปิดเบราว์เซอร์ไปที่ http://localhost:5500
+python serve_gateway.py
+# หรือ python -m http.server 5500
+```
+
+### 4) รัน Node 1: Nginx Gateway & DevOps (พอร์ต 80)
+ดับเบิลคลิกไฟล์:
+```text
+nginx\run_nginx_with_logs.bat
 ```
 
 ---
 
 ## 🎬 8. Live Demonstration Flow (ลำดับการนำเสนอโปรเจกต์)
 
-1. **เปิดหน้าเว็บสตูดิโอ:** ไปที่ `http://localhost:5500` และล็อกอินเข้าสู่ระบบ
-2. **ทดสอบ Model & LoRA Filtering:**
+1. **เข้าใช้งานผ่าน Single Entry Point:** เปิดเบราว์เซอร์ไปที่ **`http://10.23.130.212/`** (หน้า Gateway พอร์ต 80) โชว์ว่าโหลด UI จาก Node 2 ได้อย่างสมบูรณ์แบบโดยไม่ต้องระบุพอร์ต
+2. **มอนิเตอร์สถานะระบบ:** เปิด **`http://10.23.130.212/dashboard`** แสดง Health Status และ VRAM ของทั้ง 4 โหนดแบบ Real-time
+3. **ทดสอบ Model & LoRA Filtering:**
    * เลือกโมเดล **Counterfeit v3.0 (SD 1.5)** ➔ สังเกตว่าช่อง LoRA จะแสดงเฉพาะ Tachi-e และ Niji Mix
    * สลับไปเลือก **Nova Anime XL** ➔ สังเกตว่าตัวเลือก LoRA เปลี่ยนเป็น Frieren และ Himmel ทันที
-3. **ทดสอบสร้างภาพ (txt2img):** กรอก Prompt ➔ กดสร้างภาพ ➔ สังเกต Task Queue บน AI Server รับงานและประมวลผล
-4. **ทดสอบ Inpainting & Image Edit:** อัปโหลดภาพต้นฉบับ ➔ ระบาย Mask สีบนแคนวาส ➔ สั่ง Inpaint แปลงวัตถุเฉพาะจุด
-5. **ทดสอบเครื่องมือสตูดิโอ (Studio Tools):** ทดสอบการตรวจจับท่าทาง (Pose Detection) และการตัดพื้นหลัง (GrabCut)
-6. **แสดงผลความปลอดภัยและการทดสอบ:** รันคำสั่งทดสอบ `python -m unittest ai_server.tests.test_server` แสดงความสมบูรณ์ของระบบ
+4. **ทดสอบสร้างภาพ (txt2img Asynchronous Flow):**
+   * กรอก Prompt ➔ กดสร้างภาพ ➔ Backend ตอบรับ `202 Accepted` ทันที
+   * สังเกตหน้าต่าง AI Node Console ประมวลผลบน GPU RTX 3070 ด้วยความเร็ว ~7.54 it/s
+   * เมื่อเสร็จสิ้น AI Node ส่ง Callback WebP กลับไปยัง Backend ➔ หน้าเว็บแสดงภาพสำเร็จ
+5. **ทดสอบ Inpainting & Image Edit:** อัปโหลดภาพต้นฉบับ ➔ ระบาย Mask สีบนแคนวาส ➔ สั่ง Inpaint แปลงวัตถุเฉพาะจุด
+6. **ทดสอบเครื่องมือสตูดิโอ (Studio Tools):** ทดสอบการตรวจจับท่าทาง (Pose Detection) และการตัดพื้นหลัง (GrabCut)
+7. **รัน Automated QA Verification:** ดับเบิลคลิก `nginx/run_tests.bat` โชว์ผลการทดสอบผ่าน 100% Pass ยืนยันความพร้อมของระบบ

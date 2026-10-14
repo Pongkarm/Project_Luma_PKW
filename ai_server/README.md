@@ -1,26 +1,50 @@
-# 🤖 Node 3: AI Inference Server (PC3 — 192.168.1.30:7860)
+# 🤖 Node 4: AI Inference Engine (PC3 — 10.23.130.112:7860)
 
 ## 📌 ภาพรวมและหน้าที่ของระบบ (Overview)
-**Node 3** ทำหน้าที่เป็นเซิร์ฟเวอร์ประมวลผล Generative AI สำหรับโปรเจกต์ LUMA โดยรันด้วย **FastAPI** บนระบบปฏิบัติการ Windows ทำงานร่วมกับฮาร์ดแวร์การ์ดจอ **NVIDIA GeForce RTX 3070 (8GB VRAM)** และเชื่อมต่อกับ **Stable Diffusion WebUI Forge API** (`http://127.0.0.1:7861`) 
 
-### หน้าที่หลัก:
-1. **คิวงาน In-Memory FIFO**: จัดการคิวงานสร้างภาพแบบเรียงลำดับ ป้องกันไม่ให้ GPU รับภาระเกินกำลัง (Concurrency = 1)
+**Node 4** ทำหน้าที่เป็นเซิร์ฟเวอร์ประมวลผล Generative AI สำหรับโปรเจกต์ LUMA ภายใต้สถาปัตยกรรมกระจายศูนย์ 4 โหนด (4-Node Distributed Architecture) รันด้วย **FastAPI** บน Windows ทำงานร่วมกับฮาร์ดแวร์การ์ดจอ **NVIDIA GeForce RTX 3070 Laptop (8GB VRAM)** และเชื่อมต่อกับ **Stable Diffusion WebUI Forge Headless API** (`http://127.0.0.1:7861`) ผ่าน Local Loopback
+
+### หน้าที่หลักของ Node 4 (AI Deliverables):
+1. **คิวงาน In-Memory FIFO (Concurrency = 1)**: จัดการคิวงานสร้างภาพแบบเรียงลำดับ ป้องกันไม่ให้ GPU รับภาระเกินกำลัง และขจัดปัญหา GPU Out-of-Memory (OOM) 100%
 2. **Watchdog Timer (120s)**: เฝ้าระวังไม่ให้งานค้าง หาก GPU ประมวลผลเกินเวลาจะสั่งยกเลิกและคืนสถานะทันที
-3. **Model & LoRA Compatibility Guard**: ตรวจสอบตระกูลโมเดล และตัดคำสั่ง LoRA ที่ไม่เข้ากันออกอัตโนมัติ (**Auto-skip**) ป้องกันภาพผิดเพี้ยน
-4. **WebP Compression**: บีบอัดภาพผลลัพธ์เป็นไฟล์ WebP (Quality 92) ลดขนาดลง ~85% เมื่อเทียบกับ PNG เพื่อการส่งข้อมูลข้ามเครือข่ายที่รวดเร็ว
-5. **Asynchronous HTTP Webhook Callback**: ยิงส่งภาพผลลัพธ์กลับไปยัง Backend Core (`/api/callback`) เมื่อประมวลผลเสร็จสิ้น
+3. **Model & LoRA Compatibility Guard**: ตรวจสอบตระกูลสถาปัตยกรรมโมเดล (`sd15`, `illustrious_xl`, `pony_xl`) และตัดคำสั่ง LoRA ที่ไม่เข้ากันออกอัตโนมัติ (**Auto-skip**) ป้องกันภาพผิดเพี้ยนและโมเดลแครช
+4. **VAE Latent Alignment Math ($f=8$)**: บังคับขนาดภาพพิกเซลให้หาร 8 ลงตัวเสมอด้วยสูตร `(w // 8) * 8` พร้อมรีไซซ์ด้วย **Lanczos Resampling** ป้องกัน VAE Decoder ทำงานล้มเหลว
+5. **High-Efficiency WebP Compression**: บีบอัดภาพผลลัพธ์เป็นฟอร์แมต WebP (Quality 92, Method 6) ลดขนาดไฟล์ลง ~70–80% เมื่อเทียบกับ PNG ส่งข้อมูลข้ามเครือข่าย LAN ได้อย่างรวดเร็ว
+6. **Asynchronous HTTP Webhook Callback**: ยิงส่งผลลัพธ์พร้อม Base64 WebP และ Seed กลับไปยัง Backend Core (`http://10.23.130.9:8000/api/callback`)
+7. **Disaster Recovery Local Cache**: บันทึกภาพผลลัพธ์สำรองลงในเครื่องโลคอล (`cache/{task_id}.webp.b64`) เผื่อกรณีสาย LAN สะดุดหรือ Backend รีสตาร์ท
+8. **VRAM Zero-Leak Cleanup**: คืนหน่วยความจำ VRAM ให้ไดรเวอร์ CUDA ทันทีหลังจบทุกคำสั่ง ด้วย `gc.collect()`, `torch.cuda.empty_cache()` และ `torch.cuda.ipc_collect()`
+
+---
+
+## 🌐 โทโพโลยีการเชื่อมต่อเครือข่าย (Network Topology)
+
+* **Node 1 (DevOps Gateway):** `http://10.23.130.212:80` (เส้นทางรับ Traffic จากภายนอก)
+* **Node 2 (Frontend Client):** `http://10.23.130.6:5500` (หน้าจอสั่งงานผู้ใช้)
+* **Node 3 (Backend Core):** `http://10.23.130.9:8000` (จุดรับ Webhook Callback)
+* **Node 4 (AI Node — เครื่องนี้):** `http://10.23.130.112:7860` (FastAPI AI Engine)
+* **Forge Headless Engine:** `http://127.0.0.1:7861` (รันคำสั่ง `--nowebui --api`)
 
 ---
 
 ## 📜 สัญญาข้อมูลระหว่างโหนด (Data Contracts & Guarantees)
 
-### 1. รูปแบบภาพใน Webhook Callback (`image_base64`)
-* **Format**: Data URL มาตรฐาน **`data:image/webp;base64,<encoded_data>`**
-* **Quality & Size**: WebP คุณภาพ 92 ขนาดเฉลี่ย ~70–90 KB (จากไฟล์ PNG เดิม ~1.2 MB)
-* **ความปลอดภัย**: ส่งพร้อม Header `X-LUMA-INTERNAL-SECRET` เพื่อยืนยันความถูกต้องระหว่าง Node
+### 1. รูปแบบ Payload ใน Webhook Callback ไปยัง Backend
+เมื่อประมวลผลเสร็จสิ้น AI Node จะยิง HTTP POST ไปยัง `http://10.23.130.9:8000/api/callback`:
+* **Header**: `X-LUMA-INTERNAL-SECRET: <AI_CALLBACK_SECRET>`
+* **Payload JSON**:
+```json
+{
+  "task_id": "b267e348-d030-4b55-b95f-0560f38d60d9",
+  "status": "completed",
+  "image_base64": "data:image/webp;base64,UklGRm...",
+  "error": null,
+  "generation_time": 3.65,
+  "seed": 1827491024
+}
+```
 
 ### 2. รูปแบบ Response ของ `GET /ai/models` (พร้อมฟิลด์ `family`)
-Backend Proxy และ Frontend ดึงข้อมูลจาก Endpoint นี้เพื่อทราบรายการโมเดลและตระกูลสถาปัตยกรรม:
+Backend Proxy และ Frontend ดึงข้อมูลจาก Endpoint นี้เพื่อนำไปกรอง LoRA Dropdown:
 ```json
 {
   "checkpoints": [
@@ -70,20 +94,6 @@ Backend Proxy และ Frontend ดึงข้อมูลจาก Endpoint �
 
 ---
 
-## 🧠 Model-LoRA Compatibility & Auto-Skip Guard
-
-LoRA Adapter แต่ละตัวถูกสร้างขึ้นสำหรับ Base Architecture ที่จำเพาะเจาะจง หากนำไปฉีดข้ามสถาปัตยกรรม (เช่น นำ Frieren LoRA ของ Illustrious XL ไปใช้กับ Checkpoint SD 1.5) เวกเตอร์น้ำหนักจะขัดแย้งกัน ส่งผลให้ภาพเบลอ เสียรูปทรง หรือเกิด Artifacts
-
-### วิธีการทำงานของระบบป้องกัน:
-1. `detect_model_family(model_name)`: วิเคราะห์ชื่อไฟล์ Checkpoint เพื่อระบุตระกูล (`sd15`, `illustrious_xl`, `pony_xl`)
-2. `is_lora_compatible(lora_id, model_name)`: ตรวจสอบความสอดคล้องกับฐานข้อมูลใน `lora_registry.json`
-3. **Auto-skip Action**: หากโมเดลและ LoRA ข้ามตระกูลกัน:
-   * ระบบจะไม่โยน Exception 500 แต่จะบันทึกข้อความเตือน `[WARN] Compatibility Guard: LoRA ... is incompatible with model ...`
-   * ตัดการฉีดแท็ก `<lora:...>` และ Trigger Words ออกจาก Prompt โดยอัตโนมัติ
-   * ปล่อยให้งานสร้างภาพทำงานต่อไปได้อย่างปลอดภัย (Zero Breaking Change)
-
----
-
 ## ⚙️ ขอบเขตค่าพารามิเตอร์ (Safety Bounds ใน `config.py`)
 
 | พารามิเตอร์ | ขอบเขตที่รับได้ | ค่าเริ่มต้น | เหตุผลทางวิศวกรรม / Hardware Bound |
@@ -98,19 +108,36 @@ LoRA Adapter แต่ละตัวถูกสร้างขึ้นสำ�
 
 ---
 
-## 🔌 API Endpoints สรุป
+## 🔌 สรุป API Endpoints ของ Node 4
 
-* `POST /ai/generate`: รับงาน Text-to-Image เข้าสู่ FIFO Queue (ตอบกลับ 202 Accepted ทันที)
+* `POST /ai/generate`: รับงาน Text-to-Image เข้าสู่ FIFO Queue (ตอบกลับ `HTTP 202 Accepted` ทันที)
 * `POST /ai/edit`: รับงาน Image-to-Image / Canvas Inpainting
 * `GET /ai/task/{task_id}`: ตรวจสอบสถานะงานและตำแหน่งคิวแบบ Real-time
-* `DELETE /ai/task/{task_id}`: สั่งยกเลิกงาน (รองรับทั้งการปลดออกจากคิว และการส่งสัญญาณ Interrupt ไปยัง GPU Forge)
-* `GET /ai/health`: รายงานสถานะการ์ดจอ VRAM Usage (Total / Allocated / Free)
-* `GET /ai/models`: รายการ Checkpoints และ LoRAs พร้อมตระกูล `family`
+* `DELETE /ai/task/{task_id}`: สั่งยกเลิกงาน (รองรับทั้ง Soft Cancel ปลดออกจากคิว และ Hard Cancel ส่งสัญญาณ Interrupt ไปยัง GPU)
+* `GET /ai/health`: รายงานสถานะการ์ดจอ VRAM Usage (Total / Allocated / Free) และจำนวนงานในคิว
+* `GET /ai/models`: รายการ Checkpoints และ LoRAs พร้อมจำแนกตระกูล `family`
 
 ---
 
-## 🛡️ High-Fidelity Fallback Mode (ระบบสำรองเมื่อไม่มี GPU)
-* หากเปิด `ALLOW_FALLBACK_RENDER=true` ใน `.env`:
-  * เมื่อ WebUI Forge ปิดอยู่ หรือรันบนเครื่องทั่วไปที่ไม่มีการ์ดจอ NVIDIA
-  * ระบบจะวาดภาพ Canvas Preview พร้อมข้อมูลจำลองและลายน้ำ **`⚠️ PREVIEW ONLY — Forge GPU offline`**
-  * ช่วยให้สามารถรัน Automated Integration Tests และเชื่อมต่อกับ Frontend/Backend ได้ 100% โดยไม่เกิดข้อผิดพลาด 500
+## 🚀 วิธีเปิดใช้งาน (Quick Start)
+
+### วิธีที่ 1: รันด้วย 1-Click Batch Script (แนะนำสำหรับการนำเสนอ)
+ดับเบิลคลิกไฟล์:
+```text
+start_ai_server.bat
+```
+
+### วิธีที่ 2: รันผ่านคำสั่ง Python Module
+```powershell
+python -m ai_server.run
+```
+*(ระบบจะบูต Uvicorn ASGI Server ที่ `0.0.0.0:7860` พร้อมระบบ Hot-Reload อัตโนมัติ)*
+
+---
+
+## 🧪 การรันชุดทดสอบ (Automated Unit Tests)
+
+รันชุดทดสอบความถูกต้องของ AI Node ด้วย pytest (ผ่าน 17/17 รายการสมบูรณ์):
+```powershell
+pytest ai_server/tests/test_server.py ai_server/tests/test_edge_cases.py
+```
