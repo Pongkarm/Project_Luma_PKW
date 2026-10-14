@@ -20,9 +20,9 @@
 | Branch | เครื่อง | เนื้อหาหลัก | ผู้รับผิดชอบ |
 | :--- | :--- | :--- | :---: |
 | [`main`](https://github.com/Pongkarm/Project_Luma_PKW/tree/main) | — | README ภาพรวม, `.env.example`, สไลด์นำเสนอ | ทั้งทีม |
-| [`devops`](https://github.com/Pongkarm/Project_Luma_PKW/tree/devops) | Node 1: Gateway | `nginx/` (`nginx.conf`, Dashboard, QA Test Suite, Backup, `DEVOPS_MANUAL.md`) | [@bankjunjan](https://github.com/bankjunjan) |
+| [`devops`](https://github.com/Pongkarm/Project_Luma_PKW/tree/devops) | Node 1: Gateway | `nginx/` (`nginx.conf`, Dashboard, QA Test Suite, Backup, `DEVOPS_MANUAL.md`), `TestCases/` (ชุดทดสอบรวมของทีม) | [@bankjunjan](https://github.com/bankjunjan) |
 | [`frontend-app`](https://github.com/Pongkarm/Project_Luma_PKW/tree/frontend-app) | Node 2: Frontend | `frontend-html/` (HTML + CSS + Vanilla JS), สคริปต์ `start.sh` | [@winxtxrgit](https://github.com/winxtxrgit) · [@wxnxtxr](https://github.com/wxnxtxr) |
-| [`backend`](https://github.com/Pongkarm/Project_Luma_PKW/tree/backend) | Node 3: Backend | `app/` (FastAPI), `tests/` (pytest), Dockerfile, สคริปต์ `run_backend` | [@Pongkarm](https://github.com/Pongkarm) |
+| [`backend`](https://github.com/Pongkarm/Project_Luma_PKW/tree/backend) | Node 3: Backend | `app/` (FastAPI), Dockerfile, สคริปต์ `run_backend` | [@Pongkarm](https://github.com/Pongkarm) |
 | [`ai-node`](https://github.com/Pongkarm/Project_Luma_PKW/tree/ai-node) | Node 4: AI | `ai_server/` (FastAPI + WebUI Forge), LoRA Compatibility Guard | [@Kong19565](https://github.com/Kong19565) |
 
 > แต่ละ branch มี README/คู่มือของตัวเองที่ลงรายละเอียดเฉพาะเครื่องนั้น
@@ -242,15 +242,32 @@ erDiagram
 
 ## 🧪 7. การทดสอบ
 
+### ชุดทดสอบรวมของทีม (`TestCases/` ใน branch `devops`)
+
+ชุดทดสอบหลักรวมอยู่ที่ [`TestCases/`](https://github.com/Pongkarm/Project_Luma_PKW/tree/devops/TestCases) แยกเป็น 5 track ตามเครื่อง ใช้แค่ Python
+(ไม่ต้องติดตั้งแพ็กเกจ และไม่ต้องเปิดเครื่องไหน) รันทั้งหมดด้วย `TestCases\run_all_tests.bat`
+หรือ `python TestCases/run_all_python_tests.py`
+
+| Track | โฟลเดอร์ | test ที่รันอัตโนมัติ | สคริปต์รันแยก |
+| :--- | :--- | :---: | :--- |
+| 01 DevOps & Gateway | `01_DevOps_Gateway/` | 9 | `run_devops_tests.bat` |
+| 02 Frontend | `02_Frontend_Web/` | 10 | `run_frontend_tests.bat` |
+| 03 Backend | `03_Backend_API/` | 15 | `run_backend_tests.bat` |
+| 04 AI Node | `04_AI_Inference_Node/` | 9 | `run_ainode_tests.bat` |
+| 05 End-to-End | `05_End_to_End_Integration/` | 4 | `run_e2e_tests.bat` |
+| **รวม** | | **47** | `run_all_tests.bat` |
+
+> track 02 อ่านไฟล์หน้าเว็บจากโฟลเดอร์ `frontend-html/` ที่อยู่ข้าง `TestCases/` จึงต้องรันในโฟลเดอร์ที่รวมโค้ดของ branch `frontend-app` ไว้ด้วย
+>
+> เอกสาร spec ของแต่ละ track (`TC_*_SPECIFICATION.md`) ระบุเคสไว้รวม 109 เคส test หนึ่งตัวอาจครอบคลุมหลายเคส เช่น `test_tc_dev_005_to_008`
+
+### ชุดทดสอบเฉพาะเครื่องที่ยังอยู่ใน branch ของตัวเอง
+
 | Node | ชุดทดสอบ | จำนวน | วิธีรัน | ต้องเปิดอะไรไว้ก่อน |
 | :--- | :--- | :---: | :--- | :--- |
 | Gateway | `nginx/test_distributed_system.py` / `.ps1` | 12 (Python) / 16 (PowerShell) | `nginx\run_tests.bat` | ทั้ง 4 เครื่อง (ทดสอบกับ IP จริง) |
-| Backend | `tests/` ยกเว้น `test_admin_permissions.py` | 85 | `pytest --cov=app` | ไม่ต้อง (แต่ต้องตั้ง `DATABASE_URL`, `SECRET_KEY`, `AI_CALLBACK_SECRET` ก่อน) |
-| Backend | `tests/test_admin_permissions.py` | 31 | (รันพร้อมชุดบน) | Backend ที่ `localhost:8000` และบัญชีทดสอบ `alice` (owner), `normaluser` (reviewer), `outsider` (ผู้ใช้ทั่วไป) |
 | AI Server | `test_server.py`, `test_edge_cases.py` | 17 | `pytest ai_server/tests/test_server.py ai_server/tests/test_edge_cases.py` | ไม่ต้อง (แต่ต้องตั้ง `LUMA_INTERNAL_SECRET` และติดตั้ง `pytest` เพิ่ม เพราะไม่อยู่ใน `requirements.txt`) |
 | AI Server | `test_multi_node_e2e.py` | 1 | `pytest ai_server/tests/test_multi_node_e2e.py` | โค้ด branch `backend` ในโฟลเดอร์ `backend_node` ข้างโฟลเดอร์ repo (ถ้าไม่มีจะข้าม) — test เปิด AI :7860 และ Backend :8000 ให้เอง |
-
-> Backend รวมทั้งหมด 116 test (pytest นับแยกทุกกรณีของ parametrize)
 
 ---
 
