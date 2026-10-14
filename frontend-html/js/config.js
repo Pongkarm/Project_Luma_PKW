@@ -1,12 +1,15 @@
 /*
  * config.js — ค่าตั้งต้นทั้งหมดของเว็บอยู่ที่ไฟล์นี้ไฟล์เดียว
  *
- * ถ้า backend ย้ายเครื่องหรือ IP เปลี่ยน ให้แก้ API_BASE_URL บรรทัดเดียว
- *   backend ในเครื่องตัวเอง:  http://localhost:8000
- *   backend ของเพื่อน:        http://<IP ของเครื่องเพื่อน>:8000
+ * API_BASE_URL = '' แปลว่าเรียก backend ที่เดียวกับที่โหลดหน้าเว็บมา คือ Nginx Gateway
+ * (http://10.23.130.212) ซึ่งส่ง /auth /generations /uploads /api/ /admin/ ต่อให้ backend เอง
+ * ถ้า backend ย้ายเครื่องหรือ IP เปลี่ยน ไม่ต้องแก้ไฟล์นี้ ให้แก้ upstream ใน nginx.conf (branch devops)
+ *
+ * แก้ค่านี้ชั่วคราวเฉพาะตอนเปิดแบบไม่มี Gateway (./start.sh local) แล้วอย่า commit:
+ *   backend ในเครื่องตัวเอง:  'http://localhost:8000'
  *
  * ค่าในไฟล์นี้:
- *   API_BASE_URL          ที่อยู่ backend (ทุกคำขอใน api.js ต่อท้ายจากค่านี้)
+ *   API_BASE_URL          ที่อยู่ backend ('' = ผ่าน Gateway · ทุกคำขอใน api.js ต่อท้ายจากค่านี้)
  *   LIMITS                ขอบเขตของ prompt, steps, CFG, denoise, ขนาดภาพ, ไฟล์อัปโหลด
  *   DEFAULT_SIZE          ขนาดภาพตั้งต้น 768 × 768
  *   PAGE_SIZES            จำนวนงานที่ขอต่อครั้ง (แถบล่าสุด, สตูดิโอ, หน้าประวัติ)

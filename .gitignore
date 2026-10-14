@@ -36,7 +36,7 @@ outputs/*
 .Trashes
 ehthumbs.db
 Thumbs.db
-# Frontend (Node 1)
+# Frontend (Node 2)
 node_modules/
 dist/
 .env
