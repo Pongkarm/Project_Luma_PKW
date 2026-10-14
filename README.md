@@ -1,6 +1,7 @@
 # 🎨 LUMA: Distributed AI Image Generation Platform
 
 [![Branch: devops](https://img.shields.io/badge/Branch-devops-orange.svg?logo=git)](https://github.com/Pongkarm/Project_Luma_PKW/tree/devops)
+[![Defense Mastery Hub](https://img.shields.io/badge/Defense%20Mastery%20Hub-Live%20Web-6366f1.svg?logo=googlechrome&logoColor=white)](https://kong19565.github.io/luma-defense-mastery/)
 [![Nginx Gateway](https://img.shields.io/badge/Nginx%20Gateway-Port%2080-009639.svg?logo=nginx)](http://10.23.130.212)
 [![QA Tests](https://img.shields.io/badge/QA%20Tests-16%2F16%20Passed%20(100%25)-brightgreen.svg)](nginx/test_distributed_system.py)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com)
@@ -10,6 +11,8 @@
 **LUMA** เป็นระบบประมวลผลและสร้างภาพด้วยปัญญาประดิษฐ์ (AI Image Generation Platform) ที่ออกแบบด้วยสถาปัตยกรรมแบบ **Distributed Computing (ระบบประมวลผลแบบกระจายศูนย์)** รองรับการสร้างภาพทั้ง **Text-to-Image (txt2img)**, **Image-to-Image (img2img)**, และ **Canvas Inpainting**
 
 > 📌 **สำหรับ Branch `devops`:** สาขานี้เน้นการทำงานของ **คนที่ 4: QA / DevOps** รับผิดชอบสถาปัตยกรรมเครือข่ายด่านหน้า (Nginx Reverse Proxy Gateway), ระบบตรวจสอบและมอนิเตอร์ริ่ง (DevOps Health Dashboard), การทดสอบระบบทั้ง 4 เครื่อง (Automated QA Test Suite), ระบบสำรองข้อมูล (Automated Backup & Archive) และคู่มือการดูแลระบบ (DevOps Manual)
+>
+> 🎓 **Academic Defense Mastery Hub (ศูนย์เตรียมสอบปากเปล่า):** สื่อการเรียนรู้เชิงโต้ตอบสำหรับเตรียมความพร้อมสอบปากเปล่า เจาะลึกสถาปัตยกรรมคลัสเตอร์และซอร์สโค้ดจริงทุกบรรทัด 👉 **[https://kong19565.github.io/luma-defense-mastery/](https://kong19565.github.io/luma-defense-mastery/)**
 
 ---
 
@@ -73,6 +76,7 @@ graph TD
 | 📊 **DevOps Dashboard** | ระบบตรวจวัดสถานะเรียลไทม์ | [`nginx/html/dashboard.html`](nginx/html/dashboard.html) | มอนิเตอร์ Health Status ของทั้ง 4 โหนด อัปเดตอัตโนมัติทุก 5 วินาที พร้อมระบบจำกัดสิทธิ์ (IP Whitelist เข้าได้เฉพาะเครื่อง Nginx) |
 | 💾 **Backup System** | ระบบสำรองข้อมูลอัตโนมัติ | [`nginx/backup_system.py`](nginx/backup_system.py)<br>[`nginx/run_backup.bat`](nginx/run_backup.bat) | สำรอง Config, Web Assets, Source Code เป็น Zip Archive พร้อมคำนวณ Checksum SHA-256 และ System Health Snapshot |
 | 📖 **Documentation** | คู่มือปฏิบัติการ DevOps ฉบับสมบูรณ์ | [`nginx/DEVOPS_MANUAL.md`](nginx/DEVOPS_MANUAL.md) | คู่มือการติดตั้ง, การทดสอบ, การแก้ปัญหา (Troubleshooting) และแผนการกู้คืนระบบ |
+| 🎓 **Defense Mastery Hub** | ศูนย์เตรียมสอบปากเปล่า | [Interactive Web App](https://kong19565.github.io/luma-defense-mastery/) | สื่อการเรียนรู้เชิงโต้ตอบสำหรับเตรียมความพร้อมสอบปากเปล่า เจาะลึกสถาปัตยกรรมและซอร์สโค้ดจริงทุกบรรทัด |
 
 ---
 
